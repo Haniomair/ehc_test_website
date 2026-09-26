@@ -16,7 +16,7 @@
     if (!wrap.Visible) { continue; }
     var alias = block.Content.ContentType.Alias;
 
-    <section id="@wrap.AnchorId" data-theme="@wrap.ThemeOverride" data-block="@alias" class="@wrap.CssClass">
+    <section id="@wrap.AnchorId" data-block="@alias" class="@wrap.CssClass"@HtmlAttributes.Data("theme", wrap.ThemeOverride)>
         @await Html.PartialAsync("blocklist/Components/" + alias, block)
     </section>
 }

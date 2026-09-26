@@ -1,5 +1,6 @@
 @* Master layout: culture/direction + active theme on <html>. *@
 @using System.Globalization
+@using EHC.Web.Blocks
 @using EHC.Web.Themes
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @inject IThemeResolver Themes
@@ -8,11 +9,12 @@
     var culture = CultureInfo.CurrentUICulture;          // set by Umbraco from the hostname/culture
     var isRtl = culture.TextInfo.IsRightToLeft;
     var theme = Themes.Resolve(Model);
-    var metaTitle = Model.Value<string>("metaTitle") ?? Model.Name;
+    var metaTitle = Model.Value<string>("metaTitle");
+    if (string.IsNullOrWhiteSpace(metaTitle)) { metaTitle = Model.Name; }
 }
 <!DOCTYPE html>
-@* Razor drops attributes whose value is null, so data-theme/style disappear for the default theme *@
-<html lang="@culture.TwoLetterISOLanguageName" dir="@(isRtl ? "rtl" : "ltr")" data-theme="@theme.PresetKey" style="@theme.InlineStyle">
+@* Razor drops a null style attribute; data-theme goes through HtmlAttributes.Data (Razor keeps empty data-* attributes). Keep it last: attributes after a C# expression are no longer dropped. *@
+<html lang="@culture.TwoLetterISOLanguageName" dir="@(isRtl ? "rtl" : "ltr")" style="@theme.InlineStyle"@HtmlAttributes.Data("theme", theme.PresetKey)>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -1,0 +1,62 @@
+@* Block 12 "Patient stories": a video card + quotes. Publish real stories only with written patient consent;
+   demo quotes must stay labelled as illustrative. The video opens in the browser's own player (controls, captions). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var quotes = c.Value<BlockListModel>("quotes")?.Select(q => q.Content).Where(q => !string.IsNullOrWhiteSpace(q.Value<string>("text"))).ToList() ?? [];
+    var video = c.Value<IPublishedContent>("video");
+    var videoTitle = c.Value<string>("videoTitle");
+    var videoCaption = c.Value<string>("videoCaption");
+    var hasVideoCard = video is not null || !string.IsNullOrWhiteSpace(videoTitle);
+    if (quotes.Count == 0 && !hasVideoCard) { return; }
+    string[] avatar = ["bg-brand-500", "bg-support-500", "bg-highlight-500"];
+}
+<div class="wrap">
+    <div class="rv mb-11">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null))
+    </div>
+    <div class="grid gap-7 @(hasVideoCard && quotes.Count > 0 ? "lg:grid-cols-2" : "")">
+        @if (hasVideoCard)
+        {
+            var inner = "relative flex min-h-[380px] items-end overflow-hidden rounded-[22px] bg-linear-to-br from-brand-400 to-deep-900 p-7 text-white lg:min-h-[440px]";
+            if (video is not null)
+            {
+                <a class="rv @inner" href="@video.Url()">
+                    <span class="mark-bg mark-white absolute -end-20 -top-20 h-[460px] w-[460px] opacity-[.12]" aria-hidden="true"></span>
+                    <span class="absolute start-1/2 top-1/2 grid h-24 w-24 -translate-y-1/2 place-items-center rounded-full bg-white text-brand-500 shadow-[0_0_0_14px_rgba(255,255,255,.18),0_0_0_28px_rgba(255,255,255,.08)] ltr:-translate-x-1/2 rtl:translate-x-1/2" aria-hidden="true"><svg class="ico !h-[34px] !w-[34px]"><use href="#i-play" /></svg></span>
+                    <span class="relative"><b class="block text-[1.3rem]">@videoTitle</b>@if (!string.IsNullOrWhiteSpace(videoCaption)) {<span class="text-[.88rem] text-brand-100">@videoCaption</span>}</span>
+                </a>
+            }
+            else
+            {
+                <div class="rv @inner">
+                    <span class="mark-bg mark-white absolute -end-20 -top-20 h-[460px] w-[460px] opacity-[.12]" aria-hidden="true"></span>
+                    <span class="relative"><b class="block text-[1.3rem]">@videoTitle</b>@if (!string.IsNullOrWhiteSpace(videoCaption)) {<span class="text-[.88rem] text-brand-100">@videoCaption</span>}</span>
+                </div>
+            }
+        }
+        @if (quotes.Count > 0)
+        {
+            <div class="flex flex-col gap-4">
+                @for (var i = 0; i < quotes.Count; i++)
+                {
+                    var q = quotes[i];
+                    var rating = Math.Clamp(q.Value<int>("rating"), 0, 5);
+                    var who = q.Value<string>("attribution") ?? "";
+                    <figure class="rv relative flex-1 rounded-[22px] bg-soft p-7 dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+                        <span class="absolute -top-1.5 end-6 font-serif text-[6rem] leading-none text-brand-100 dark:text-brand-500/20" aria-hidden="true">“</span>
+                        @if (rating > 0) { <div class="mb-2.5 text-[.9rem] tracking-[2px] text-accent-500" role="img" aria-label="@rating / 5">@(new string('★', rating))</div> }
+                        <blockquote class="relative mb-4 text-[1.1rem] font-medium text-deep-900 dark:text-white">@(q.Value<string>("text"))</blockquote>
+                        @if (!string.IsNullOrWhiteSpace(who))
+                        {
+                            <figcaption class="flex items-center gap-3 text-[.85rem] text-slate-500 dark:text-slate-400"><i class="grid h-10 w-10 place-items-center rounded-full @avatar[i % avatar.Length] font-bold not-italic text-white" aria-hidden="true">@who[..1]</i><span>@who</span></figcaption>
+                        }
+                    </figure>
+                }
+            </div>
+        }
+    </div>
+</div>

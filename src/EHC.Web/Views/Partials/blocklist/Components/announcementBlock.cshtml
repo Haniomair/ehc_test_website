@@ -1,0 +1,21 @@
+@* Block 20 "Announcement": occasion banner (e.g. a National Day greeting). Usually scheduled with Show from / Show until
+   in its settings; colours follow the active theme. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var text = c.Value<string>("text");
+    if (string.IsNullOrWhiteSpace(text)) { return; }
+    var link = c.Value<Link>("link");
+    var image = c.Value<IPublishedContent>("image");
+}
+<div class="wrap">
+    <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-[26px] bg-linear-to-br from-brand-500 to-deep-900 p-7 text-white sm:flex-row sm:p-9">
+        <span class="mark-bg mark-white absolute -end-16 -top-16 h-64 w-64 opacity-15" aria-hidden="true"></span>
+        @if (image is not null) { <img src="@image.Url()" alt="" class="relative h-20 w-auto shrink-0" loading="lazy"> }
+        <p class="relative flex-1 text-[clamp(1.2rem,2.4vw,1.6rem)] font-bold leading-snug">@text</p>
+        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn btn-sand relative shrink-0">@link.Name</a> }
+    </div>
+</div>

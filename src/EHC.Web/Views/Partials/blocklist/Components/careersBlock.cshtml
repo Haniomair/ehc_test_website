@@ -1,0 +1,22 @@
+@* Block 16 "Careers + volunteering": up to two link cards. Style: deep (navy) or light (support/mint). *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var cards = Model.Content.Value<BlockListModel>("cards")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? [];
+    if (cards.Count == 0) { return; }
+}
+<div class="wrap grid gap-5 @(cards.Count > 1 ? "md:grid-cols-2" : "")">
+    @foreach (var card in cards)
+    {
+        var deep = card.Value<string>("style") != "light";
+        var cta = card.Value<Link>("cta");
+        <a href="@(cta?.Url ?? "#")" target="@cta?.Target" class="rv group relative overflow-hidden rounded-[26px] p-8 text-white dark:ring-1 dark:ring-white/10 @(deep ? "bg-linear-to-br from-deep-900 to-deep-700 dark:from-deep-950 dark:to-deep-800" : "bg-linear-to-br from-support-500 to-support-800")">
+            <span class="mark-bg mark-white absolute -bottom-20 -end-20 h-72 w-72 opacity-10 transition duration-700 group-hover:rotate-45" aria-hidden="true"></span>
+            @if (!string.IsNullOrWhiteSpace(card.Value<string>("eyebrow"))) { <span class="text-xs font-bold uppercase tracking-widest rtl:tracking-normal @(deep ? "text-brand-300" : "text-support-50")">@(card.Value<string>("eyebrow"))</span> }
+            <b class="mt-2 block max-w-sm text-[1.8rem] leading-tight">@(card.Value<string>("title"))</b>
+            @if (!string.IsNullOrWhiteSpace(card.Value<string>("text"))) { <p class="mt-2 max-w-sm @(deep ? "text-brand-100" : "text-white/90")">@(card.Value<string>("text"))</p> }
+            @if (!string.IsNullOrWhiteSpace(cta?.Name)) { <span class="btn mt-6 !py-2.5 text-sm @(deep ? "btn-sand" : "bg-white text-support-800")"><span>@cta.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
+        </a>
+    }
+</div>

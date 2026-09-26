@@ -12,7 +12,8 @@
     if (seconds is <= 0 or > 60) { seconds = 7; }
     var panel = c.Value<string>("rightPanel") ?? "cards";
     var cards = c.Value<BlockListModel>("floatingCards")?.Select(x => x.Content).ToList() ?? [];
-    var showPanel = panel != "none" && (cards.Count > 0 || panel == "art");
+    var navigator = panel == "navigator" ? EHC.Web.Blocks.HeroNavigator.Embedded(Umbraco.AssignedContentItem.Value<BlockListModel>("blocks")) : null;
+    var showPanel = panel != "none" && (cards.Count > 0 || panel == "art" || navigator is not null);
     string Bg(IPublishedElement s) => s.Value<string>("backgroundPreset") switch { "1" => "hero-bg-1", "2" => "hero-bg-2", _ => "hero-bg-0" };   // allow-list
     var id = "hero-" + Model.ContentKey.ToString("N")[..8];
     const string titleCss = "mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal";
@@ -76,7 +77,11 @@
                 </div>
             }
         </div>
-        @if (showPanel)
+        @if (navigator is not null)
+        {
+            @await Html.PartialAsync("blocklist/Components/careNavigatorBlock", navigator, new ViewDataDictionary(ViewData) { ["inHero"] = true })
+        }
+        else if (showPanel)
         {
             <div class="relative hidden min-h-[380px] lg:block">
                 @if (panel == "art")

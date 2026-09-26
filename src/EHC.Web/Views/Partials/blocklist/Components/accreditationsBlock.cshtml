@@ -1,0 +1,29 @@
+@* Block 17 "Accreditations": a strip of accreditation logos (or names when no logo). Logos need alt text = the name. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var heading = c.Value<string>("heading");
+}
+<div class="wrap">
+    <div class="flex flex-wrap items-center justify-center gap-7 border-y border-slate-200 py-10 text-base font-bold tracking-[.06em] text-slate-500 dark:border-white/10 dark:text-slate-400">
+        @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="text-base tracking-normal text-deep-900 dark:text-white">@heading</h2> }
+        <ul class="contents">
+            @foreach (var it in items)
+            {
+                var name = it.Value<string>("title");
+                var logo = it.Value<IPublishedContent>("logo");
+                var link = it.Value<Link>("link");
+                <li>
+                    @if (link is not null) { <a href="@link.Url" target="@link.Target" class="hover:text-deep-900 dark:hover:text-white">@if (logo is not null) {<img src="@logo.Url()" alt="@name" class="h-10 w-auto" loading="lazy">} else {<span>@name</span>}</a> }
+                    else if (logo is not null) { <img src="@logo.Url()" alt="@name" class="h-10 w-auto" loading="lazy"> }
+                    else { <span>@name</span> }
+                </li>
+            }
+        </ul>
+    </div>
+</div>

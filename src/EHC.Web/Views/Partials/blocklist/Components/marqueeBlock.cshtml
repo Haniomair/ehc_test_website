@@ -1,0 +1,22 @@
+@* Block 5 "Specialty ticker": decorative scrolling words (picked specialties, or free words). Decorative only
+   (aria-hidden); stops under prefers-reduced-motion via the global CSS rule. Give it spacing "sm" or "none". *@
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var words = c.Value<IEnumerable<IPublishedContent>>("specialties")?.Select(s => s.Value<string>("pageTitle") is { Length: > 0 } t ? t : s.Name).ToList() ?? [];
+    if (words.Count == 0) { words = c.Value<IEnumerable<string>>("words")?.Where(w => !string.IsNullOrWhiteSpace(w)).ToList() ?? []; }
+    if (words.Count == 0) { return; }
+}
+<div class="mask-x overflow-hidden whitespace-nowrap py-2" aria-hidden="true">
+    <div class="anim-marquee inline-flex gap-12 text-[clamp(2rem,4.5vw,3.6rem)] font-bold">
+        @for (var round = 0; round < 2; round++)
+        {
+            for (var i = 0; i < words.Count; i++)
+            {
+                <span class="inline-flex items-center gap-12 @(i % 3 == 0 ? "text-brand-500 dark:text-brand-300" : "text-stroke")">@words[i]<span class="text-[.6em] text-brand-500">✦</span></span>
+            }
+        }
+    </div>
+</div>

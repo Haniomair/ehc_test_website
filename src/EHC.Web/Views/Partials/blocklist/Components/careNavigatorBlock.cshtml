@@ -1,0 +1,91 @@
+@* Block 2 "Care navigator": two questions (who? what do you need?) → recommended next step.
+   Options come from the block (whoOptions / needOptions) as JSON in data-options; frontend/src/js/components/care-navigator.js
+   updates the result. Urgent needs are shown in emergency red. Rendered inside the campaign hero when its right panel is
+   "navigator" (ViewData["inHero"] = true), otherwise as a standalone section. *@
+@using System.Text.Json
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var who = c.Value<BlockListModel>("whoOptions")?.Select(b => b.Content)
+        .Where(w => !string.IsNullOrWhiteSpace(w.Value<string>("label")))
+        .Select((w, i) => new { key = w.Value<string>("optionKey") is { Length: > 0 } k ? k : "w" + i, label = w.Value<string>("label"), note = w.Value<string>("note") ?? "" })
+        .ToList() ?? [];
+    var needs = c.Value<BlockListModel>("needOptions")?.Select(b => b.Content)
+        .Where(n => !string.IsNullOrWhiteSpace(n.Value<string>("label")))
+        .Select((n, i) => new
+        {
+            key = n.Value<string>("optionKey") is { Length: > 0 } k ? k : "n" + i,
+            label = n.Value<string>("label"),
+            icon = n.Value<string>("icon") ?? "arrow",
+            title = n.Value<string>("resultTitle") ?? "",
+            text = n.Value<string>("resultText") ?? "",
+            cta = n.Value<string>("ctaLabel") ?? "",
+            href = n.Value<Link>("ctaLink")?.Url ?? "#",
+            urgent = n.Value<bool>("isUrgent"),
+        })
+        .ToList() ?? [];
+    if (needs.Count == 0) { return; }
+    var inHero = ViewData["inHero"] is true;
+    var first = needs.FirstOrDefault(n => !n.urgent) ?? needs[0];
+    var json = JsonSerializer.Serialize(new { who, needs });
+    var heading = c.Value<string>("heading");
+    var intro = c.Value<string>("intro");
+    const string pill = "nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900";
+}
+@{
+    void Panel()
+    {
+        <div class="relative rounded-[28px] border border-white/20 bg-white/10 p-6 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" data-navigator data-options="@json">
+            <div class="mb-5 flex items-center gap-3">
+                <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-compass" /></svg></span>
+                <div>
+                    <b class="block text-lg leading-tight">@(string.IsNullOrWhiteSpace(heading) ? Umbraco.GetDictionaryValue("EHC.Navigator.Title") : Text.Plain(heading))</b>
+                    @if (!string.IsNullOrWhiteSpace(intro)) { <span class="text-sm text-white/75">@intro</span> }
+                </div>
+            </div>
+            @if (who.Count > 1)
+            {
+                <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
+                <div class="mb-5 flex flex-wrap gap-2" role="group" aria-labelledby="@("nvw-" + Model.ContentKey.ToString("N")[..8])">
+                    @for (var i = 0; i < who.Count; i++)
+                    {
+                        <button type="button" class="@pill" aria-pressed="@(i == 0 ? "true" : "false")" data-who="@who[i].key">@who[i].label</button>
+                    }
+                </div>
+            }
+            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvn-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">@(who.Count > 1 ? "2" : "1")</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Need")</p>
+            <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-labelledby="@("nvn-" + Model.ContentKey.ToString("N")[..8])">
+                @foreach (var n in needs)
+                {
+                    <button type="button" data-need="@n.key" aria-pressed="@(n == first ? "true" : "false")" class="flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 @(n.urgent ? "aria-pressed:border-emerg-500 aria-pressed:bg-emerg-600" : "aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900")"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-@n.icon" /></svg><span>@n.label</span></button>
+                }
+            </div>
+            <div class="rounded-2xl bg-white p-4 text-deep-950 dark:bg-night-900 dark:text-white" aria-live="polite" data-nav-out>
+                <div class="flex items-start gap-3">
+                    <span data-nav-icon class="grid h-10 w-10 shrink-0 place-items-center rounded-xl @(first.urgent ? "bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300" : "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300")"><svg class="ico" aria-hidden="true"><use href="#i-@first.icon" /></svg></span>
+                    <div class="min-w-0 flex-1"><b data-nav-title class="block leading-snug">@first.title</b><span data-nav-text class="block text-sm text-slate-500 dark:text-slate-400">@first.text</span></div>
+                </div>
+                <a data-nav-cta href="@first.href" class="btn btn-primary mt-3 w-full !py-2.5 text-sm @(first.urgent ? "!bg-emerg-600 !shadow-none" : "") @(string.IsNullOrWhiteSpace(first.cta) ? "hidden" : "")">@first.cta</a>
+            </div>
+        </div>
+    }
+}
+@if (inHero)
+{
+    <div class="relative">
+        <div class="mark-bg mark-white pointer-events-none absolute -end-10 -top-10 h-44 w-44 opacity-10" aria-hidden="true"></div>
+        @{ Panel(); }
+    </div>
+}
+else
+{
+    <div class="wrap">
+        <div class="hero-bg-0 relative overflow-hidden rounded-[28px] p-6 sm:p-10">
+            <div class="mx-auto max-w-[640px]">@{ Panel(); }</div>
+        </div>
+    </div>
+}
+<script src="~/assets/js/components/care-navigator.js" asp-append-version="true" defer></script>

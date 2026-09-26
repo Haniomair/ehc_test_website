@@ -1,0 +1,69 @@
+@* Block 8 "Life-stage journeys": tabs (stages) → intro card + timeline of steps. Colour per stage from an allow-list.
+   Behaviour: frontend/src/js/components/tabs.js (WAI-ARIA tabs). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var stages = c.Value<BlockListModel>("stages")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("label"))).ToList() ?? [];
+    if (stages.Count == 0) { return; }
+    var id = "jr-" + Model.ContentKey.ToString("N")[..8];
+    // allow-list: editor picks a colour key, never a class
+    (string Card, string Button, string Dot, string When) Palette(string? key) => key switch
+    {
+        "highlight" => ("from-highlight-500 to-highlight-800", "text-highlight-800", "bg-highlight-500", "text-highlight-500"),
+        "accent" => ("from-accent-400 to-accent-500", "text-deep-900", "bg-accent-400", "text-accent-500"),
+        "support" => ("from-support-500 to-support-900", "text-support-900", "bg-support-500", "text-support-500 dark:text-support-300"),
+        _ => ("from-brand-500 to-deep-900", "text-deep-900", "bg-brand-500", "text-brand-500 dark:text-brand-300"),
+    };
+    var disclaimer = c.Value<string>("disclaimer");
+}
+<div class="wrap" data-tabs>
+    <div class="rv mb-10">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), Id: id + "-h"))
+    </div>
+    @if (stages.Count > 1)
+    {
+        <div class="rv mb-8 flex gap-2 overflow-x-auto rounded-2xl bg-soft p-1.5 dark:bg-night-900 dark:ring-1 dark:ring-white/10" role="tablist" aria-labelledby="@id-h">
+            @for (var i = 0; i < stages.Count; i++)
+            {
+                var icon = stages[i].Value<string>("icon");
+                <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg> }
+                    <span>@(stages[i].Value<string>("label"))</span>
+                </button>
+            }
+        </div>
+    }
+    @for (var i = 0; i < stages.Count; i++)
+    {
+        var s = stages[i];
+        var p = Palette(s.Value<string>("color"));
+        var cta = s.Value<Link>("cta");
+        var steps = s.Value<BlockListModel>("steps")?.Select(x => x.Content).ToList() ?? [];
+        <div id="@id-p@(i)" role="@(stages.Count > 1 ? "tabpanel" : null)" aria-labelledby="@(stages.Count > 1 ? $"{id}-t{i}" : null)" class="grid gap-6 lg:grid-cols-[.8fr_1.2fr] @(i == 0 ? "" : "hidden")">
+            <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br @p.Card p-7 text-white">
+                <span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]" aria-hidden="true"></span>
+                <b class="relative block text-2xl leading-snug">@(s.Value<string>("cardTitle"))</b>
+                @if (!string.IsNullOrWhiteSpace(s.Value<string>("cardText"))) { <p class="relative mt-2 text-white/90">@(s.Value<string>("cardText"))</p> }
+                @if (cta is not null) { <a href="@cta.Url" target="@cta.Target" class="btn relative mt-6 bg-white @p.Button">@cta.Name</a> }
+            </div>
+            @if (steps.Count > 0)
+            {
+                <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
+                    @foreach (var step in steps)
+                    {
+                        <li class="card relative p-4">
+                            <span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white @p.Dot dark:border-night-950" aria-hidden="true"></span>
+                            <span class="text-xs font-bold @p.When">@(step.Value<string>("when"))</span>
+                            <b class="block">@(step.Value<string>("title"))</b>
+                        </li>
+                    }
+                </ol>
+            }
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="mt-5 text-[.75rem] text-slate-500">@disclaimer</p> }
+</div>
+<script src="~/assets/js/components/tabs.js" asp-append-version="true" defer></script>

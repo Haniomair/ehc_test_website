@@ -5,18 +5,28 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
 @inject IPublishedValueFallback Fallback
 @inject TimeProvider Clock
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
 @{
     if (Model is null || !Model.Any()) { return; }
     var now = Clock.GetUtcNow().UtcDateTime;
+    var embedded = HeroNavigator.Embedded(Model);   // care navigator shown inside the hero instead
 }
 @foreach (var block in Model)
 {
     if (block?.Content is null) { continue; }
     var wrap = BlockSection.From(block.Settings, Fallback, now);
     if (!wrap.Visible) { continue; }
+    if (embedded is not null && block.ContentKey == embedded.ContentKey) { continue; }
     var alias = block.Content.ContentType.Alias;
 
+    @* render first: a block with no usable content produces no wrapper (and no empty padding) *@
+    var inner = await Html.PartialAsync("blocklist/Components/" + alias, block);
+    using var writer = new System.IO.StringWriter();
+    inner.WriteTo(writer, Encoder);
+    var html = writer.ToString();
+    if (string.IsNullOrWhiteSpace(html)) { continue; }
+
     <section id="@wrap.AnchorId" data-block="@alias" class="@wrap.CssClass"@HtmlAttributes.Data("theme", wrap.ThemeOverride)>
-        @await Html.PartialAsync("blocklist/Components/" + alias, block)
+        @Html.Raw(html)
     </section>
 }

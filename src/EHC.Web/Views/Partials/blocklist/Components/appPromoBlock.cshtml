@@ -1,0 +1,49 @@
+@* Block 13 "App promo" (Sehhaty): text, bullets and store links (from Site settings) + a decorative phone. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject ISiteContext Site
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var heading = c.Value<string>("heading");
+    if (string.IsNullOrWhiteSpace(heading)) { return; }
+    var bullets = c.Value<IEnumerable<string>>("bullets")?.Where(b => !string.IsNullOrWhiteSpace(b)).ToList() ?? [];
+    var stores = Site.Get(Umbraco.AssignedContentItem).AppLinks;
+    string D(string key) => Umbraco.GetDictionaryValue("EHC.App." + key) ?? "";
+}
+<div class="wrap">
+    <div class="rv relative grid gap-10 overflow-hidden rounded-[26px] bg-linear-to-br from-brand-500 via-brand-700 to-deep-900 px-6 py-9 text-white sm:px-11 sm:py-11 lg:grid-cols-[1.1fr_.9fr] lg:rounded-[36px] lg:p-16 dark:from-deep-800 dark:via-deep-900 dark:to-night-950 dark:ring-1 dark:ring-white/10">
+        <div>
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("eyebrow"))) { <div class="eyebrow !text-white">@(c.Value<string>("eyebrow"))</div> }
+            <h2 class="h2 !text-white [&_em]:!text-white">@Text.Emphasis(heading, Encoder)</h2>
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("text"))) { <p class="mb-6 mt-4 max-w-[480px] text-[1.05rem] text-brand-50">@(c.Value<string>("text"))</p> }
+            @if (bullets.Count > 0)
+            {
+                <ul class="mb-8 grid gap-3">
+                    @foreach (var b in bullets) { <li class="flex items-center gap-3"><i class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/20 text-[.8rem] not-italic" aria-hidden="true">✓</i><span>@b</span></li> }
+                </ul>
+            }
+            @if (stores.Count > 0)
+            {
+                <div class="flex flex-wrap gap-3">
+                    @foreach (var s in stores) { <a class="flex items-center gap-2.5 rounded-2xl bg-night-950 px-5 py-2.5 leading-tight" href="@s.Url" target="@s.Target"><svg class="ico" aria-hidden="true"><use href="#i-app" /></svg><b>@s.Name</b></a> }
+                </div>
+            }
+        </div>
+        <div class="relative hidden place-items-center lg:grid" aria-hidden="true">
+            <div class="relative h-[540px] w-[270px] -rotate-6 rounded-[44px] bg-night-950 p-3 shadow-[0_40px_80px_rgba(0,0,0,.35)] rtl:rotate-6">
+                <div class="flex h-full flex-col overflow-hidden rounded-[34px] bg-soft text-deep-950 dark:bg-night-900 dark:text-white">
+                    <div class="bg-brand-500 px-[18px] pb-[22px] pt-[34px] text-white"><b class="block text-[1.05rem]">@D("Name")</b></div>
+                    <div class="grid grid-cols-2 gap-2 p-3.5 text-[.72rem] font-semibold">
+                        @foreach (var (icon, key) in new[] { ("cal", "Appointments"), ("lab", "Results"), ("note", "Prescriptions"), ("chat", "Consult") })
+                        {
+                            <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-@icon" /></svg><span>@D(key)</span></div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

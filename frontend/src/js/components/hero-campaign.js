@@ -19,6 +19,7 @@
     root.style.setProperty('--hero-interval', interval + 'ms');
 
     function setBg(cls) {
+      if (root.classList.contains('media-hero')) return;
       root.classList.remove('hero-bg-0', 'hero-bg-1', 'hero-bg-2');
       if (/^hero-bg-[012]$/.test(cls)) root.classList.add(cls);
     }
@@ -39,6 +40,18 @@
         if (on && focus) t.focus();
       });
       setBg(slides[i].getAttribute('data-bg') || '');
+      if (root.classList.contains('media-hero')) {
+        // media per slide: show this slide's layer and apply its overlay / strength / focal point (validated server-side)
+        [].forEach.call(root.querySelectorAll('[data-slide-media]'), function (m) {
+          var on = m.getAttribute('data-slide-media') === String(i);
+          m.classList.toggle('contents', on);
+          m.classList.toggle('hidden', !on);
+        });
+        var s = slides[i], ov = s.getAttribute('data-overlay'), st = s.getAttribute('data-strength'), fo = s.getAttribute('data-focal');
+        if (/^(tint|duotone|shade)$/.test(ov || '')) root.setAttribute('data-overlay', ov); else root.setAttribute('data-overlay', 'shade');
+        if (/^(light|medium|strong)$/.test(st || '')) root.setAttribute('data-strength', st);
+        if (/^[0-9.]+% [0-9.]+%$/.test(fo || '')) root.style.setProperty('--focal', fo);
+      }
       schedule();
     }
     function setPaused(p) {

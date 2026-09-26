@@ -33,6 +33,11 @@ First run opens the Umbraco installer (choose SQLite for local development). The
 connection string to `src/EHC.Web/appsettings.Local.json`, which is not in source control. Keep secrets such as
 `Umbraco:CMS:Imaging:HMACSecretKey` there locally, and in environment variables on servers.
 
+Schema, settings, dictionary and demo content are stored as uSync files in `src/EHC.Web/uSync` and imported on the
+first boot of an empty database. Media *files* (`wwwroot/media`) are not in source control: after a fresh setup,
+upload the images in `frontend/src/img/placeholder` again to the "Placeholders" media folder (same names), or pick
+new images in the hero sections.
+
 ## Publish
 `src/EHC.Web/wwwroot/assets` is generated, so build the frontend first:
 ```bash

@@ -122,6 +122,12 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .media-hero[data-strength="strong"] { --ov-a: 96%; --ov-b: 88%; --ov-c: 62%; }
 html[dir="rtl"] .media-hero { --overlay-dir: 270deg; }
 .media-hero > .media-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); z-index: -3; }
+.media-hero > picture.media-bg > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); }
+/* campaign hero: one media layer per slide, wrapped for switching */
+.media-hero > [data-slide-media] > .media-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); z-index: -3; }
+.media-hero > [data-slide-media] > picture.media-bg > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); }
+.media-hero[data-overlay="duotone"] > [data-slide-media] > .media-bg { filter: grayscale(1) contrast(1.15) brightness(1.05); mix-blend-mode: multiply; }
+.media-frame > picture > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); }
 .media-hero::before, .media-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
 
 /* tint — photo keeps its colours, washed by the theme gradient (stronger on the text side) */

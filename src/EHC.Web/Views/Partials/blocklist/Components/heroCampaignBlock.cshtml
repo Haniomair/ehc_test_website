@@ -16,9 +16,22 @@
     var showPanel = panel != "none" && (cards.Count > 0 || panel == "art" || navigator is not null);
     string Bg(IPublishedElement s) => s.Value<string>("backgroundPreset") switch { "1" => "hero-bg-1", "2" => "hero-bg-2", _ => "hero-bg-0" };   // allow-list
     var id = "hero-" + Model.ContentKey.ToString("N")[..8];
+    var media = slides.Select(EHC.Web.Blocks.MediaBackground.From).ToList();
+    var anyMedia = media.Any(m => m.HasMedia);
+    var isFirst = EHC.Web.Blocks.Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey);
     const string titleCss = "mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal";
 }
-<div data-hero data-interval="@(seconds * 1000)" class="@Bg(slides[0]) relative overflow-hidden text-white transition-[background] duration-700">
+@* With photos/videos on any slide the hero becomes a media-hero; each slide's media layer is swapped by the script,
+   together with its overlay, strength and focal point. *@
+<div data-hero data-interval="@(seconds * 1000)" class="@(anyMedia ? "media-hero" : Bg(slides[0]) + " relative overflow-hidden transition-[background] duration-700") text-white" style="@(anyMedia ? media[0].FocalStyle : null)"@EHC.Web.Blocks.HtmlAttributes.Data("overlay", anyMedia ? media[0].Overlay : null)@EHC.Web.Blocks.HtmlAttributes.Data("strength", anyMedia ? media[0].Strength : null)>
+    @if (anyMedia)
+    {
+        for (var i = 0; i < media.Count; i++)
+        {
+            if (!media[i].HasMedia) { continue; }
+            <div class="@(i == 0 ? "contents" : "hidden")" data-slide-media="@i">@await Html.PartialAsync("site/_MediaBackground", media[i] with { ShowPattern = false })</div>
+        }
+    }
     <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08]" aria-hidden="true"></div>
     <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:pb-[120px] lg:pt-10 @(showPanel ? "lg:grid-cols-[1.05fr_.95fr]" : "")">
         <div>
@@ -28,7 +41,7 @@
                 var primary = s.Value<Link>("primaryCta");
                 var secondary = s.Value<Link>("secondaryCta");
                 var highlight = s.Value<string>("titleHighlight");
-                <div class="slide anim-fadeup @(i == 0 ? "" : "hidden")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-bg="@Bg(s)">
+                <div class="slide anim-fadeup @(i == 0 ? "" : "hidden")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-bg="@Bg(s)" data-overlay="@(media[i].HasMedia ? media[i].Overlay : "")" data-strength="@media[i].Strength" data-focal="@media[i].Focal">
                     @if (!string.IsNullOrWhiteSpace(s.Value<string>("kicker")))
                     {
                         <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium">
@@ -36,8 +49,8 @@
                             <span>@(s.Value<string>("kicker"))</span>
                         </span>
                     }
-                    @* Only the first slide is the page's h1; the others are visually identical h2s. *@
-                    @if (i == 0)
+                    @* Only the first slide of the page's first section is the h1; the others are visually identical h2s. *@
+                    @if (i == 0 && isFirst)
                     {
                         <h1 class="@titleCss">@(s.Value<string>("title"))@if (!string.IsNullOrWhiteSpace(highlight)) {<br><em class="not-italic text-brand-300">@highlight</em>}</h1>
                     }

@@ -73,6 +73,16 @@
   var search = $('#search'), sIn = $('#sIn');
   on('search-open', function () { if (sIn) sIn.value = ''; showModal(search, sIn); });
   on('search-close', hideModal);
+  // search boxes in page sections (e.g. the search hero) hand their query to the palette
+  $$('[data-search-form]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!search) return;
+      e.preventDefault();
+      var q = form.querySelector('input[name="q"]');
+      showModal(search, sIn);
+      if (sIn && q) { sIn.value = q.value; sIn.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+  });
   document.addEventListener('keydown', function (e) {
     if (!search || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return;
     e.preventDefault();

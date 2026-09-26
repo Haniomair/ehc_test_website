@@ -1,30 +1,23 @@
-@* Shared media layer for every hero that uses mediaComposition.
-   Usage inside a hero partial:
-     <section class="media-hero …" data-overlay="@overlay" data-strength="@strength" style="--focal: @focal">
-         @await Html.PartialAsync("site/_MediaBackground", element)
-         … hero content …
-     </section>
-   Overlay colours come from the theme tokens (see frontend/src/css/ehc.css › MEDIA HEROES). *@
-@using Umbraco.Cms.Core.Models.PublishedContent
-@using Umbraco.Cms.Core.PropertyEditors.ValueConverters
-@model Umbraco.Cms.Core.Models.PublishedContent.IPublishedElement
-@{
-    var image = Model.Value<ImageCropperValue>("backgroundImage");
-    var video = Model.Value<IPublishedContent>("backgroundVideo");
-    var poster = Model.Value<IPublishedContent>("poster");
-    var alt = Model.Value<string>("imageAlt") ?? "";
-}
-@if (video is not null)
+@* Shared media layer for heroes using mediaComposition. The caller renders the wrapper:
+     <section class="media-hero …" data-overlay="@bg.Overlay" data-strength="@bg.Strength" style="@bg.FocalStyle">
+         @await Html.PartialAsync("site/_MediaBackground", bg)
+   Video: muted loop, no autoplay under prefers-reduced-motion, pause button wired by components/hero-video.js
+   (the caller places a [data-video-toggle] button). Overlay colours come from the active theme. *@
+@model EHC.Web.Blocks.MediaBackground
+@if (Model.HasVideo)
 {
-    @* muted + playsinline are required for autoplay on mobile; JS pauses it for prefers-reduced-motion and wires the pause button *@
-    <video class="media-bg" autoplay muted loop playsinline preload="metadata" poster="@poster?.Url()" aria-hidden="true" data-hero-video>
-        <source src="@video.Url()" type="video/mp4">
+    <video class="media-bg" muted loop playsinline preload="metadata" poster="@Model.PosterUrl" aria-hidden="true" data-hero-video>
+        <source src="@Model.VideoUrl" type="@Model.VideoType">
     </video>
 }
-else if (image is not null && !string.IsNullOrEmpty(image.Src))
+else if (Model.HasImage)
 {
-    <picture>
-        <source media="(max-width: 767px)" srcset="@image.Src.GetCropUrl(image, cropAlias: "mobile", useCropDimensions: true)">
-        <img class="media-bg" src="@image.Src.GetCropUrl(image, cropAlias: "desktop", useCropDimensions: true)" alt="@alt" fetchpriority="high">
+    <picture class="media-bg">
+        <source media="(max-width: 767px)" srcset="@Model.ImageMobile">
+        <img src="@Model.ImageDesktop" alt="@Model.Alt" fetchpriority="high">
     </picture>
+}
+@if (Model.ShowPattern)
+{
+    <div class="mark-bg mark-white pointer-events-none absolute -end-32 top-[calc(50%-340px)] h-[680px] w-[680px] opacity-[.10]" aria-hidden="true"></div>
 }

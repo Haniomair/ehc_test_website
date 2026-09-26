@@ -6,7 +6,12 @@
     var title = Model.Value<string>("pageTitle");
     if (string.IsNullOrWhiteSpace(title)) { title = Model.Name; }
     var intro = Model.Value<string>("intro");
+    var blocks = Model.Value<BlockListModel>("blocks");
+    // a hero as the first section is the page header (and the page's h1)
+    var heroFirst = blocks?.FirstOrDefault()?.Content.ContentType.Alias.StartsWith("hero") ?? false;
 }
+@if (!heroFirst)
+{
 <div class="bg-soft py-14 dark:bg-night-900/60 lg:py-20">
     <div class="wrap">
         <h1 class="text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-tight text-deep-900 dark:text-white">@title</h1>
@@ -16,4 +21,5 @@
         }
     </div>
 </div>
-@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))
+}
+@await Html.GetBlockListHtmlAsync(blocks)

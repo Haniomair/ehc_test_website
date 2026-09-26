@@ -1,0 +1,37 @@
+@* Hero 6 "Video": brand film loop behind the text (muted, ≤ 15 s, ≤ 4 MB, poster required).
+   Visible pause/play button (WCAG 2.2.2); no autoplay under prefers-reduced-motion. JS: components/hero-video.js.
+   Give the block spacing "none". *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    if (string.IsNullOrWhiteSpace(title)) { return; }
+    var bg = MediaBackground.From(c);
+    var highlight = c.Value<string>("titleHighlight");
+    var film = c.Value<Link>("fullFilmLink");
+    var kicker = c.Value<string>("kicker");
+}
+<div class="@(bg.HasMedia ? "media-hero" : "hero-bg-0 relative overflow-hidden") text-white" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+    @await Html.PartialAsync("site/_MediaBackground", bg)
+    <div class="wrap relative flex min-h-[560px] flex-col justify-end pb-14 pt-24">
+        @if (!string.IsNullOrWhiteSpace(kicker)) { <span class="mb-4 w-fit rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">@kicker</span> }
+        @Heading.Hero(Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey), "max-w-3xl text-[clamp(2.2rem,5vw,4.2rem)] font-bold leading-[1.1] rtl:leading-[1.3]", title, highlight, "not-italic text-brand-300", Encoder)
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("lead"))) { <p class="mt-4 max-w-2xl text-lg text-white/85">@(c.Value<string>("lead"))</p> }
+        <div class="mt-7 flex flex-wrap items-center gap-3">
+            @if (film is not null) { <a class="btn btn-sand btn-lg" href="@film.Url" target="@film.Target"><svg class="ico" aria-hidden="true"><use href="#i-play" /></svg><span>@film.Name</span></a> }
+            @if (bg.HasVideo)
+            {
+                <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-white/40 text-white hover:bg-white/10" data-video-toggle aria-pressed="false"
+                        aria-label="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPause")" data-label-pause="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPause")" data-label-play="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPlay")">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon-pause><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                    <svg class="hidden h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon-play><path d="M8 5v14l11-7z" /></svg>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+@if (bg.HasVideo) { <script src="~/assets/js/components/hero-video.js" asp-append-version="true" defer></script> }

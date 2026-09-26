@@ -1,0 +1,78 @@
+@* Hero 1 "Search & tasks" (Concept A): headline + search box with scope tabs + popular links + side cards.
+   Until /api/search exists (phase 5) submitting opens the site search palette with the query (site.js). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    if (string.IsNullOrWhiteSpace(title)) { return; }
+    var highlight = c.Value<string>("titleHighlight");
+    var tabs = c.Value<IEnumerable<string>>("searchTabs")?.ToList() ?? [];
+    var popular = c.Value<IEnumerable<Link>>("popularLinks")?.ToList() ?? [];
+    var side = c.Value<BlockListModel>("sideCards")?.Select(s => s.Content).ToList() ?? [];
+    var id = "hs-" + Model.ContentKey.ToString("N")[..8];
+}
+<div class="hero-bg-0 relative overflow-hidden text-white">
+    <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-40 top-[calc(50%-320px)] h-[640px] w-[640px] opacity-[.07]" aria-hidden="true"></div>
+    <div class="wrap relative grid items-center gap-10 py-14 lg:py-20 @(side.Count > 0 ? "lg:grid-cols-[1.15fr_.85fr]" : "")">
+        <div>
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("kicker"))) { <span class="mb-4 inline-block text-sm font-bold uppercase tracking-[.2em] text-brand-100 rtl:tracking-normal">@(c.Value<string>("kicker"))</span> }
+            @Heading.Hero(Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey), "mb-4 text-[clamp(2rem,4.2vw,3.2rem)] font-bold leading-tight rtl:leading-[1.4]", title, highlight, "not-italic text-brand-300", Encoder)
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("lead"))) { <p class="mb-7 max-w-xl text-lg text-on-deep">@(c.Value<string>("lead"))</p> }
+            <form class="max-w-2xl rounded-2xl bg-white p-2 text-deep-950 shadow-[0_20px_50px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white" role="search" data-search-form>
+                @if (tabs.Count > 0)
+                {
+                    <fieldset class="flex flex-wrap gap-1 px-1 pb-2 pt-1 text-sm font-semibold">
+                        <legend class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Scope")</legend>
+                        @for (var i = 0; i < tabs.Count; i++)
+                        {
+                            <label class="cursor-pointer rounded-lg px-3 py-1.5 text-slate-500 has-checked:bg-brand-50 has-checked:text-brand-600 dark:has-checked:bg-brand-500/15 dark:has-checked:text-brand-300">
+                                <input type="radio" name="scope" value="@tabs[i]" class="sr-only" checked="@(i == 0)">@Umbraco.GetDictionaryValue("EHC.Search.Scope." + tabs[i])
+                            </label>
+                        }
+                    </fieldset>
+                }
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <label class="flex flex-1 items-center gap-2.5 rounded-xl border border-slate-200 px-3.5 text-slate-400 focus-within:border-brand-500 dark:border-white/15" for="@id-q">
+                        <svg class="ico" aria-hidden="true"><use href="#i-search" /></svg>
+                        <span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Title")</span>
+                        <input id="@id-q" name="q" type="search" class="h-12 min-w-0 flex-1 bg-transparent text-deep-950 outline-hidden dark:text-white" placeholder="@Umbraco.GetDictionaryValue("EHC.Search.Placeholder")" autocomplete="off">
+                    </label>
+                    <button type="submit" class="btn btn-primary">@Umbraco.GetDictionaryValue("EHC.Search.Button")</button>
+                </div>
+            </form>
+            @if (popular.Count > 0)
+            {
+                <div class="mt-5 flex flex-wrap items-center gap-2 text-sm">
+                    <span class="text-on-deep">@Umbraco.GetDictionaryValue("EHC.Search.Popular")</span>
+                    @foreach (var l in popular) { <a href="@l.Url" target="@l.Target" class="rounded-full border border-white/25 px-3 py-1 hover:bg-white/10">@l.Name</a> }
+                </div>
+            }
+        </div>
+        @if (side.Count > 0)
+        {
+            <div class="hidden gap-3 lg:grid">
+                @foreach (var s in side)
+                {
+                    if (s.ContentType.Alias == "sideCardStats")
+                    {
+                        var stats = s.Value<BlockListModel>("stats")?.Select(x => x.Content).ToList() ?? [];
+                        <div class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
+                            @if (!string.IsNullOrWhiteSpace(s.Value<string>("title"))) { <b class="mb-3 block">@(s.Value<string>("title"))</b> }
+                            <div class="grid grid-cols-3 gap-2.5">
+                                @foreach (var st in stats) { <div><b class="block text-2xl">@(st.Value<string>("value"))@(st.Value<string>("suffix"))</b><span class="text-xs text-on-deep">@(st.Value<string>("label"))</span></div> }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur"><b class="block">@(s.Value<string>("title"))</b><span class="text-sm text-on-deep">@(s.Value<string>("text"))</span></div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>

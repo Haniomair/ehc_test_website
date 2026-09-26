@@ -1,0 +1,21 @@
+@* Campaign: header (tag, dates), call to action, then the campaign's sections. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var start = Model.Value<DateOnly?>("startDate");
+    var end = Model.Value<DateOnly?>("endDate");
+    var cta = Model.Value<Link>("ctaLink");
+    ViewData["eyebrow"] = Model.Value<string>("tag");
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@if (start is not null || cta is not null)
+{
+    <div class="wrap flex flex-wrap items-center gap-4 pt-8">
+        @if (start is { } s) { <span class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-cal" /></svg><time datetime="@s.ToString("yyyy-MM-dd", inv)">@s.ToString("d MMMM yyyy")</time>@if (end is { } e) {<text> – </text><time datetime="@e.ToString("yyyy-MM-dd", inv)">@e.ToString("d MMMM yyyy")</time>}</span> }
+        @if (cta is not null) { <a class="btn btn-primary" href="@cta.Url" target="@cta.Target">@cta.Name</a> }
+    </div>
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

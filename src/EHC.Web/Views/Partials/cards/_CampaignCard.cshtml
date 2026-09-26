@@ -1,0 +1,30 @@
+@* Campaign poster card: colour from the campaign's allow-listed colour key, tag, title, dates. *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var c = Model;
+    var title = c.Value<string>("pageTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = c.Name; }
+    var gradient = c.Value<string>("color") switch
+    {
+        "support" => "from-support-500 to-support-900",
+        "highlight" => "from-highlight-500 to-highlight-800",
+        "accent" => "from-accent-400 to-accent-500",
+        _ => "from-brand-500 to-deep-900",
+    };
+    var icon = c.Value<string>("icon");
+    var start = c.Value<DateOnly?>("startDate");
+    var end = c.Value<DateOnly?>("endDate");
+}
+<a href="@c.Url()" class="group relative flex min-h-[300px] flex-col overflow-hidden rounded-[22px] bg-linear-to-br @gradient p-7 text-white transition hover:-translate-y-1">
+    <span class="mark-bg mark-white absolute -bottom-16 -end-16 h-56 w-56 opacity-[.15] transition duration-700 group-hover:rotate-45" aria-hidden="true"></span>
+    <span class="relative flex items-center justify-between gap-3">
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("tag"))) { <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">@(c.Value<string>("tag"))</span> }
+        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white/20"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
+    </span>
+    <b class="relative mt-auto text-[1.5rem] leading-tight">@title</b>
+    @if (start is { } s)
+    {
+        <span class="relative mt-2 text-sm text-white/85"><time datetime="@s.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@s.ToString("d MMMM")</time>@if (end is { } e) {<text> – </text><time datetime="@e.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@e.ToString("d MMMM yyyy")</time>}</span>
+    }
+</a>

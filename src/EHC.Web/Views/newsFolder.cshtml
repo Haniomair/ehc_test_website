@@ -1,0 +1,37 @@
+@* Newsroom: newest first, category chips (links), 12 per page. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    var all = Model.Children().Where(c => c.ContentType.Alias == "newsItem")
+        .OrderByDescending(n => n.Value<DateOnly?>("publishDate") ?? DateOnly.FromDateTime(n.CreateDate)).ToList();
+    var categories = all.SelectMany(n => n.Value<IEnumerable<string>>("category") ?? []).Distinct().OrderBy(c => c).ToList();
+    string? category = req.Query["category"];
+    if (category is not null && !categories.Contains(category)) { category = null; }
+    var list = all.Where(n => category is null || (n.Value<IEnumerable<string>>("category") ?? []).Contains(category)).ToList();
+    const int size = 12;
+    var pages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)size));
+    var page = Math.Min(ListingQuery.CurrentPage(req), pages);
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    @if (categories.Count > 0)
+    {
+        <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.News.Categories")">
+            <a class="chip" href="@ListingQuery.With(req, "category", null)" aria-current="@(category is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+            @foreach (var c in categories) { <a class="chip" href="@ListingQuery.With(req, "category", c)" aria-current="@(category == c ? "true" : null)">@c</a> }
+        </nav>
+    }
+    @if (list.Count == 0)
+    {
+        <p class="card p-10 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+    }
+    else
+    {
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var n in list.Skip((page - 1) * size).Take(size)) { @await Html.PartialAsync("cards/_NewsCard", n) }
+        </div>
+        @await Html.PartialAsync("site/_Pager", (page, pages))
+    }
+</div>

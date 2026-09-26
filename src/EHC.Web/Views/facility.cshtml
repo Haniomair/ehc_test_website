@@ -1,0 +1,61 @@
+@* Facility: header, contact + opening hours, map with this facility, directions link. *@
+@using System.Globalization
+@using System.Text.Json
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var type = Model.Value<string>("facilityType") ?? "hospital";
+    var er = Model.Value<bool>("hasEmergency");
+    var lat = Model.Value<decimal?>("latitude");
+    var lng = Model.Value<decimal?>("longitude");
+    var hasMap = lat is not null && lng is not null && lat != 0 && lng != 0;
+    var hours = Model.Value<BlockListModel>("openingHours")?.Select(h => h.Content).ToList() ?? [];
+    var phone = Model.Value<string>("phone");
+    var dial = new string((phone ?? "").Where(c => char.IsDigit(c) || c == '+').ToArray());
+    var point = hasMap ? JsonSerializer.Serialize(new[] { new { id = Model.Key, name = Model.Name, lat, lng, er, url = "" } }) : null;
+    var inv = CultureInfo.InvariantCulture;
+    ViewData["eyebrow"] = Umbraco.GetDictionaryValue("EHC.Facility.Type." + type);
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap grid gap-8 py-12 lg:grid-cols-[1fr_1.2fr] lg:py-16">
+    <div class="grid content-start gap-5">
+        @if (er)
+        {
+            <div class="flex items-center gap-3 rounded-2xl bg-emerg-600 p-5 text-white">
+                <svg class="ico" aria-hidden="true"><use href="#i-er" /></svg>
+                <b>@Umbraco.GetDictionaryValue("EHC.Facility.EmergencyOpen")</b>
+            </div>
+        }
+        <dl class="card grid gap-4 p-6 text-sm">
+            @if (!string.IsNullOrWhiteSpace(Model.Value<string>("address")) || !string.IsNullOrWhiteSpace(Model.Value<string>("city")))
+            {
+                <div class="flex gap-3"><svg class="ico shrink-0 text-brand-500" aria-hidden="true"><use href="#i-pin" /></svg><div><dt class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Address")</dt><dd>@(Model.Value<string>("address"))@if (!string.IsNullOrWhiteSpace(Model.Value<string>("city"))) {<span class="block text-slate-500">@(Model.Value<string>("city"))</span>}</dd></div></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(phone))
+            {
+                <div class="flex gap-3"><svg class="ico shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone" /></svg><div><dt class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Phone")</dt><dd>@if (dial.Length > 2) {<a href="tel:@dial" class="font-semibold hover:underline" dir="ltr">@phone</a>} else {<span dir="ltr">@phone</span>}</dd></div></div>
+            }
+        </dl>
+        @if (hours.Count > 0)
+        {
+            <div class="card p-6">
+                <h2 class="mb-3 flex items-center gap-2 text-base font-bold text-deep-900 dark:text-white"><svg class="ico text-brand-500" aria-hidden="true"><use href="#i-clock" /></svg>@Umbraco.GetDictionaryValue("EHC.Facility.Hours")</h2>
+                <table class="w-full text-sm">
+                    <tbody>
+                        @foreach (var h in hours) { <tr class="border-t border-slate-100 first:border-0 dark:border-white/10"><th scope="row" class="py-2 text-start font-medium">@(h.Value<string>("days"))</th><td class="py-2 text-end text-slate-600 dark:text-slate-400">@(h.Value<string>("hours"))</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (hasMap)
+        {
+            <a class="btn btn-ghost w-fit" href="https://www.openstreetmap.org/directions?to=@(lat!.Value.ToString(inv))%2C@(lng!.Value.ToString(inv))" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-compass" /></svg><span>@Umbraco.GetDictionaryValue("EHC.Facility.Directions")</span></a>
+        }
+    </div>
+    @if (hasMap)
+    {
+        <div class="min-h-[360px] overflow-hidden rounded-[22px] border border-slate-200 dark:border-white/10" data-map data-points="@point" data-zoom="14" role="region" aria-label="@Umbraco.GetDictionaryValue("EHC.Facility.Map")"></div>
+        @await Html.PartialAsync("site/_MapAssets")
+    }
+</div>

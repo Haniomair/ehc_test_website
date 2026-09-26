@@ -1,25 +1,14 @@
-﻿@* Landing page: page header band (title + intro) followed by the page's sections. *@
+@* Landing page: page header (breadcrumb, title, intro) followed by the page's sections. *@
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "master.cshtml";
-    var title = Model.Value<string>("pageTitle");
-    if (string.IsNullOrWhiteSpace(title)) { title = Model.Name; }
-    var intro = Model.Value<string>("intro");
     var blocks = Model.Value<BlockListModel>("blocks");
     // a hero as the first section is the page header (and the page's h1)
     var heroFirst = blocks?.FirstOrDefault()?.Content.ContentType.Alias.StartsWith("hero") ?? false;
 }
 @if (!heroFirst)
 {
-<div class="bg-soft py-14 dark:bg-night-900/60 lg:py-20">
-    <div class="wrap">
-        <h1 class="text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-tight text-deep-900 dark:text-white">@title</h1>
-        @if (!string.IsNullOrWhiteSpace(intro))
-        {
-            <p class="mt-4 max-w-[680px] text-[1.15rem] text-slate-600 dark:text-slate-400">@intro</p>
-        }
-    </div>
-</div>
+    @await Html.PartialAsync("site/_PageHeader", Model)
 }
 @await Html.GetBlockListHtmlAsync(blocks)

@@ -1,0 +1,26 @@
+@* News card: header image (optional), date, category, title, intro. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var n = Model;
+    var title = n.Value<string>("pageTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = n.Name; }
+    var image = n.Value<MediaWithCrops>("headerImage");
+    var date = n.Value<DateOnly?>("publishDate");
+    var category = n.Value<IEnumerable<string>>("category")?.FirstOrDefault();
+}
+<a href="@n.Url()" class="card group flex h-full flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-soft">
+    <div class="relative aspect-[16/10] overflow-hidden bg-linear-to-br from-brand-500 to-deep-900">
+        @if (image is not null) { <img src="@image.GetCropUrl(720, 450)" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy"> }
+        else { <span class="mark-bg mark-white absolute -bottom-10 -end-10 h-40 w-40 opacity-20" aria-hidden="true"></span> }
+    </div>
+    <div class="flex flex-1 flex-col gap-2 p-5">
+        <span class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            @if (date is { } d) { <time datetime="@d.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@d.ToString("d MMMM yyyy")</time> }
+            @if (!string.IsNullOrWhiteSpace(category)) { <span class="rounded-full bg-brand-50 px-2 py-0.5 font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">@category</span> }
+        </span>
+        <b class="text-lg leading-snug text-deep-900 dark:text-white">@title</b>
+        @if (!string.IsNullOrWhiteSpace(n.Value<string>("intro"))) { <span class="line-clamp-3 text-sm text-slate-600 dark:text-slate-400">@(n.Value<string>("intro"))</span> }
+    </div>
+</a>

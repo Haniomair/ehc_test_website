@@ -1,0 +1,13 @@
+@* Specialties index: all specialties as cards, alphabetical. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var list = Model.Children().Where(c => c.ContentType.Alias == "specialty").OrderBy(s => s.Name).ToList();
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    @if (list.Count == 0) { <p class="card p-10 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p> }
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach (var s in list) { @await Html.PartialAsync("cards/_SpecialtyCard", s) }
+    </div>
+</div>

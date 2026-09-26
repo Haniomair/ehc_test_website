@@ -1,0 +1,55 @@
+@* Block 7 "Facility finder": filter chips + map (GET /api/facilities) + list of facilities (server-rendered, so it works
+   without JS). "Use my location" sorts the list by distance (browser geolocation, computed client-side; nothing is sent
+   to the server). JS: components/map.js + components/facility-finder.js. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    var facilities = home?.DescendantsOfType("facility").OrderBy(f => f.Name).ToList() ?? [];
+    if (facilities.Count == 0) { return; }
+    var max = c.Value<int>("maxListItems");
+    if (max <= 0) { max = 6; }
+    string[] filters = ["all", "hospital", "primaryCare", "specialist", "emergency"];
+    var initial = c.Value<string>("defaultFilter") is { } d && filters.Contains(d) ? d : "all";
+    bool Match(Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent f, string filter) =>
+        filter == "all" || (filter == "emergency" ? f.Value<bool>("hasEmergency") : f.Value<string>("facilityType") == filter);
+    var folder = home?.Children().FirstOrDefault(x => x.ContentType.Alias == "facilityFolder");
+    var culture = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var id = "ff-" + Model.ContentKey.ToString("N")[..8];
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+}
+<div class="wrap" data-finder="@id" data-filter="@initial" data-max="@max">
+    <div class="rv mb-8 flex flex-wrap items-end justify-between gap-6">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.Finder.Eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.Finder.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    <div class="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="@D("EHC.Facility.Filter")">
+        @foreach (var f in filters)
+        {
+            <button type="button" class="chip" data-finder-filter="@f" aria-pressed="@(f == initial ? "true" : "false")">@D(f switch { "all" => "EHC.Common.All", "emergency" => "EHC.Facility.Emergency", _ => "EHC.Facility.Type." + f })</button>
+        }
+        <button type="button" class="chip ms-auto inline-flex items-center gap-1.5" data-finder-locate><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-locate" /></svg>@D("EHC.Finder.Locate")</button>
+    </div>
+    <div class="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+        <div class="min-h-[380px] overflow-hidden rounded-[22px] border border-slate-200 dark:border-white/10" data-map data-src="/api/facilities?culture=@culture" role="region" aria-label="@D("EHC.Facility.Map")"></div>
+        <div>
+            <p class="sr-only" role="status" data-finder-status></p>
+            <div class="grid gap-3" data-finder-list>
+                @{ var shown = 0; }
+                @foreach (var f in facilities)
+                {
+                    var visible = Match(f, initial) && shown < max;
+                    if (visible) { shown++; }
+                    <div class="@(visible ? "" : "hidden")" data-type="@(f.Value<string>("facilityType"))" data-er="@(f.Value<bool>("hasEmergency") ? "1" : "0")" data-lat="@(f.Value<decimal?>("latitude")?.ToString(System.Globalization.CultureInfo.InvariantCulture))" data-lng="@(f.Value<decimal?>("longitude")?.ToString(System.Globalization.CultureInfo.InvariantCulture))">
+                        @await Html.PartialAsync("cards/_FacilityCard", f)
+                        <span class="hidden px-5 pt-1 text-xs text-slate-500" data-finder-distance></span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+@await Html.PartialAsync("site/_MapAssets")
+<script src="~/assets/js/components/facility-finder.js" asp-append-version="true" defer></script>

@@ -1,0 +1,27 @@
+@* Block 15 "Latest news": newest news items (count, default 3), optionally one category. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    var folder = home?.Children().FirstOrDefault(x => x.ContentType.Alias == "newsFolder");
+    var count = c.Value<int>("count");
+    if (count is <= 0 or > 12) { count = 3; }
+    var category = c.Value<string>("category")?.Trim();
+    var news = folder?.Children().Where(x => x.ContentType.Alias == "newsItem")
+        .Where(x => string.IsNullOrEmpty(category) || (x.Value<IEnumerable<string>>("category") ?? []).Contains(category, StringComparer.OrdinalIgnoreCase))
+        .OrderByDescending(x => x.Value<DateOnly?>("publishDate") ?? DateOnly.FromDateTime(x.CreateDate))
+        .Take(count).ToList() ?? [];
+    if (news.Count == 0) { return; }
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+}
+<div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.News.Eyebrow"), c.Value<string>("heading"), null))
+        @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.News.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    <div class="grid gap-5 md:grid-cols-3">
+        @foreach (var n in news) { <div class="rv">@await Html.PartialAsync("cards/_NewsCard", n)</div> }
+    </div>
+</div>

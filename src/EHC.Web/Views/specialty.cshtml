@@ -1,0 +1,37 @@
+@* Specialty: header, summary + body, where it's offered (facilities), consultants in this specialty. *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var body = Model.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    var facilities = Model.Value<IEnumerable<IPublishedContent>>("facilities")?.ToList() ?? [];
+    var home = Model.AncestorOrSelf("home");
+    var doctors = home?.DescendantsOfType("doctor")
+        .Where(d => d.Value<IPublishedContent>("specialty")?.Key == Model.Key)
+        .Take(8).ToList() ?? [];
+    var doctorFolder = home?.Children().FirstOrDefault(c => c.ContentType.Alias == "doctorFolder");
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-12 lg:py-16">
+    @if (!string.IsNullOrWhiteSpace(Model.Value<string>("summary"))) { <p class="mb-8 max-w-[760px] text-xl font-medium text-deep-900 dark:text-white">@(Model.Value<string>("summary"))</p> }
+    @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+
+    @if (facilities.Count > 0)
+    {
+        <h2 class="mb-5 mt-14 text-2xl font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Specialty.Where")</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var f in facilities) { @await Html.PartialAsync("cards/_FacilityCard", f) }
+        </div>
+    }
+    @if (doctors.Count > 0)
+    {
+        <div class="mb-5 mt-14 flex flex-wrap items-end justify-between gap-3">
+            <h2 class="text-2xl font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Specialty.Doctors")</h2>
+            @if (doctorFolder is not null) { <a class="link" href="@doctorFolder.Url()?specialty=@Model.Key">@Umbraco.GetDictionaryValue("EHC.Common.ViewAll")<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach (var d in doctors) { @await Html.PartialAsync("cards/_DoctorCard", d) }
+        </div>
+    }
+</div>

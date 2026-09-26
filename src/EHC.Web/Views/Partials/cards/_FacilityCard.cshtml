@@ -1,0 +1,17 @@
+@* Facility card: type, city, emergency badge. data-* attributes let the map highlight the matching pin. *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var f = Model;
+    var type = f.Value<string>("facilityType") ?? "";
+    var icon = type switch { "hospital" => "hosp", "primaryCare" => "clinic", _ => "star" };
+    var er = f.Value<bool>("hasEmergency");
+}
+<a href="@f.Url()" class="card group flex items-start gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-soft" data-facility="@f.Key">
+    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+    <span class="min-w-0 flex-1">
+        <b class="block leading-snug text-deep-900 dark:text-white">@f.Name</b>
+        <span class="text-sm text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Facility.Type." + (string.IsNullOrEmpty(type) ? "hospital" : type))@if (!string.IsNullOrWhiteSpace(f.Value<string>("city"))) {<text> · @(f.Value<string>("city"))</text>}</span>
+        @if (er) { <span class="mt-2 inline-flex items-center gap-1 rounded-full bg-emerg-50 px-2 py-0.5 text-xs font-bold text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300"><svg class="ico !h-3.5 !w-3.5" aria-hidden="true"><use href="#i-er" /></svg>@Umbraco.GetDictionaryValue("EHC.Facility.Emergency")</span> }
+    </span>
+</a>

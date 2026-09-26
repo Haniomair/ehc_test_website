@@ -1,0 +1,29 @@
+@* Doctor card (listing + doctors block). Placeholder avatar when there is no photo. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var d = Model;
+    var name = d.Value<string>("fullName");
+    if (string.IsNullOrWhiteSpace(name)) { name = d.Name; }
+    var photo = d.Value<MediaWithCrops>("photo");
+    var specialty = d.Value<IPublishedContent>("specialty");
+    var initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Replace("د.", "").Replace("Dr", "").Trim().FirstOrDefault().ToString();
+}
+<a href="@d.Url()" class="card group flex h-full flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-soft">
+    <div class="relative aspect-[4/3.6] overflow-hidden bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">
+        @if (photo is not null)
+        {
+            <img src="@photo.GetCropUrl(600, 540)" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
+        }
+        else
+        {
+            <span class="absolute inset-0 grid place-items-center text-6xl font-bold text-brand-300 dark:text-brand-400/40" aria-hidden="true">@initial</span>
+        }
+    </div>
+    <div class="flex flex-1 flex-col gap-1 p-5">
+        <b class="text-lg leading-snug text-deep-900 dark:text-white">@name</b>
+        @if (!string.IsNullOrWhiteSpace(d.Value<string>("title"))) { <span class="text-sm text-slate-500 dark:text-slate-400">@(d.Value<string>("title"))</span> }
+        @if (specialty is not null) { <span class="mt-auto pt-3 text-sm font-semibold text-brand-600 dark:text-brand-300">@specialty.Name</span> }
+    </div>
+</a>

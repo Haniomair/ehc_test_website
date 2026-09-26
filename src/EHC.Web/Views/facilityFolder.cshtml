@@ -1,0 +1,38 @@
+@* Facilities: type / emergency filter chips (links), map with all shown facilities, list. *@
+@using System.Text.Json
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    string? type = req.Query["type"];
+    string[] types = ["hospital", "primaryCare", "specialist", "emergency"];
+    if (type is not null && !types.Contains(type)) { type = null; }
+    var list = Model.Children().Where(c => c.ContentType.Alias == "facility")
+        .Where(f => type is null || (type == "emergency" ? f.Value<bool>("hasEmergency") : f.Value<string>("facilityType") == type))
+        .OrderBy(f => f.Name).ToList();
+    var points = JsonSerializer.Serialize(list
+        .Where(f => f.Value<decimal?>("latitude") is { } la && la != 0 && f.Value<decimal?>("longitude") is { } lo && lo != 0)
+        .Select(f => new { id = f.Key, name = f.Name, lat = f.Value<decimal?>("latitude"), lng = f.Value<decimal?>("longitude"), er = f.Value<bool>("hasEmergency"), url = f.Url() }));
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    <nav class="mb-6 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Facility.Filter")">
+        <a class="chip" href="@ListingQuery.With(req, "type", null)" aria-current="@(type is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+        @foreach (var t in types)
+        {
+            <a class="chip" href="@ListingQuery.With(req, "type", t)" aria-current="@(type == t ? "true" : null)">@Umbraco.GetDictionaryValue(t == "emergency" ? "EHC.Facility.Emergency" : "EHC.Facility.Type." + t)</a>
+        }
+    </nav>
+    <div class="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+        <div class="min-h-[420px] overflow-hidden rounded-[22px] border border-slate-200 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] dark:border-white/10" data-map data-points="@points" role="region" aria-label="@Umbraco.GetDictionaryValue("EHC.Facility.Map")"></div>
+        <div>
+            <p class="mb-4 text-sm text-slate-500" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
+            @if (list.Count == 0) { <p class="card p-10 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p> }
+            <div class="grid gap-3">
+                @foreach (var f in list) { @await Html.PartialAsync("cards/_FacilityCard", f) }
+            </div>
+        </div>
+    </div>
+</div>
+@await Html.PartialAsync("site/_MapAssets")

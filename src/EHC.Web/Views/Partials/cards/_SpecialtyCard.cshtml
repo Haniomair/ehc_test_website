@@ -1,0 +1,12 @@
+@* Specialty card: icon, name, summary. *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var s = Model;
+    var icon = s.Value<string>("icon");
+}
+<a href="@s.Url()" class="card group flex h-full flex-col gap-3 p-6 transition hover:-translate-y-1 hover:shadow-soft">
+    <span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-500 transition group-hover:bg-brand-500 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@(string.IsNullOrWhiteSpace(icon) ? "heart" : icon)" /></svg></span>
+    <b class="text-lg text-deep-900 dark:text-white">@s.Name</b>
+    @if (!string.IsNullOrWhiteSpace(s.Value<string>("summary"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(s.Value<string>("summary"))</span> }
+</a>

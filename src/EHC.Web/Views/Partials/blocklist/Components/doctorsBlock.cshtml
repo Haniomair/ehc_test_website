@@ -1,0 +1,30 @@
+@* Block 14 "Doctors": picked doctors (max 8), doctors of one specialty, or a random selection (changes per request). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    var folder = home?.Children().FirstOrDefault(x => x.ContentType.Alias == "doctorFolder");
+    var all = folder?.Children().Where(x => x.ContentType.Alias == "doctor").ToList() ?? [];
+    var specialty = c.Value<IPublishedContent>("specialty");
+    var doctors = (c.Value<string>("mode") ?? "picked") switch
+    {
+        "bySpecialty" => all.Where(d => specialty is not null && d.Value<IPublishedContent>("specialty")?.Key == specialty.Key).Take(4).ToList(),
+        "random" => all.OrderBy(_ => Random.Shared.Next()).Take(4).ToList(),
+        _ => c.Value<IEnumerable<IPublishedContent>>("doctors")?.Take(8).ToList() ?? [],
+    };
+    if (doctors.Count == 0) { return; }
+    var more = folder is null ? null : specialty is not null && c.Value<string>("mode") == "bySpecialty" ? $"{folder.Url()}?specialty={specialty.Key}" : folder.Url();
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+}
+<div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.Doctors.Eyebrow"), c.Value<string>("heading"), null))
+        @if (more is not null) { <a class="link" href="@more"><span>@D("EHC.Doctors.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach (var d in doctors) { <div class="rv">@await Html.PartialAsync("cards/_DoctorCard", d)</div> }
+    </div>
+</div>

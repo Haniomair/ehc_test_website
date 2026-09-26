@@ -68,6 +68,20 @@ public sealed record MediaBackground(
             e.Value<bool>("showPattern"));
     }
 
+    /// <summary>Inner-page header image (pageHeaderComposition): theme tint, medium, decorative (the h1 carries the meaning).</summary>
+    public static MediaBackground ForHeader(MediaWithCrops? image) => new(
+        image?.GetCropUrl("desktop") ?? image?.Url(),
+        image?.GetCropUrl("mobile") ?? image?.Url(),
+        image?.Url(),
+        "",
+        null,
+        null,
+        null,
+        "tint",
+        "medium",
+        FocalOf(image),
+        false);
+
     private static string FocalOf(MediaWithCrops? image)
     {
         var fp = image?.LocalCrops?.FocalPoint ?? image?.Content.Value<ImageCropperValue>("umbracoFile")?.FocalPoint;

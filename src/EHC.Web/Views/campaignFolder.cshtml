@@ -1,0 +1,23 @@
+@* Campaigns: current and upcoming first (by start date), then past campaigns. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var all = Model.Children().Where(c => c.ContentType.Alias == "campaign").ToList();
+    var current = all.Where(c => (c.Value<DateOnly?>("endDate") ?? DateOnly.MaxValue) >= today).OrderBy(c => c.Value<DateOnly?>("startDate") ?? DateOnly.MinValue).ToList();
+    var past = all.Except(current).OrderByDescending(c => c.Value<DateOnly?>("endDate")).ToList();
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    @if (all.Count == 0) { <p class="card p-10 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p> }
+    @if (current.Count > 0)
+    {
+        <h2 class="mb-5 text-2xl font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Campaigns.Current")</h2>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">@foreach (var c in current) { @await Html.PartialAsync("cards/_CampaignCard", c) }</div>
+    }
+    @if (past.Count > 0)
+    {
+        <h2 class="mb-5 mt-14 text-2xl font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Campaigns.Past")</h2>
+        <div class="grid gap-6 opacity-80 sm:grid-cols-2 lg:grid-cols-3">@foreach (var c in past) { @await Html.PartialAsync("cards/_CampaignCard", c) }</div>
+    }
+</div>

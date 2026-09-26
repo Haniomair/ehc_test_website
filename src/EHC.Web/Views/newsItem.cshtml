@@ -1,0 +1,23 @@
+@* News article: header, date + category, body, back link to the newsroom. *@
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var date = Model.Value<DateOnly?>("publishDate");
+    var categories = Model.Value<IEnumerable<string>>("category")?.ToList() ?? [];
+    var body = Model.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    var newsroom = Model.Parent();
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<article class="wrap py-12 lg:py-16">
+    <div class="mb-8 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+        @if (date is { } d) { <time datetime="@d.ToString("yyyy-MM-dd", inv)" class="font-semibold">@d.ToString("d MMMM yyyy")</time> }
+        @foreach (var c in categories)
+        {
+            if (newsroom is not null) { <a href="@newsroom.Url()?category=@Uri.EscapeDataString(c)" class="chip">@c</a> } else { <span class="chip">@c</span> }
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+    @if (newsroom is not null) { <a href="@newsroom.Url()" class="link mt-12"><svg class="ico rotate-180 rtl:rotate-0 !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg>@newsroom.Name</a> }
+</article>

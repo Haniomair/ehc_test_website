@@ -71,8 +71,49 @@
 
   // ---------- search palette ----------
   var search = $('#search'), sIn = $('#sIn');
-  on('search-open', function () { if (sIn) sIn.value = ''; showModal(search, sIn); });
+  on('search-open', function () { if (sIn) { sIn.value = ''; sIn.dispatchEvent(new Event('input')); } showModal(search, sIn); });
   on('search-close', hideModal);
+  // live results from /api/search (debounced; built with DOM APIs, never innerHTML with server text)
+  var sRes = $('#sRes');
+  if (sIn && sRes) {
+    var labels = {}; try { labels = JSON.parse(sRes.getAttribute('data-labels') || '{}'); } catch (e) { /* keep keys */ }
+    var timer = null, seq = 0;
+    var message = function (text) { sRes.textContent = ''; var p = document.createElement('p'); p.className = 'px-3 py-8 text-center text-slate-500'; p.textContent = text; sRes.appendChild(p); };
+    var render = function (groups) {
+      sRes.textContent = '';
+      if (!groups.length) { message(sRes.getAttribute('data-empty') || ''); return; }
+      groups.forEach(function (g) {
+        var h = document.createElement('p');
+        h.className = 'px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal';
+        h.textContent = labels[g.key] || g.key;
+        sRes.appendChild(h);
+        g.items.forEach(function (it) {
+          var a = document.createElement('a');
+          a.href = it.url;
+          a.className = 'flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 focus:bg-brand-50 dark:hover:bg-white/5 dark:focus:bg-white/5';
+          var ic = document.createElement('span'); ic.className = 'mega-ic !h-9 !w-9';
+          if (/^[a-z0-9-]+$/.test(it.icon || '')) {
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'ico'); svg.setAttribute('aria-hidden', 'true');
+            var use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + it.icon); svg.appendChild(use); ic.appendChild(svg);
+          }
+          var t = document.createElement('span'); t.className = 'flex-1'; t.textContent = it.title;
+          a.appendChild(ic); a.appendChild(t);
+          sRes.appendChild(a);
+        });
+      });
+    };
+    var run = function () {
+      var q = sIn.value.trim();
+      if (q.length < 2) { message(sRes.getAttribute('data-hint') || ''); return; }
+      var mine = ++seq;
+      fetch((sRes.getAttribute('data-api') || '/api/search') + '?q=' + encodeURIComponent(q) + '&culture=' + encodeURIComponent(html.lang || 'ar'), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (groups) { if (mine === seq) render(groups || []); })
+        .catch(function () { if (mine === seq) message(sRes.getAttribute('data-error') || ''); });
+    };
+    sIn.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(run, 250); });
+  }
+
   // search boxes in page sections (e.g. the search hero) hand their query to the palette
   $$('[data-search-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {

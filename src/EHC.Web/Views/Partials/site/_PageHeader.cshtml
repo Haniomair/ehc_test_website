@@ -1,0 +1,36 @@
+@* Inner-page header: breadcrumb + title (pageTitle or name) + intro, as a soft band or over the header image
+   (pageHeaderComposition: headerStyle = band | image). Detail pages may pass an eyebrow and extra content via ViewData. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    var node = Model;
+    var title = node.Value<string>("pageTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = node.Name; }
+    var intro = node.Value<string>("intro");
+    var eyebrow = ViewData["eyebrow"] as string;
+    var crumbs = node.Ancestors().Reverse().ToList();
+    var hasImage = node.Value<string>("headerStyle") == "image" && node.Value<MediaWithCrops>("headerImage") is not null;
+    var bg = hasImage ? MediaBackground.ForHeader(node.Value<MediaWithCrops>("headerImage")) : null;
+}
+<div class="@(hasImage ? "media-hero text-white" : "bg-soft dark:bg-night-900/60")" style="@(bg?.FocalStyle)"@HtmlAttributes.Data("overlay", bg?.Overlay)@HtmlAttributes.Data("strength", bg?.Strength)>
+    @if (bg is not null) { @await Html.PartialAsync("site/_MediaBackground", bg) }
+    <div class="wrap relative py-10 lg:py-14">
+        @if (crumbs.Count > 0)
+        {
+            <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-6 text-sm">
+                <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-500 dark:text-slate-400")">
+                    @foreach (var a in crumbs)
+                    {
+                        <li class="flex items-center gap-1.5"><a href="@a.Url()" class="hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>
+                    }
+                    <li aria-current="page" class="font-semibold @(hasImage ? "text-white" : "text-deep-900 dark:text-white")">@node.Name</li>
+                </ol>
+            </nav>
+        }
+        @if (!string.IsNullOrWhiteSpace(eyebrow)) { <div class="eyebrow @(hasImage ? "!text-white" : "")">@eyebrow</div> }
+        <h1 class="max-w-4xl text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-tight rtl:leading-[1.35] @(hasImage ? "" : "text-deep-900 dark:text-white")">@title</h1>
+        @if (!string.IsNullOrWhiteSpace(intro)) { <p class="mt-4 max-w-[680px] text-[1.15rem] @(hasImage ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@intro</p> }
+        @if (ViewData["extra"] is Microsoft.AspNetCore.Html.IHtmlContent extra) { <div class="mt-5">@extra</div> }
+    </div>
+</div>

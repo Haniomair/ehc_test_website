@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EHC.Web/EHC.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EHC.Web.Tests/EHC.Web.Tests.csproj" />
+  </Folder>
+</Solution>

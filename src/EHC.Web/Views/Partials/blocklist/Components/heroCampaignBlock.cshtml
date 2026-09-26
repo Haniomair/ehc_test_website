@@ -1,0 +1,61 @@
+@* Block 1 "Campaign hero". Markup from frontend/preview (<section id="hero">).
+   Slides come from the nested `slides` block list; the JS slider (frontend/src/js) reads data attributes.
+   Set this block's spacing to "none" (it is full-bleed).
+   The care navigator is its own block (careNavigatorBlock) rendered in the right column when showNavigator = true. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var slides = c.Value<BlockListModel>("slides")?.Select(s => s.Content).ToList() ?? [];
+    if (slides.Count == 0) { return; }
+    var seconds = c.Value<int>("autoRotateSeconds");
+    if (seconds <= 0) { seconds = 7; }
+    string Bg(int i) => i switch { 1 => "hero-bg-1", 2 => "hero-bg-2", _ => "hero-bg-0" };   // allow-list
+}
+<div id="hero" data-hero data-interval="@(seconds * 1000)" class="@Bg(slides[0].Value<int>("backgroundPreset")) relative overflow-hidden text-white transition-[background] duration-700">
+    <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08]" aria-hidden="true"></div>
+    <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:grid-cols-[1.05fr_.95fr] lg:pb-[120px] lg:pt-10">
+        <div>
+            @for (var i = 0; i < slides.Count; i++)
+            {
+                var s = slides[i];
+                var primary = s.Value<Link>("primaryCta");
+                var secondary = s.Value<Link>("secondaryCta");
+                <div class="slide anim-fadeup @(i == 0 ? "" : "hidden")" data-bg="@Bg(s.Value<int>("backgroundPreset"))">
+                    @if (!string.IsNullOrWhiteSpace(s.Value<string>("kicker")))
+                    {
+                        <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium">
+                            <b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900">@(s.Value<string>("badge"))</b><span>@(s.Value<string>("kicker"))</span>
+                        </span>
+                    }
+                    <h1 class="mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal">
+                        @(s.Value<string>("title"))<br><em class="not-italic text-brand-300">@(s.Value<string>("titleHighlight"))</em>
+                    </h1>
+                    <p class="mb-8 max-w-[540px] text-[1.15rem] text-white/85">@(s.Value<string>("lead"))</p>
+                    <div class="flex flex-wrap gap-3">
+                        @if (primary is not null) { <a class="btn btn-sand btn-lg" href="@primary.Url">@primary.Name</a> }
+                        @if (secondary is not null) { <a class="btn btn-outline btn-lg" href="@secondary.Url">@secondary.Name</a> }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(s.Value<string>("finePrint")))
+                    {
+                        <div class="mt-4 text-[.8rem] text-white/65">@(s.Value<string>("finePrint"))</div>
+                    }
+                </div>
+            }
+            @if (slides.Count > 1)
+            {
+                <div class="mt-8 flex gap-2 sm:mt-11 sm:gap-3.5" role="tablist" aria-label="@Umbraco.GetDictionaryValue("EHC.Hero.Campaigns")">
+                    @for (var i = 0; i < slides.Count; i++)
+                    {
+                        <button type="button" data-i="@i" role="tab" class="flex flex-1 flex-col gap-2 text-start text-[.7rem] font-semibold text-white/70 sm:w-[170px] sm:flex-none sm:text-[.8rem] [&.prog-on]:text-white">
+                            <span class="bar block h-[3px] overflow-hidden rounded bg-white/25"><i class="block h-full w-0 bg-white"></i></span>
+                            <span class="hidden sm:inline">@(slides[i].Value<string>("navLabel") ?? slides[i].Value<string>("title"))</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+        @* right column: careNavigatorBlock partial when c.Value<bool>("showNavigator") — phase 4 *@
+    </div>
+</div>

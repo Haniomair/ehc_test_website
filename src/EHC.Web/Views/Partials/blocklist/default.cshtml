@@ -1,0 +1,22 @@
+@* Renders every block through ONE wrapper that applies the shared blockSettings:
+   hide, showFrom/showUntil, variant, spacing, anchorId, themeOverride. Components never repeat this logic. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
+@inject IPublishedValueFallback Fallback
+@inject TimeProvider Clock
+@{
+    if (Model is null || !Model.Any()) { return; }
+    var now = Clock.GetUtcNow().UtcDateTime;
+}
+@foreach (var block in Model)
+{
+    if (block?.Content is null) { continue; }
+    var wrap = BlockSection.From(block.Settings, Fallback, now);
+    if (!wrap.Visible) { continue; }
+    var alias = block.Content.ContentType.Alias;
+
+    <section id="@wrap.AnchorId" data-theme="@wrap.ThemeOverride" data-block="@alias" class="@wrap.CssClass">
+        @await Html.PartialAsync("blocklist/Components/" + alias, block)
+    </section>
+}

@@ -29,3 +29,14 @@ Hajj · Eid al-Adha · Pink October. Dark mode and Arabic/English can be toggled
 ```bash
 dotnet run --project src/EHC.Web
 ```
+First run opens the Umbraco installer (choose SQLite for local development). The installer writes the
+connection string to `src/EHC.Web/appsettings.Local.json`, which is not in source control. Keep secrets such as
+`Umbraco:CMS:Imaging:HMACSecretKey` there locally, and in environment variables on servers.
+
+## Publish
+`src/EHC.Web/wwwroot/assets` is generated, so build the frontend first:
+```bash
+cd frontend && npm ci && npm run publish:umbraco
+dotnet publish src/EHC.Web -c Release
+```
+`dotnet publish` stops with an error if the assets are missing.

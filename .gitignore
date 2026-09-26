@@ -31,3 +31,6 @@ Thumbs.db
 !/README.md
 # design concepts are kept locally for reference
 design/
+# schema files copied in by the Umbraco build
+tests/**/appsettings-schema*.json
+tests/**/umbraco-package-schema.json

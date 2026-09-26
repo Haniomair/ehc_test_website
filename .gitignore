@@ -1,0 +1,33 @@
+# node / frontend
+frontend/node_modules/
+# dotnet
+bin/
+obj/
+*.user
+.vs/
+# Umbraco runtime
+src/EHC.Web/umbraco/Data/
+src/EHC.Web/umbraco/Logs/
+src/EHC.Web/umbraco/mediacache/
+src/EHC.Web/wwwroot/media/
+src/EHC.Web/appsettings.*.local.json
+# frontend build output (regenerate with npm run build / publish:umbraco)
+frontend/dist/
+src/EHC.Web/wwwroot/assets/
+# Umbraco runtime (additional)
+src/EHC.Web/umbraco/Data/TEMP/
+*.sqlite.db*
+# secrets / local
+.env
+.env.*
+*.log
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+# documentation is kept locally; only the README is versioned
+*.md
+!/README.md
+# design concepts are kept locally for reference
+design/

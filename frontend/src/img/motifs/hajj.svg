@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#5B6B80" stroke-width="2.5" stroke-linejoin="round">
+  <!-- geometric rosette: 8-point star within interlaced octagons -->
+  <circle cx="100" cy="100" r="92"/>
+  <circle cx="100" cy="100" r="80" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <g fill="#5B6B80" fill-opacity=".07">
+    <rect x="40" y="40" width="120" height="120"/>
+    <rect x="40" y="40" width="120" height="120" transform="rotate(45 100 100)"/>
+  </g>
+  <rect x="62" y="62" width="76" height="76"/>
+  <rect x="62" y="62" width="76" height="76" transform="rotate(45 100 100)"/>
+  <rect x="62" y="62" width="76" height="76" transform="rotate(22.5 100 100)"/>
+  <rect x="62" y="62" width="76" height="76" transform="rotate(67.5 100 100)"/>
+  <circle cx="100" cy="100" r="18" fill="#5B6B80" fill-opacity=".15"/>
+</svg>

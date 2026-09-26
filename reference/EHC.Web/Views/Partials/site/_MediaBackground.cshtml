@@ -1,0 +1,31 @@
+@* REFERENCE CODE — shared media layer for every hero that uses mediaComposition.
+   Usage inside a hero partial:
+     <section class="media-hero …" data-overlay="@overlay" data-strength="@strength" style="--focal: @focal">
+         @await Html.PartialAsync("site/_MediaBackground", element)
+         … hero content …
+     </section>
+   Overlay colours come from the theme tokens (see frontend/src/css/ehc.css › MEDIA HEROES). *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.PropertyEditors.ValueConverters
+@model Umbraco.Cms.Core.Models.PublishedContent.IPublishedElement
+@{
+    var image = Model.Value<ImageCropperValue>("backgroundImage");
+    var video = Model.Value<IPublishedContent>("backgroundVideo");
+    var poster = Model.Value<IPublishedContent>("poster");
+    var alt = Model.Value<string>("imageAlt") ?? "";
+}
+@if (video is not null)
+{
+    @* muted + playsinline are required for autoplay on mobile; JS pauses it for prefers-reduced-motion and wires the pause button *@
+    <video class="media-bg" autoplay muted loop playsinline preload="metadata" poster="@poster?.Url()" aria-hidden="true" data-hero-video>
+        <source src="@video.Url()" type="video/mp4">
+    </video>
+}
+else if (image is not null && !string.IsNullOrEmpty(image.Src))
+{
+    @* VERIFY in Umbraco 17: the crop-URL helper for an ImageCropperValue (e.g. Url.GetCropUrl / element.GetCropUrl(alias, crop)) *@
+    <picture>
+        <source media="(max-width: 767px)" srcset="@image.Src@image.GetCropUrl("mobile")">
+        <img class="media-bg" src="@image.Src@image.GetCropUrl("desktop")" alt="@alt" fetchpriority="high">
+    </picture>
+}

@@ -1,0 +1,145 @@
+/* EHC website — Tailwind CSS v4 entry point
+   Build:  npm run build   (see package.json)                           */
+@import "tailwindcss";
+@import "./_fonts.css";
+@import "./_tokens.css";
+@import "./_themes.css";
+@import "./_safelist.css";
+
+/* Where Tailwind looks for class names.
+   Razor views are the source of truth once the Umbraco project exists. */
+@source "../../../src/EHC.Web/Views";
+@source "../../preview";
+@source "../js";
+@source "../../../reference/EHC.Web";
+
+/* Class-based dark mode (toggled by the header button / system setting) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------- base */
+@layer base {
+  /* Tailwind v4 changed the default border colour to currentColor; keep v3 behaviour */
+  *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-gray-200, currentColor); }
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+
+  html { font-size: var(--fs, 16px); scroll-behavior: smooth; }
+  body { @apply bg-white text-deep-950 antialiased dark:bg-night-950 dark:text-slate-100; overflow-x: clip; }
+  :focus-visible { outline: 3px solid var(--accent-400); outline-offset: 2px; border-radius: 6px; }
+  html.contrast { filter: contrast(1.25); }
+}
+
+/* ----------------------------------------------------------- components */
+@layer components {
+  .wrap { @apply mx-auto max-w-[1240px] px-4 sm:px-6; }
+  .ico { @apply h-[22px] w-[22px] shrink-0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-transparent px-[22px] py-[13px] text-[.95rem] font-semibold leading-tight transition hover:-translate-y-px; }
+  .btn-primary { @apply bg-brand-600 text-white shadow-glow hover:bg-brand-700; }  /* brand-600: white text passes AA in every theme */
+  .btn-sand { @apply bg-accent-400 text-[#2B1D00] hover:bg-accent-500; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-400) 35%, transparent); }
+  .btn-outline { @apply border-white/50 text-white hover:bg-white/10; }
+  .btn-ghost { @apply border-slate-200 bg-white text-deep-950 hover:border-brand-500 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:hover:border-brand-400 dark:hover:text-brand-300; }
+  .btn-lg { @apply px-7 py-4 text-[1.02rem]; }
+
+  .eyebrow { @apply mb-3 inline-flex items-center gap-2 text-[.8rem] font-bold uppercase tracking-[.1em] text-brand-500 dark:text-brand-300 rtl:tracking-normal; }
+  .eyebrow::before { content: ""; @apply h-[2px] w-[22px] bg-current; }
+  .h2 { @apply m-0 text-[clamp(2rem,4vw,3.2rem)] font-bold leading-[1.12] tracking-[-.01em] text-deep-900 dark:text-white rtl:leading-[1.3] rtl:tracking-normal; }
+  .h2 em { @apply not-italic text-brand-500 dark:text-brand-300; }
+  .link { @apply inline-flex items-center gap-1.5 font-semibold text-brand-500 transition-all hover:gap-2.5 dark:text-brand-300; }
+  .card { @apply rounded-[22px] border border-slate-200 bg-white dark:border-white/10 dark:bg-night-900; }
+
+  .chip { @apply rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600 transition dark:border-white/15 dark:bg-white/5 dark:text-slate-300; }
+  .chip[aria-pressed="true"] { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-500; }
+
+  .mega-link { @apply flex gap-3 rounded-2xl p-3 transition hover:bg-brand-50 dark:hover:bg-white/5; }
+  .mega-link b { @apply block text-[.93rem] font-semibold text-deep-900 dark:text-white; }
+  .mega-link span.d { @apply block text-[.8rem] leading-snug text-slate-500 dark:text-slate-400; }
+  .mega-ic { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300; }
+}
+
+/* ---------------------------------------------- hand-written utilities */
+html[dir="rtl"] .flip { transform: scaleX(-1); }
+.mark-bg { background-image: var(--pattern-image); background-repeat: no-repeat; background-size: contain; background-position: center; }
+.mark-white { filter: brightness(0) invert(1); }
+.text-stroke { color: transparent; -webkit-text-stroke: 1.5px var(--brand-100); }
+.dark .text-stroke { -webkit-text-stroke-color: color-mix(in srgb, var(--brand-300) 22%, transparent); }
+.mask-x { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.scrollbar-thin { scrollbar-width: thin; }
+
+/* hero campaign backgrounds — every stop is a token, so themes recolour them */
+.hero-bg-0 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-0-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-0-from) 0%, var(--hero-0-via) 45%, var(--hero-0-to) 100%); }
+.hero-bg-1 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-1-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-1-from) 0%, var(--hero-1-via) 45%, var(--hero-1-to) 100%); }
+.hero-bg-2 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-2-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-2-from) 0%, var(--hero-2-via) 45%, var(--hero-2-to) 100%); }
+.dark .hero-bg-0 { background: radial-gradient(900px 600px at 80% 20%, color-mix(in srgb, var(--hero-0-glow) 55%, transparent) 0%, transparent 60%), linear-gradient(135deg, var(--deep-950) 0%, var(--hero-0-from) 55%, var(--brand-700) 100%); }
+
+/* motion */
+.anim-spin-slow { animation: ehc-spin 120s linear infinite; }
+.anim-bob { animation: ehc-bob 6s ease-in-out infinite; }
+.anim-marquee { animation: ehc-mq 40s linear infinite; }
+html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
+.anim-fadeup { animation: ehc-fadeUp .7s ease both; }
+.prog-on .bar i { animation: ehc-prog 7s linear forwards; }
+.rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+.rv.in { opacity: 1; transform: none; }
+
+/* map pins, mega menu */
+.pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; transition: opacity .25s, transform .25s; }
+.pin i { width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid #fff; box-shadow: 0 2px 6px rgb(0 0 0 / .25); }
+.pin.dim { opacity: .15; }
+.mega-panel { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .2s ease, transform .2s ease, visibility .2s; }
+.mega-panel.open { opacity: 1; visibility: visible; transform: none; }
+
+@keyframes ehc-spin { to { transform: rotate(360deg); } }
+@keyframes ehc-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes ehc-mq { to { transform: translateX(-50%); } }
+@keyframes ehc-mqr { to { transform: translateX(50%); } }
+@keyframes ehc-fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes ehc-prog { to { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .rv { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------------
+   MEDIA HEROES — image / video with a theme-aware overlay
+   <section class="media-hero" data-overlay="tint|duotone|shade" data-strength="light|medium|strong"
+            style="--focal: 60% 40%">
+     <img class="media-bg" …>  or  <video class="media-bg" …>
+   Every overlay colour comes from the active theme, so the same photo
+   looks "EHC blue", "National Day green" or "Ramadan night" automatically.
+   --------------------------------------------------------------------- */
+.media-hero { position: relative; isolation: isolate; overflow: hidden; background: var(--deep-950); --ov-a: 90%; --ov-b: 72%; --ov-c: 38%; --overlay-dir: 90deg; }
+.media-hero[data-strength="light"]  { --ov-a: 72%; --ov-b: 45%; --ov-c: 12%; }
+.media-hero[data-strength="strong"] { --ov-a: 96%; --ov-b: 88%; --ov-c: 62%; }
+html[dir="rtl"] .media-hero { --overlay-dir: 270deg; }
+.media-hero > .media-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); z-index: -3; }
+.media-hero::before, .media-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+
+/* tint — photo keeps its colours, washed by the theme gradient (stronger on the text side) */
+.media-hero[data-overlay="tint"]::before {
+  z-index: -2;
+  background: linear-gradient(var(--overlay-dir),
+    color-mix(in srgb, var(--hero-0-from) var(--ov-a), transparent) 0%,
+    color-mix(in srgb, var(--hero-0-via) var(--ov-b), transparent) 48%,
+    color-mix(in srgb, var(--hero-0-to) var(--ov-c), transparent) 100%);
+}
+.media-hero[data-overlay="tint"]::after { z-index: -2; background: radial-gradient(900px 520px at 85% 12%, color-mix(in srgb, var(--hero-0-glow) 30%, transparent), transparent 60%); }
+
+/* duotone — shadows become deep-900, highlights become brand-500 */
+.media-hero[data-overlay="duotone"] { background: var(--brand-500); }
+.media-hero[data-overlay="duotone"] > .media-bg { filter: grayscale(1) contrast(1.15) brightness(1.05); mix-blend-mode: multiply; }
+.media-hero[data-overlay="duotone"]::before { z-index: -2; background: var(--deep-900); mix-blend-mode: lighten; }
+.media-hero[data-overlay="duotone"]::after { z-index: -1; background: linear-gradient(to top, color-mix(in srgb, var(--deep-950) var(--ov-b), transparent), transparent 70%); }
+
+/* shade — natural photo, dark scrim from the bottom + a soft brand glow */
+.media-hero[data-overlay="shade"]::before {
+  z-index: -2;
+  background: linear-gradient(to top, color-mix(in srgb, var(--deep-950) var(--ov-a), transparent) 0%, color-mix(in srgb, var(--deep-950) var(--ov-c), transparent) 60%, transparent 100%);
+}
+.media-hero[data-overlay="shade"]::after { z-index: -2; background: radial-gradient(800px 480px at 15% 90%, color-mix(in srgb, var(--hero-0-glow) 28%, transparent), transparent 60%); }
+html[dir="rtl"] .media-hero[data-overlay="shade"]::after { background: radial-gradient(800px 480px at 85% 90%, color-mix(in srgb, var(--hero-0-glow) 28%, transparent), transparent 60%); }
+
+/* framed image for split heroes: photo tinted lightly with the brand */
+.media-frame { position: relative; isolation: isolate; overflow: hidden; background: var(--brand-600); }
+.media-frame > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); mix-blend-mode: luminosity; opacity: .92; }
+.media-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, transparent 35%, color-mix(in srgb, var(--deep-900) 70%, transparent)); }

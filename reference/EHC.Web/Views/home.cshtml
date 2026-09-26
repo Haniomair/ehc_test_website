@@ -1,0 +1,7 @@
+@* REFERENCE CODE — the homepage is nothing but its blocks. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

@@ -1,0 +1,121 @@
+/* =====================================================================
+   EHC DESIGN TOKENS
+   ---------------------------------------------------------------------
+   Every themeable colour is a CSS custom property. Tailwind utilities
+   (bg-brand-500, text-deep-900, …) resolve to these at runtime, so a
+   theme only has to redefine the variables — no rebuild, no markup change.
+
+   Resolution order (last wins):
+     1. :root defaults below              (EHC brand)
+     2. [data-theme="…"] presets          (_themes.css — designed occasions)
+     3. inline style="--brand-500:…"      (written by Umbraco from the
+                                            active Theme node, if the editor
+                                            overrides colours)
+
+   Palette roles
+     brand      primary actions, links, highlights      (EHC sky blue)
+     deep       dark sections, headings, footer         (EHC ocean navy)
+     night      dark-mode surfaces                      (near-black navy)
+     accent     secondary CTA (sand), stars, badges
+     highlight  campaign / awareness colour (coral)
+     support    health / wellbeing colour (mint/teal)
+     emerg      EMERGENCY RED — NEVER THEMED. Safety colour must stay
+                recognisable on every occasion.
+   ===================================================================== */
+
+:root {
+  /* brand */
+  --brand-50:  #EAF5FC;
+  --brand-100: #D3EAF7;
+  --brand-200: #A9D5EF;
+  --brand-300: #7FD3FF;
+  --brand-400: #2FA8DF;
+  --brand-500: #2490CC;
+  --brand-600: #1C7DB4;
+  --brand-700: #17669A;
+  /* deep */
+  --deep-700: #123F73;
+  --deep-800: #0F3A6B;
+  --deep-900: #0A2A4F;
+  --deep-950: #061A33;
+  /* night (dark mode surfaces) */
+  --night-900: #0B1B31;
+  --night-950: #060F1E;
+  /* accent */
+  --accent-400: #F2B544;
+  --accent-500: #E3A12C;
+  /* highlight */
+  --highlight-500: #E0567B;
+  --highlight-800: #7A1F4F;
+  /* support */
+  --support-50:  #E6F5F3;
+  --support-300: #9BF0E2;
+  --support-400: #3BB6A9;
+  --support-500: #0E8F87;
+  --support-800: #0B4E6B;
+  --support-900: #06324A;
+  /* neutrals that carry a brand tint */
+  --soft:        #F4F8FC;   /* light section background */
+  --on-deep:     #BFD6EE;   /* muted text on deep backgrounds */
+
+  /* hero gradient stops (per campaign slide 0/1/2) */
+  --hero-0-glow: var(--brand-400);
+  --hero-0-from: var(--deep-900);
+  --hero-0-via:  var(--deep-800);
+  --hero-0-to:   var(--brand-500);
+  --hero-1-glow: var(--support-400);
+  --hero-1-from: var(--support-900);
+  --hero-1-via:  var(--support-800);
+  --hero-1-to:   var(--support-500);
+  --hero-2-glow: #F08AA6;
+  --hero-2-from: #3A1030;
+  --hero-2-via:  var(--highlight-800);
+  --hero-2-to:   var(--highlight-500);
+
+  /* decorative pattern (logo star by default; a theme can swap it) */
+  --pattern-image: url('../img/mark.png');
+}
+
+/* Map roles → Tailwind colour utilities.
+   `inline` makes each utility reference the role variable directly, so a
+   theme can also be scoped to a single section (<section data-theme="…">). */
+@theme inline {
+  --color-brand-50:  var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-deep-700: var(--deep-700);
+  --color-deep-800: var(--deep-800);
+  --color-deep-900: var(--deep-900);
+  --color-deep-950: var(--deep-950);
+  --color-night-900: var(--night-900);
+  --color-night-950: var(--night-950);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-highlight-500: var(--highlight-500);
+  --color-highlight-800: var(--highlight-800);
+  --color-support-50:  var(--support-50);
+  --color-support-300: var(--support-300);
+  --color-support-400: var(--support-400);
+  --color-support-500: var(--support-500);
+  --color-support-800: var(--support-800);
+  --color-support-900: var(--support-900);
+  --color-soft: var(--soft);
+  --color-on-deep: var(--on-deep);
+}
+
+/* Fixed (non-themeable) tokens */
+@theme {
+  --color-emerg-50:  #FDECEC;
+  --color-emerg-500: #D32F2F;
+  --color-emerg-600: #C62828;
+
+  --font-sans: 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --shadow-soft: 0 2px 4px rgb(10 42 79 / .05), 0 18px 40px rgb(10 42 79 / .10);
+  --shadow-glow: 0 8px 20px color-mix(in srgb, var(--brand-500) 35%, transparent);
+}

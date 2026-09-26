@@ -1,0 +1,43 @@
+@* REFERENCE CODE — block 18 "Final call to action". Markup from frontend/preview (<!-- FINAL CTA -->).
+   Every field optional; nothing renders if there is no title. *@
+@using Umbraco.Cms.Core.Models
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    var highlight = c.Value<string>("titleHighlight");
+    var text = c.Value<string>("text");
+    var primary = c.Value<Link>("primaryCta");
+    var secondary = c.Value<Link>("secondaryCta");
+    if (string.IsNullOrWhiteSpace(title)) { return; }
+}
+<div class="relative overflow-hidden text-center">
+    <div class="mark-bg anim-spin-slow pointer-events-none absolute left-[calc(50%-260px)] top-[calc(50%-260px)] h-[520px] w-[520px] opacity-[.07] dark:opacity-[.1]" aria-hidden="true"></div>
+    <div class="wrap relative">
+        <h2 class="h2 !text-[clamp(2.2rem,5vw,4rem)]">
+            @title
+            @if (!string.IsNullOrWhiteSpace(highlight))
+            {
+                <br /><em>@highlight</em>
+            }
+        </h2>
+        @if (!string.IsNullOrWhiteSpace(text))
+        {
+            <p class="mx-auto mb-8 mt-4 max-w-[560px] text-[1.1rem] text-slate-600 dark:text-slate-400">@text</p>
+        }
+        <div class="flex flex-wrap justify-center gap-3">
+            @if (primary is not null)
+            {
+                <a class="btn btn-primary btn-lg" href="@primary.Url" target="@primary.Target">
+                    <svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@primary.Name</span>
+                </a>
+            }
+            @if (secondary is not null)
+            {
+                <a class="btn btn-ghost btn-lg" href="@secondary.Url" target="@secondary.Target">
+                    <svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg><span>@secondary.Name</span>
+                </a>
+            }
+        </div>
+    </div>
+</div>

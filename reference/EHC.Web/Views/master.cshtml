@@ -1,0 +1,40 @@
+@* REFERENCE CODE — port, build, fix. Master layout: culture/direction + active theme on <html>. *@
+@using System.Globalization
+@using EHC.Web.Themes
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@inject IThemeResolver Themes
+@{
+    Layout = null;
+    var culture = CultureInfo.CurrentUICulture;          // set by Umbraco from the hostname/culture
+    var isRtl = culture.TextInfo.IsRightToLeft;
+    var theme = Themes.Resolve(Model);
+    var metaTitle = Model.Value<string>("metaTitle") ?? Model.Name;
+}
+<!DOCTYPE html>
+@* Razor drops attributes whose value is null, so data-theme/style disappear for the default theme *@
+<html lang="@culture.TwoLetterISOLanguageName" dir="@(isRtl ? "rtl" : "ltr")" data-theme="@theme.PresetKey" style="@theme.InlineStyle">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@metaTitle</title>
+    <meta name="description" content="@(Model.Value<string>("metaDescription"))">
+    @* hreflang alternates: see docs/05-bilingual.md *@
+    <script src="~/assets/js/theme-init.js" asp-append-version="true"></script>  @* sets .dark before paint; no inline script (CSP) *@
+    <link rel="preload" href="~/assets/fonts/cairo-arabic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="~/assets/css/ehc.css" asp-append-version="true">
+</head>
+<body class="leading-relaxed">
+    @await Html.PartialAsync("site/_Icons")
+    <a href="#main" class="absolute start-3 -top-16 z-[100] rounded-lg bg-deep-900 px-3.5 py-2.5 text-white focus:top-3">@Umbraco.GetDictionaryValue("EHC.Common.SkipToContent")</a>
+
+    @await Html.PartialAsync("site/_Ribbon", theme)
+    @* phase 3: site/_UtilityBar, site/_Header (logo from theme or settings), site/_MegaMenu, site/_MobileDrawer *@
+
+    <main id="main">
+        @RenderBody()
+    </main>
+
+    @* phase 3: site/_Footer, site/_MobileActionBar, site/_SearchPalette *@
+    <script src="~/assets/js/ehc.js" asp-append-version="true" defer></script>
+</body>
+</html>

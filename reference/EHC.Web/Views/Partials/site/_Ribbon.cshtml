@@ -1,0 +1,15 @@
+@* REFERENCE CODE — optional occasion ribbon from the active theme ("Happy 96th Saudi National Day"). *@
+@model EHC.Web.Themes.ResolvedTheme
+@if (!string.IsNullOrWhiteSpace(Model.RibbonText))
+{
+    <div class="bg-brand-600 px-3 py-1.5 text-center text-sm font-semibold text-white">
+        @if (!string.IsNullOrWhiteSpace(Model.RibbonUrl))
+        {
+            <a href="@Model.RibbonUrl" class="underline-offset-4 hover:underline">@Model.RibbonText</a>
+        }
+        else
+        {
+            @Model.RibbonText
+        }
+    </div>
+}

@@ -1,0 +1,84 @@
+/* =====================================================================
+   THEME PRESETS — designed occasions
+   ---------------------------------------------------------------------
+   Activated by <html data-theme="…"> (set server-side by the Umbraco
+   ThemeResolver when a scheduled theme is live) or on a single section.
+   A preset only overrides role variables from _tokens.css, plus an
+   optional decorative motif (--pattern-image) used by .mark-bg.
+
+   Contrast (WCAG 2.2 AA) checked with scripts/check-contrast.mjs:
+     white on brand-600 (buttons) ≥ 4.5 · deep-900 on soft ≥ 7 ·
+     brand-300 on deep-900 (hero highlight) ≥ 4.5
+   Colours are proposals: align with the official identity of each
+   occasion (e.g. the yearly Saudi National Day identity) before launch.
+   ===================================================================== */
+
+/* ---------- Saudi National Day — green & gold ---------- */
+[data-theme="national-day"] {
+  --brand-50:  #EAF7EF;  --brand-100: #D2EEDC;  --brand-200: #A8DDBE;  --brand-300: #8FE3B3;
+  --brand-400: #1E9E5A;  --brand-500: #007A3D;  --brand-600: #006C35;  --brand-700: #005A2C;
+  --deep-700: #125238;   --deep-800: #0B4029;   --deep-900: #07301E;   --deep-950: #041F13;
+  --night-900: #0A1C13;  --night-950: #05110B;
+  --accent-400: #C9A227; --accent-500: #B38B1D;
+  --soft: #F2F8F4;       --on-deep: #BFE3CC;
+  --hero-0-glow: #1E9E5A; --hero-0-from: #041F13; --hero-0-via: #0B4029; --hero-0-to: #007A3D;
+}
+
+/* ---------- Ramadan — midnight sky, amethyst & lantern gold, crescent motif ---------- */
+[data-theme="ramadan"] {
+  --brand-50:  #F4EFFA;  --brand-100: #E6DCF3;  --brand-200: #CDB9E7;  --brand-300: #E9C77B; /* gold highlight on dark */
+  --brand-400: #8A5CC2;  --brand-500: #6B3FA0;  --brand-600: #5A3389;  --brand-700: #48286E;
+  --deep-700: #2E2257;   --deep-800: #221A45;   --deep-900: #140F2E;   --deep-950: #0B0820;
+  --night-900: #120E26;  --night-950: #0A0816;
+  --accent-400: #E0B04F; --accent-500: #C9962F;
+  --soft: #FBF7EE;       --on-deep: #D8CCEB;
+  --hero-0-glow: #E0B04F; --hero-0-from: #0B0820; --hero-0-via: #221A45; --hero-0-to: #6B3FA0;
+  --pattern-image: url('../img/motifs/ramadan.svg');
+}
+
+/* ---------- Eid al-Fitr — celebration: turquoise, festive magenta & gold ---------- */
+[data-theme="eid-al-fitr"] {
+  --brand-50:  #E8F6F5;  --brand-100: #CDEDEB;  --brand-200: #9ADAD6;  --brand-300: #F5C2E0;
+  --brand-400: #1FA3A0;  --brand-500: #0B7A77;  --brand-600: #09696A;  --brand-700: #075657;
+  --deep-700: #135259;   --deep-800: #0E464C;   --deep-900: #0B3B3F;   --deep-950: #062629;
+  --night-900: #0A1D20;  --night-950: #051113;
+  --accent-400: #EFBF45; --accent-500: #D9A62E;
+  --highlight-500: #C2569B; --highlight-800: #6E2358;
+  --soft: #F3FAF9;       --on-deep: #BFE6E3;
+  --hero-0-glow: #EFBF45; --hero-0-from: #062629; --hero-0-via: #0E464C; --hero-0-to: #0B7A77;
+  --pattern-image: url('../img/motifs/eid.svg');
+}
+
+/* ---------- Eid al-Adha — warmth & generosity: deep crimson, cream & gold ---------- */
+[data-theme="eid-al-adha"] {
+  --brand-50:  #FBEFF1;  --brand-100: #F4D8DD;  --brand-200: #E8B0BA;  --brand-300: #F2D08A;
+  --brand-400: #B04556;  --brand-500: #8E2A3B;  --brand-600: #7A2332;  --brand-700: #641C29;
+  --deep-700: #5A1A26;   --deep-800: #46141E;   --deep-900: #34101A;   --deep-950: #220A10;
+  --night-900: #1C0B10;  --night-950: #110609;
+  --accent-400: #D9A843; --accent-500: #C29030;
+  --soft: #FBF5F1;       --on-deep: #EBC9CF;
+  --hero-0-glow: #D9A843; --hero-0-from: #220A10; --hero-0-via: #46141E; --hero-0-to: #8E2A3B;
+  --pattern-image: url('../img/motifs/eid.svg');
+}
+
+/* ---------- Hajj season — ihram white, kiswa black, earth & gold, geometric rosette ---------- */
+[data-theme="hajj"] {
+  --brand-50:  #F7F1E6;  --brand-100: #EEE2CB;  --brand-200: #DDC59A;  --brand-300: #E8D3A2;
+  --brand-400: #9C7634;  --brand-500: #7A5A24;  --brand-600: #664B1D;  --brand-700: #523C17;
+  --deep-700: #3A3428;   --deep-800: #2A251C;   --deep-900: #1A1712;   --deep-950: #0F0D0A;
+  --night-900: #15130F;  --night-950: #0B0A08;
+  --accent-400: #C9A227; --accent-500: #B38B1D;
+  --soft: #F8F5EE;       --on-deep: #DCCFB5;
+  --hero-0-glow: #C9A227; --hero-0-from: #0F0D0A; --hero-0-via: #2A251C; --hero-0-to: #7A5A24;
+  --pattern-image: url('../img/motifs/hajj.svg');
+}
+
+/* ---------- Pink October — breast-cancer awareness ---------- */
+[data-theme="pink-october"] {
+  --brand-50:  #FDEEF3;  --brand-100: #FAD6E2;  --brand-200: #F4ADC5;  --brand-300: #FFC2D6;
+  --brand-400: #E56C95;  --brand-500: #D6457A;  --brand-600: #BC3367;  --brand-700: #9C2853;
+  --deep-700: #5E1F45;   --deep-800: #4E1839;   --deep-900: #3B112B;   --deep-950: #26091B;
+  --night-900: #1E0D18;  --night-950: #12070E;
+  --soft: #FCF4F7;       --on-deep: #F0C9D8;
+  --hero-0-glow: #F08AA6; --hero-0-from: #26091B; --hero-0-via: #4E1839; --hero-0-to: #D6457A;
+}

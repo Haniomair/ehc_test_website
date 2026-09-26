@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EHC Hero Library</title>
+<script src="../dist/js/theme-init.js"></script>
+<link rel="stylesheet" href="../dist/css/ehc.css">
+</head>
+<body class="leading-relaxed">
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3v3H8z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/><path d="M12 14v4M10 16h4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-er" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-lab" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/><path d="M7 12h3l1-2 2 4 1-2h3"/></symbol>
+  <symbol id="i-scal" viewBox="0 0 24 24"><path d="M4 20L16 8l4 4L8 24"/><path d="M14 6l4-4 4 4-4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-bone" viewBox="0 0 24 24"><path d="M7 4a2.5 2.5 0 00-2 4 2.5 2.5 0 004 2l6 6a2.5 2.5 0 002 4 2.5 2.5 0 004-2 2.5 2.5 0 00-2-4l-6-6a2.5 2.5 0 00-2-4 2.5 2.5 0 00-4 0z"/></symbol>
+  <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 0110 0c0 3-3 4-3 7a3 3 0 01-6 0"/><path d="M10 10a2 2 0 014 0"/></symbol>
+  <symbol id="i-baby" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-3a6 6 0 0112 0v3"/><path d="M10.5 8h.01M13.5 8h.01"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M4 8c4-2 12-2 16 0v4a8 8 0 01-16 0z"/><path d="M8 11h8M9 14h6"/></symbol>
+  <symbol id="i-onc" viewBox="0 0 24 24"><path d="M12 3c3 3 3 6 0 9s-3 6 0 9"/><path d="M8 7c2 1 6 1 8 0M8 17c2-1 6-1 8 0"/></symbol>
+  <symbol id="i-hosp" viewBox="0 0 24 24"><path d="M4 21V7l8-4 8 4v14"/><path d="M12 8v6M9 11h6M9 21v-4h6v4"/></symbol>
+  <symbol id="i-clinic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V9h14v12"/><path d="M12 12v5M9.5 14.5h5M8 9V5h8v4"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19V5M8 7h7"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M3 12l4-4 5 3 5-3 4 4-9 8z"/><path d="M12 11v9"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
+  <symbol id="i-app" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2M10 9h4M12 7v4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M9 11h6M9 15h6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10l5-3v10l-5-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 8h10M7 12h10M7 16h6"/></symbol>
+  <symbol id="i-brief" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 13h18"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+</svg>
+
+
+
+<!-- ============ PREVIEW CONTROLS (not part of the site) ============ -->
+<div class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-night-950/95">
+  <div class="wrap flex flex-wrap items-center gap-2 py-2.5 text-sm">
+    <b class="me-1 text-deep-900 dark:text-white" data-ar="مكتبة الواجهات">Hero library</b>
+    <div class="flex flex-wrap gap-1.5" id="themeChips">
+      <button class="chip !py-1" aria-pressed="true" data-theme-preset="" data-ar="الافتراضي">EHC default</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="national-day" data-ar="اليوم الوطني">National Day</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="ramadan" data-ar="رمضان">Ramadan</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="eid-al-fitr" data-ar="عيد الفطر">Eid al-Fitr</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="hajj" data-ar="الحج">Hajj</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="eid-al-adha" data-ar="عيد الأضحى">Eid al-Adha</button>
+      <button class="chip !py-1" aria-pressed="false" data-theme-preset="pink-october" data-ar="أكتوبر الوردي">Pink October</button>
+    </div>
+    <div class="ms-auto flex gap-1.5">
+      <button id="darkBtn" class="chip !py-1"><span class="dark:hidden" data-ar="داكن">Dark</span><span class="hidden dark:inline" data-ar="فاتح">Light</span></button>
+      <button id="langBtn" class="chip !py-1">العربية</button>
+    </div>
+  </div>
+  <div id="greet" class="hidden bg-brand-600 px-3 py-1.5 text-center text-sm font-semibold text-white"></div>
+</div>
+
+<!-- label helper: each hero is introduced by a thin bar naming the Umbraco block -->
+
+<!-- ============ 1. SEARCH & TASKS (Concept A) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">1</span><b class="text-deep-900 dark:text-white" data-ar="البحث والمهام (النسخة أ)">Search &amp; tasks (Concept A)</b><code class="text-xs text-slate-500">heroSearchBlock</code></div>
+<section class="hero-bg-0 relative overflow-hidden text-white">
+  <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-40 top-[calc(50%-320px)] h-[640px] w-[640px] opacity-[.07]" aria-hidden="true"></div>
+  <div class="wrap relative grid items-center gap-10 py-14 lg:grid-cols-[1.15fr_.85fr] lg:py-20">
+    <div>
+      <h1 class="mb-4 text-[clamp(2rem,4.2vw,3.2rem)] font-bold leading-tight rtl:leading-[1.4]" data-ar="رعاية صحية <em class='not-italic text-brand-300'>قريبة منك</em> في كل أنحاء المنطقة الشرقية">Care <em class="not-italic text-brand-300">close to you</em>, across the Eastern Province</h1>
+      <p class="mb-7 max-w-xl text-lg text-on-deep" data-ar="احجز موعدك، اعثر على طبيبك أو أقرب منشأة، وأنجز خدماتك الإلكترونية من مكان واحد.">Book a visit, find the right doctor or the nearest facility, and complete your e-services in one place.</p>
+      <div class="max-w-2xl rounded-2xl bg-white p-2 text-deep-950 shadow-[0_20px_50px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white">
+        <div class="flex gap-1 px-1 pb-2 pt-1 text-sm font-semibold"><span class="rounded-lg bg-brand-50 px-3 py-1.5 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" data-ar="طبيب">Doctor</span><span class="px-3 py-1.5 text-slate-500" data-ar="تخصص">Specialty</span><span class="px-3 py-1.5 text-slate-500" data-ar="منشأة">Facility</span></div>
+        <div class="flex flex-col gap-2 sm:flex-row"><label class="flex flex-1 items-center gap-2.5 rounded-xl border border-slate-200 px-3.5 text-slate-400 dark:border-white/15"><svg class="ico"><use href="#i-search"/></svg><input class="h-12 min-w-0 flex-1 bg-transparent outline-hidden" placeholder="Search by doctor name or specialty…"></label><a class="btn btn-primary" href="#" data-ar="بحث">Search</a></div>
+      </div>
+    </div>
+    <div class="hidden gap-3 lg:grid">
+      <div class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur"><b class="block" data-ar="مواعيدك في تطبيق صحتي">Your appointments live in Sehhaty</b><span class="text-sm text-on-deep" data-ar="احجز، أعد الجدولة، واطّلع على نتائجك.">Book, reschedule and see your results.</span></div>
+      <div class="grid grid-cols-3 gap-2.5 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur"><div><b class="block text-2xl">##</b><span class="text-xs text-on-deep" data-ar="مستشفى">Hospitals</span></div><div><b class="block text-2xl">###</b><span class="text-xs text-on-deep" data-ar="مركز صحي">Health centers</span></div><div><b class="block text-2xl">##K</b><span class="text-xs text-on-deep" data-ar="موظف">Staff</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. CAMPAIGN + ORBIT ART (Concept B) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">2</span><b class="text-deep-900 dark:text-white" data-ar="حملة مع رسم العلامة (النسخة ب)">Campaign with brand art (Concept B)</b><code class="text-xs text-slate-500">heroCampaignBlock · rightPanel = art</code></div>
+<section class="hero-bg-0 relative overflow-hidden text-white">
+  <div class="wrap relative grid items-center gap-10 py-14 lg:min-h-[560px] lg:grid-cols-[1.05fr_.95fr]">
+    <div>
+      <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-sm"><b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900" data-ar="التجمع">EHC</b><span data-ar="رعاية لكل فرد في المنطقة الشرقية">Care for everyone in the Eastern Province</span></span>
+      <h1 class="mb-5 text-[clamp(2.4rem,5.4vw,4.4rem)] font-bold leading-[1.1] rtl:leading-[1.3]" data-ar="صحتك<br><em class='not-italic text-brand-300'>في أيدٍ أمينة.</em>">Your health,<br><em class="not-italic text-brand-300">in trusted hands.</em></h1>
+      <div class="flex flex-wrap gap-3"><a class="btn btn-sand btn-lg" href="#" data-ar="احجز موعدك">Book your visit</a><a class="btn btn-outline btn-lg" href="#" data-ar="اكتشف خدماتنا">Explore services</a></div>
+    </div>
+    <div class="relative mx-auto hidden h-[440px] w-[440px] lg:block" aria-hidden="true">
+      <div class="anim-spin-slow absolute inset-0 rounded-full border border-dashed border-white/25"></div>
+      <div class="absolute inset-9 rounded-full border border-white/25 bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,.35),rgba(255,255,255,.05)_60%)]"></div>
+      <div class="absolute inset-[115px] grid place-items-center rounded-full bg-white shadow-[0_30px_80px_rgba(0,0,0,.3)] dark:bg-night-900"><img src="../dist/img/mark.png" alt="" class="w-[62%]"></div>
+      <div class="anim-bob absolute -start-2 top-8 rounded-2xl bg-white px-4 py-3 text-sm text-deep-950 shadow-[0_20px_40px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white"><b class="block" data-ar="تم تأكيد الموعد">Appointment confirmed</b><span class="text-xs text-slate-500" data-ar="الأحد ١٠:٣٠ ص">Sun 10:30</span></div>
+      <div class="anim-bob absolute -end-2 bottom-16 rounded-2xl bg-white px-4 py-3 text-sm text-deep-950 shadow-[0_20px_40px_rgba(0,0,0,.25)] [animation-delay:-3s] dark:bg-night-900 dark:text-white"><b class="block" data-ar="اعتماد CBAHI">CBAHI accredited</b><span class="text-xs text-slate-500" data-ar="جودة وسلامة المرضى">Quality &amp; safety</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. CARE NAVIGATOR (Concept C) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">3</span><b class="text-deep-900 dark:text-white" data-ar="مرشد الرعاية (النسخة ج)">Care navigator (Concept C)</b><code class="text-xs text-slate-500">heroCampaignBlock · rightPanel = navigator</code></div>
+<section class="hero-bg-0 relative overflow-hidden text-white">
+  <div class="mark-bg mark-white pointer-events-none absolute -end-24 -top-24 h-[520px] w-[520px] opacity-[.08]" aria-hidden="true"></div>
+  <div class="wrap relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_.95fr]">
+    <div>
+      <h1 class="mb-5 text-[clamp(2.4rem,5.4vw,4.4rem)] font-bold leading-[1.1] rtl:leading-[1.3]" data-ar="صحتك<br><em class='not-italic text-brand-300'>في أيدٍ أمينة.</em>">Your health,<br><em class="not-italic text-brand-300">in trusted hands.</em></h1>
+      <p class="max-w-lg text-lg text-white/85" data-ar="أجب عن سؤالين وسنرشدك للخطوة الصحيحة.">Answer two questions and we'll point you to the right place.</p>
+    </div>
+    <div class="rounded-[28px] border border-white/20 bg-white/10 p-6 backdrop-blur-xl">
+      <b class="mb-3 block text-lg" data-ar="مرشد الرعاية">Care navigator</b>
+      <div class="mb-4 flex flex-wrap gap-2"><span class="rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-deep-900" data-ar="لي">Me</span><span class="rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold" data-ar="طفلي">My child</span><span class="rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold" data-ar="والدي">My parent</span></div>
+      <div class="mb-4 grid grid-cols-3 gap-2 text-sm font-semibold"><span class="rounded-2xl bg-emerg-600 p-3" data-ar="حالة عاجلة">Urgent help</span><span class="rounded-2xl bg-white p-3 text-deep-900" data-ar="زيارة طبيب">See a doctor</span><span class="rounded-2xl border border-white/15 bg-white/5 p-3" data-ar="نتائج">Test results</span></div>
+      <div class="rounded-2xl bg-white p-4 text-deep-950 dark:bg-night-900 dark:text-white"><b class="block" data-ar="احجز مع طبيب الأسرة">Book with your family doctor</b><a class="btn btn-primary mt-3 w-full !py-2.5 text-sm" href="#" data-ar="احجز عبر صحتي">Book via Sehhaty</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. CAMPAIGN + CUSTOM IMAGE (Concept B with photo, theme overlay) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">4</span><b class="text-deep-900 dark:text-white" data-ar="حملة بصورة مخصصة وتظليل بلون الثيم">Campaign with custom photo + theme overlay</b><code class="text-xs text-slate-500">heroCampaignBlock · background = image · overlay = tint</code></div>
+<section class="media-hero text-white" data-overlay="tint" data-strength="medium" style="--focal: 60% 45%">
+  <img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt="">
+  <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-32 top-[calc(50%-340px)] h-[680px] w-[680px] opacity-[.10]" aria-hidden="true"></div>
+  <div class="wrap relative grid items-center gap-10 py-16 lg:min-h-[600px] lg:grid-cols-[1.05fr_.95fr]">
+    <div>
+      <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 py-1.5 pe-4 ps-1.5 text-sm backdrop-blur"><b class="rounded-full bg-accent-400 px-2.5 py-0.5 text-xs text-[#2B1D00]" data-ar="جديد">New</b><span data-ar="مركز القلب في مجمع الدمام الطبي">Cardiac center, Dammam Medical Complex</span></span>
+      <h1 class="mb-5 text-[clamp(2.4rem,5.4vw,4.4rem)] font-bold leading-[1.1] rtl:leading-[1.3]" data-ar="قلبك<br><em class='not-italic text-brand-300'>يستحق الأفضل.</em>">Your heart<br><em class="not-italic text-brand-300">deserves the best.</em></h1>
+      <p class="mb-8 max-w-lg text-lg text-white/90" data-ar="قسطرة وجراحة وتأهيل قلبي بمعايير عالمية، قريبًا منك.">Cath lab, surgery and cardiac rehab to international standards, close to home.</p>
+      <div class="flex flex-wrap gap-3"><a class="btn btn-sand btn-lg" href="#" data-ar="احجز استشارة">Book a consultation</a><a class="btn btn-outline btn-lg" href="#" data-ar="تعرّف على المركز">About the center</a></div>
+    </div>
+    <div class="relative hidden h-[420px] lg:block" aria-hidden="true">
+      <div class="anim-bob absolute end-6 top-10 flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 text-sm text-deep-950 shadow-[0_20px_40px_rgba(0,0,0,.3)] backdrop-blur dark:bg-night-900/95 dark:text-white"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-heart"/></svg></span><div><b class="block" data-ar="قسطرة على مدار الساعة">24/7 cath lab</b><span class="text-xs text-slate-500" data-ar="للحالات الطارئة">for emergencies</span></div></div>
+      <div class="anim-bob absolute bottom-16 start-8 flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 text-sm text-deep-950 shadow-[0_20px_40px_rgba(0,0,0,.3)] backdrop-blur [animation-delay:-3s] dark:bg-night-900/95 dark:text-white"><span class="grid h-10 w-10 place-items-center rounded-xl bg-accent-400/20 text-accent-500"><svg class="ico"><use href="#i-award"/></svg></span><div><b class="block" data-ar="اعتماد دولي">Internationally accredited</b><span class="text-xs text-slate-500" data-ar="نص توضيحي">placeholder</span></div></div>
+    </div>
+  </div>
+  <span class="absolute bottom-3 end-4 rounded bg-black/40 px-2 py-0.5 text-[.7rem] text-white/80" data-ar="صورة مؤقتة — تُستبدل بتصوير التجمع">Placeholder photo, replace with EHC photography</span>
+</section>
+
+<!-- ============ 5. FULL-BLEED IMAGE, CENTERED (duotone) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">5</span><b class="text-deep-900 dark:text-white" data-ar="صورة كاملة بتأثير ثنائي اللون">Full-bleed image, centered (duotone)</b><code class="text-xs text-slate-500">heroImageBlock · overlay = duotone</code></div>
+<section class="media-hero text-white" data-overlay="duotone" style="--focal: 50% 60%">
+  <img class="media-bg" src="../dist/img/placeholder/hero-architecture.jpg" alt="">
+  <div class="wrap relative flex min-h-[520px] flex-col items-center justify-center py-20 text-center">
+    <span class="mb-5 text-sm font-bold uppercase tracking-[.2em] text-brand-100 rtl:tracking-normal" data-ar="تجمع الشرقية الصحي">Eastern Health Cluster</span>
+    <h1 class="max-w-4xl text-[clamp(2.4rem,5.8vw,4.8rem)] font-bold leading-[1.08] rtl:leading-[1.3]" data-ar="نبني مستقبل الرعاية الصحية في المنطقة الشرقية">Building the future of care in the Eastern Province</h1>
+    <p class="mt-5 max-w-2xl text-lg text-white/85" data-ar="مستشفيات ومراكز صحية وفرق متخصصة تعمل كمنظومة واحدة.">Hospitals, health centers and specialist teams working as one system.</p>
+    <a class="btn btn-sand btn-lg mt-8" href="#" data-ar="تعرّف علينا">Get to know us</a>
+  </div>
+</section>
+
+<!-- ============ 6. BACKGROUND VIDEO (shade) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">6</span><b class="text-deep-900 dark:text-white" data-ar="فيديو في الخلفية">Background video (shade)</b><code class="text-xs text-slate-500">heroVideoBlock · overlay = shade</code></div>
+<section class="media-hero text-white" data-overlay="shade" data-strength="medium">
+  <video class="media-bg" autoplay muted loop playsinline preload="metadata" poster="../dist/img/placeholder/hero-loop-poster.jpg" aria-hidden="true" data-hero-video>
+    <source src="../dist/img/placeholder/hero-loop.webm" type="video/webm">
+    <source src="../dist/img/placeholder/hero-loop.mp4" type="video/mp4">
+  </video>
+  <div class="wrap relative flex min-h-[560px] flex-col justify-end pb-14 pt-24">
+    <span class="mb-4 w-fit rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur" data-ar="شاهد قصتنا">Watch our story</span>
+    <h1 class="max-w-3xl text-[clamp(2.2rem,5vw,4.2rem)] font-bold leading-[1.1] rtl:leading-[1.3]" data-ar="خلف كل رقم، <em class='not-italic text-brand-300'>إنسان.</em>">Behind every number, <em class="not-italic text-brand-300">a person.</em></h1>
+    <div class="mt-7 flex flex-wrap items-center gap-3">
+      <a class="btn btn-sand btn-lg" href="#"><svg class="ico"><use href="#i-play"/></svg><span data-ar="شاهد الفيلم كاملًا">Watch the full film</span></a>
+      <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-white/40 text-white hover:bg-white/10" data-video-toggle aria-label="Pause background video"><svg class="ico" data-icon-pause viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><svg class="ico hidden" data-icon-play><use href="#i-play"/></svg></button>
+    </div>
+  </div>
+  <span class="absolute bottom-3 end-4 rounded bg-black/40 px-2 py-0.5 text-[.7rem] text-white/80" data-ar="فيديو مؤقت">Placeholder video</span>
+</section>
+
+<!-- ============ 7. SPLIT: TEXT + FRAMED PHOTO (light hero) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">7</span><b class="text-deep-900 dark:text-white" data-ar="نص وصورة جانبية (فاتح)">Split: text + framed photo (light)</b><code class="text-xs text-slate-500">heroSplitBlock</code></div>
+<section class="relative overflow-hidden bg-soft dark:bg-night-900">
+  <div class="mark-bg pointer-events-none absolute -start-24 -top-24 h-[420px] w-[420px] opacity-[.06] dark:opacity-[.12]" aria-hidden="true"></div>
+  <div class="wrap relative grid items-center gap-12 py-14 lg:grid-cols-2 lg:py-20">
+    <div>
+      <div class="eyebrow" data-ar="الرعاية المنزلية">Home healthcare</div>
+      <h1 class="text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.1] rtl:leading-[1.3] text-deep-900 dark:text-white" data-ar="رعايتنا تصل <em class='not-italic text-brand-600 dark:text-brand-300'>إلى بابك.</em>">Our care comes <em class="not-italic text-brand-600 dark:text-brand-300">to your door.</em></h1>
+      <p class="mt-4 max-w-lg text-lg text-slate-600 dark:text-slate-300" data-ar="فرق تمريض وعلاج طبيعي ومتابعة للأمراض المزمنة في منزلك.">Nursing, physiotherapy and chronic-care follow-up in your own home.</p>
+      <div class="mt-7 flex flex-wrap gap-3"><a class="btn btn-primary btn-lg" href="#" data-ar="تحقق من الأهلية">Check eligibility</a><a class="btn btn-ghost btn-lg" href="#" data-ar="كيف تعمل الخدمة">How it works</a></div>
+    </div>
+    <div class="relative">
+      <div class="absolute -inset-3 rotate-2 rounded-[36px] bg-linear-to-br from-brand-400 to-accent-400 opacity-60 rtl:-rotate-2" aria-hidden="true"></div>
+      <div class="media-frame relative aspect-[4/3.4] rounded-[32px]" style="--focal: 50% 40%"><img src="../dist/img/placeholder/hero-architecture.jpg" alt=""></div>
+      <div class="absolute -bottom-5 start-6 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-soft dark:bg-night-950"><span class="grid h-10 w-10 place-items-center rounded-xl bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300"><svg class="ico"><use href="#i-home"/></svg></span><div><b class="block text-deep-900 dark:text-white" data-ar="زيارات منزلية">Home visits</b><span class="text-xs text-slate-500" data-ar="بعد التحويل الطبي">after a referral</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. COMPACT PAGE HEADER (inner pages) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-10"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">8</span><b class="text-deep-900 dark:text-white" data-ar="ترويسة مختصرة للصفحات الداخلية">Compact page header (inner pages)</b><code class="text-xs text-slate-500">pageHeaderComposition · style = band | image</code></div>
+<section class="hero-bg-0 relative overflow-hidden text-white">
+  <div class="mark-bg mark-white pointer-events-none absolute -end-10 top-[calc(50%-130px)] h-[260px] w-[260px] opacity-[.12]" aria-hidden="true"></div>
+  <div class="wrap relative py-10">
+    <nav class="mb-3 flex items-center gap-2 text-sm text-on-deep" aria-label="Breadcrumb"><a href="#" data-ar="الرئيسية">Home</a><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg><a href="#" data-ar="الرعاية والخدمات">Care &amp; services</a><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg><span class="text-white" data-ar="أمراض القلب">Cardiology</span></nav>
+    <h1 class="text-[clamp(1.9rem,3.6vw,2.8rem)] font-bold" data-ar="أمراض القلب">Cardiology</h1>
+    <p class="mt-2 max-w-2xl text-on-deep" data-ar="تشخيص وعلاج أمراض القلب والأوعية الدموية في منشآت التجمع.">Diagnosis and treatment of heart and vascular conditions across EHC facilities.</p>
+  </div>
+</section>
+<section class="media-hero mt-3 text-white" data-overlay="tint" data-strength="strong" style="--focal: 50% 50%">
+  <img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt="">
+  <div class="wrap relative py-10">
+    <nav class="mb-3 flex items-center gap-2 text-sm text-white/80" aria-label="Breadcrumb"><a href="#" data-ar="الرئيسية">Home</a><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg><span class="text-white" data-ar="المنشآت">Facilities</span></nav>
+    <h1 class="text-[clamp(1.9rem,3.6vw,2.8rem)] font-bold" data-ar="مجمع الدمام الطبي">Dammam Medical Complex</h1>
+    <p class="mt-2 max-w-2xl text-white/85" data-ar="الدمام · طوارئ على مدار الساعة">Dammam · 24/7 emergency department</p>
+  </div>
+</section>
+
+<!-- ============ 9. OVERLAY OPTIONS (what editors choose) ============ -->
+<div class="lbl wrap flex flex-wrap items-baseline gap-x-3 pb-3 pt-12"><span class="rounded-full bg-deep-900 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-brand-500">9</span><b class="text-deep-900 dark:text-white" data-ar="خيارات التظليل التي يختارها المحرر">Overlay options editors choose</b><code class="text-xs text-slate-500">mediaSettings.overlay × strength</code></div>
+<div class="wrap grid gap-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">
+  <figure class="media-hero flex h-64 items-end rounded-3xl p-5 text-white" data-overlay="tint" data-strength="light"><img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt=""><figcaption><b class="block text-lg" data-ar="تلوين · خفيف">Tint · light</b><span class="text-sm text-white/80" data-ar="الصورة ظاهرة بوضوح">Photo stays prominent</span></figcaption></figure>
+  <figure class="media-hero flex h-64 items-end rounded-3xl p-5 text-white" data-overlay="tint" data-strength="strong"><img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt=""><figcaption><b class="block text-lg" data-ar="تلوين · قوي">Tint · strong</b><span class="text-sm text-white/80" data-ar="لون الثيم هو الغالب">Theme colour leads</span></figcaption></figure>
+  <figure class="media-hero flex h-64 items-end rounded-3xl p-5 text-white" data-overlay="duotone"><img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt=""><figcaption><b class="block text-lg" data-ar="ثنائي اللون">Duotone</b><span class="text-sm text-white/80" data-ar="أي صورة تطابق الهوية">Any photo matches the brand</span></figcaption></figure>
+  <figure class="media-hero flex h-64 items-end rounded-3xl p-5 text-white" data-overlay="shade"><img class="media-bg" src="../dist/img/placeholder/hero-corridor.jpg" alt=""><figcaption><b class="block text-lg" data-ar="تظليل">Shade</b><span class="text-sm text-white/80" data-ar="ألوان طبيعية ونص واضح">Natural colours, readable text</span></figcaption></figure>
+</div>
+
+<script src="../dist/js/heroes-preview.js"></script>
+</body>
+</html>

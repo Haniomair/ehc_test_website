@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EHC Component Preview</title>
+<script>
+  // Apply theme before paint: follow the system setting until the visitor toggles.
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+</script>
+<link rel="stylesheet" href="../dist/css/ehc.css">
+</head>
+<body class="font-sans leading-relaxed">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3v3H8z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/><path d="M12 14v4M10 16h4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-er" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-lab" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/><path d="M7 12h3l1-2 2 4 1-2h3"/></symbol>
+  <symbol id="i-scal" viewBox="0 0 24 24"><path d="M4 20L16 8l4 4L8 24"/><path d="M14 6l4-4 4 4-4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-bone" viewBox="0 0 24 24"><path d="M7 4a2.5 2.5 0 00-2 4 2.5 2.5 0 004 2l6 6a2.5 2.5 0 002 4 2.5 2.5 0 004-2 2.5 2.5 0 00-2-4l-6-6a2.5 2.5 0 00-2-4 2.5 2.5 0 00-4 0z"/></symbol>
+  <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 0110 0c0 3-3 4-3 7a3 3 0 01-6 0"/><path d="M10 10a2 2 0 014 0"/></symbol>
+  <symbol id="i-baby" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-3a6 6 0 0112 0v3"/><path d="M10.5 8h.01M13.5 8h.01"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M4 8c4-2 12-2 16 0v4a8 8 0 01-16 0z"/><path d="M8 11h8M9 14h6"/></symbol>
+  <symbol id="i-onc" viewBox="0 0 24 24"><path d="M12 3c3 3 3 6 0 9s-3 6 0 9"/><path d="M8 7c2 1 6 1 8 0M8 17c2-1 6-1 8 0"/></symbol>
+  <symbol id="i-hosp" viewBox="0 0 24 24"><path d="M4 21V7l8-4 8 4v14"/><path d="M12 8v6M9 11h6M9 21v-4h6v4"/></symbol>
+  <symbol id="i-clinic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V9h14v12"/><path d="M12 12v5M9.5 14.5h5M8 9V5h8v4"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19V5M8 7h7"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M3 12l4-4 5 3 5-3 4 4-9 8z"/><path d="M12 11v9"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
+  <symbol id="i-app" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2M10 9h4M12 7v4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M9 11h6M9 15h6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z"/></symbol>
+</svg>
+
+<svg width="0" height="0" class="absolute" aria-hidden="true">
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10l5-3v10l-5-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 8h10M7 12h10M7 16h6"/></symbol>
+  <symbol id="i-brief" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 13h18"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+</svg>
+
+<a href="#main" class="absolute start-3 -top-16 z-[100] rounded-lg bg-deep-900 px-3.5 py-2.5 text-white focus:top-3" data-ar="تخطَّ إلى المحتوى">Skip to content</a>
+
+<div class="border-b border-[#F0DDA6] bg-[repeating-linear-gradient(45deg,#FFF6DD_0_12px,#FFF1C9_12px_24px)] px-3 py-1.5 text-center text-[.8rem] text-[#6A4B00] dark:border-white/10 dark:bg-none dark:bg-[#2A2410] dark:text-[#F4DDA0]" data-ar="تصوّر مقترح (النسخة ج: المحسّنة) — للمراجعة الداخلية فقط. الصور والأرقام والأسماء نماذج توضيحية.">Concept C (enhanced), for internal review only. Images, figures and names are placeholders.</div>
+<div class="flex flex-wrap items-center justify-center gap-2 border-b border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-night-900" id="themePreview"><b class="text-deep-900 dark:text-white">Preview theme:</b><button class="chip" aria-pressed="true" data-theme-preset="">EHC default</button><button class="chip" aria-pressed="false" data-theme-preset="national-day">Saudi National Day</button><button class="chip" aria-pressed="false" data-theme-preset="pink-october">Pink October</button><button class="chip" aria-pressed="false" data-theme-preset="ramadan">Ramadan</button><button class="chip" aria-pressed="false" data-theme-preset="eid-al-fitr">Eid al-Fitr</button><button class="chip" aria-pressed="false" data-theme-preset="hajj">Hajj</button><button class="chip" aria-pressed="false" data-theme-preset="eid-al-adha">Eid al-Adha</button><a class="chip" href="heroes.html">Hero library →</a></div>
+<div id="greet" class="hidden bg-brand-600 px-3 py-1.5 text-center text-sm font-semibold text-white"></div>
+
+<!-- Utility bar -->
+<div class="bg-deep-900 text-[.84rem] text-on-deep dark:bg-night-950 dark:border-b dark:border-white/10">
+  <div class="wrap flex min-h-[38px] flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-[18px]">
+      <a href="#" class="inline-flex items-center gap-1.5"><svg class="ico !h-[15px] !w-[15px]"><use href="#i-phone"/></svg><span data-ar="الاستشارات الطبية">Medical advice</span> <b class="text-white">937</b></a>
+      <a href="#" class="hidden items-center gap-1.5 sm:inline-flex"><svg class="ico !h-[15px] !w-[15px]"><use href="#i-phone"/></svg><span data-ar="الرقم الموحد">Unified number</span> <b class="text-white">920022231</b></a>
+      <a href="#" class="hidden items-center gap-1.5 md:inline-flex"><svg class="ico !h-[15px] !w-[15px]"><use href="#i-mail"/></svg>info@ehc.med.sa</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden gap-1 sm:flex" role="group" aria-label="Accessibility">
+        <button onclick="fs(-1)" class="h-[26px] min-w-[30px] rounded-md border border-white/25 text-[.78rem] text-white" aria-label="Smaller text">A−</button>
+        <button onclick="fs(1)" class="h-[26px] min-w-[30px] rounded-md border border-white/25 text-[.78rem] text-white" aria-label="Larger text">A+</button>
+        <button onclick="document.documentElement.classList.toggle('contrast')" class="h-[26px] min-w-[30px] rounded-md border border-white/25 text-[.78rem] text-white" aria-label="High contrast">◐</button>
+      </div>
+      <button id="langBtn" onclick="toggleLang()" class="rounded-full border border-white/25 bg-white/10 px-3 py-0.5 text-[.8rem] text-white hover:bg-white/20"><span>العربية</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Header + mega menu -->
+<header id="hdr" class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-night-950/85">
+  <div class="wrap flex h-[66px] items-center gap-5 lg:h-20">
+    <a href="#" class="shrink-0" aria-label="Eastern Health Cluster home">
+      <img class="lg-en block h-9 w-auto lg:h-[52px] dark:brightness-0 dark:invert" src="../dist/img/logo-en.png" alt="Eastern Health Cluster, Health Holding Co.">
+      <img class="lg-ar hidden h-9 w-auto lg:h-[52px] dark:brightness-0 dark:invert" src="../dist/img/logo-ar.png" alt="تجمع الشرقية الصحي، شركة الصحة القابضة">
+    </a>
+    <nav class="hidden min-w-0 flex-1 justify-center gap-0.5 xl:flex" aria-label="Primary">
+      <button class="mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300" aria-expanded="false" aria-controls="m-care" data-mega="m-care"><span data-ar="الخدمات">Services</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180"><use href="#i-chev"/></svg></button>
+      <button class="mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300" aria-expanded="false" aria-controls="m-pat" data-mega="m-pat"><span data-ar="المرضى والزوار">Patients</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180"><use href="#i-chev"/></svg></button>
+      <button class="mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300" aria-expanded="false" aria-controls="m-fac" data-mega="m-fac"><span data-ar="المنشآت">Facilities</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180"><use href="#i-chev"/></svg></button>
+      <button class="mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300" aria-expanded="false" aria-controls="m-res" data-mega="m-res"><span data-ar="البحث والابتكار">Research</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180"><use href="#i-chev"/></svg></button>
+      <button class="mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300" aria-expanded="false" aria-controls="m-about" data-mega="m-about"><span data-ar="عن التجمع">About</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180"><use href="#i-chev"/></svg></button>
+    </nav>
+    <div class="ms-auto flex items-center gap-2 xl:ms-0">
+      <button onclick="searchUi(true)" class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-300" aria-label="Search (Ctrl+K)"><svg class="ico"><use href="#i-search"/></svg></button>
+      <button id="themeBtn" onclick="toggleTheme()" class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-accent-400" aria-label="Toggle dark mode"><svg class="ico dark:hidden"><use href="#i-moon"/></svg><svg class="ico hidden dark:block"><use href="#i-sun"/></svg></button>
+      <a class="btn btn-primary hidden sm:inline-flex" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجز موعدًا">Book appointment</span></a>
+      <button onclick="drawer(true)" class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 xl:hidden dark:border-white/15 dark:bg-white/5 dark:text-slate-300" aria-label="Open menu"><svg class="ico"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+
+  <!-- MEGA PANELS -->
+  <div id="megaWrap" class="absolute inset-x-0 top-full hidden xl:block">
+    <!-- Care & Services -->
+    <div id="m-care" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="Care and services">
+      <div class="wrap grid grid-cols-12 gap-8 py-8">
+        <div class="col-span-5">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="التخصصات">Specialties</p>
+          <div class="grid grid-cols-2 gap-1">
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-heart"/></svg></span><span><b data-ar="أمراض القلب">Cardiology</b><span class="d" data-ar="قسطرة وتخطيط وعيادات">Cath lab, ECG, clinics</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-onc"/></svg></span><span><b data-ar="الأورام">Oncology</b><span class="d" data-ar="تشخيص وعلاج متكامل">Integrated diagnosis &amp; care</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-baby"/></svg></span><span><b data-ar="طب الأطفال">Pediatrics</b><span class="d" data-ar="المواليد والأطفال">Newborn &amp; child care</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-bone"/></svg></span><span><b data-ar="جراحة العظام">Orthopedics</b><span class="d" data-ar="المفاصل والعمود الفقري">Joints, spine, trauma</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-eye"/></svg></span><span><b data-ar="طب العيون">Ophthalmology</b><span class="d" data-ar="الشبكية والمياه البيضاء">Retina, cataract, laser</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-scal"/></svg></span><span><b data-ar="الجراحة العامة">General surgery</b><span class="d" data-ar="المناظير واليوم الواحد">Laparoscopic &amp; day surgery</span></span></a>
+          </div>
+          <a href="#" class="link mt-4 ps-3 text-sm"><span data-ar="جميع التخصصات (٤٠+)">All specialties (40+)</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="col-span-3 border-s border-slate-200 ps-8 dark:border-white/10">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="برامج الرعاية">Care programs</p>
+          <div class="grid gap-1">
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-home"/></svg></span><span><b data-ar="الرعاية المنزلية">Home healthcare</b><span class="d" data-ar="رعاية في منزلك">Care where you live</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-video"/></svg></span><span><b data-ar="الرعاية الافتراضية">Virtual care</b><span class="d" data-ar="استشارات عن بُعد">Remote consultations</span></span></a>
+            <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-shield"/></svg></span><span><b data-ar="التطعيمات والفحوصات">Vaccines &amp; screening</b><span class="d" data-ar="وقاية لكل العائلة">Prevention for the family</span></span></a>
+          </div>
+        </div>
+        <a href="#" class="group relative col-span-4 flex flex-col justify-end overflow-hidden rounded-3xl bg-linear-to-br from-support-500 to-support-900 p-6 text-white">
+          <span class="mark-bg mark-white absolute -end-10 -top-10 h-56 w-56 opacity-20"></span>
+          <span class="mb-auto w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-bold" data-ar="حملة الآن">Campaign now</span>
+          <b class="mt-10 text-2xl leading-tight" data-ar="لقاح الإنفلونزا الموسمية متاح مجانًا">The seasonal flu vaccine is free</b>
+          <span class="mt-2 text-sm text-white/85" data-ar="في جميع المراكز الصحية دون موعد مسبق.">At every health center, no appointment needed.</span>
+          <span class="mt-4 inline-flex items-center gap-1.5 font-semibold"><span data-ar="اعثر على مركز">Find a center</span><svg class="ico flip !h-4 !w-4 transition group-hover:translate-x-1 rtl:group-hover:-translate-x-1"><use href="#i-arrow"/></svg></span>
+        </a>
+      </div>
+    </div>
+    <!-- Patients & Visitors -->
+    <div id="m-pat" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="Patients and visitors">
+      <div class="wrap grid grid-cols-12 gap-8 py-8">
+        <div class="col-span-8 grid grid-cols-2 gap-1">
+          <p class="col-span-2 mb-2 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="الخدمات الأكثر طلبًا">Most requested</p>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-cal"/></svg></span><span><b data-ar="احجز موعدًا">Book an appointment</b><span class="d" data-ar="عبر صحتي أو 937">Via Sehhaty or 937</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-doc"/></svg></span><span><b data-ar="ابحث عن طبيب">Find a doctor</b><span class="d" data-ar="حسب التخصص أو المنشأة">By specialty, facility or language</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-lab"/></svg></span><span><b data-ar="النتائج والتقارير">Results &amp; reports</b><span class="d" data-ar="مختبر، أشعة، تقارير طبية">Lab, radiology, medical reports</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-note"/></svg></span><span><b data-ar="الإجازات المرضية">Sick leave</b><span class="d" data-ar="إصدار والتحقق">Issue and verify</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-clock"/></svg></span><span><b data-ar="أوقات الزيارة">Visiting hours</b><span class="d" data-ar="إرشادات الزوار">Guidance for visitors</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-shield"/></svg></span><span><b data-ar="حقوق المرضى">Patient rights</b><span class="d" data-ar="حقوقك ومسؤولياتك">Your rights &amp; responsibilities</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-chat"/></svg></span><span><b data-ar="شاركنا رأيك">Feedback &amp; complaints</b><span class="d" data-ar="صوتك يهمنا">We're listening</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-book"/></svg></span><span><b data-ar="الموسوعة الصحية">Health encyclopedia</b><span class="d" data-ar="معلومات موثوقة">Trusted health information</span></span></a>
+        </div>
+        <div class="col-span-4 flex flex-col justify-between rounded-3xl bg-linear-to-br from-brand-500 to-deep-900 p-6 text-white">
+          <div class="flex items-center gap-3"><span class="grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-500"><svg class="ico"><use href="#i-app"/></svg></span><b class="text-lg" data-ar="تطبيق صحتي">Sehhaty app</b></div>
+          <p class="my-4 text-sm text-white/85" data-ar="احجز، أعد الجدولة، واطّلع على نتائجك ووصفاتك من هاتفك.">Book, reschedule, and view your results and prescriptions from your phone.</p>
+          <div class="flex gap-2"><a href="#" class="rounded-xl bg-night-950 px-3 py-2 text-xs font-semibold">App Store</a><a href="#" class="rounded-xl bg-night-950 px-3 py-2 text-xs font-semibold">Google Play</a></div>
+        </div>
+      </div>
+    </div>
+    <!-- Facilities -->
+    <div id="m-fac" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="Facilities">
+      <div class="wrap grid grid-cols-12 gap-8 py-8">
+        <div class="col-span-4">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="أنواع المنشآت">Facility types</p>
+          <a href="#facilities" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-hosp"/></svg></span><span><b data-ar="المستشفيات">Hospitals</b><span class="d" data-ar="مستشفيات عامة وتخصصية">General &amp; specialist hospitals</span></span></a>
+          <a href="#facilities" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-clinic"/></svg></span><span><b data-ar="مراكز الرعاية الأولية">Primary care centers</b><span class="d" data-ar="طبيب الأسرة قرب منزلك">Your family doctor, nearby</span></span></a>
+          <a href="#facilities" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-star"/></svg></span><span><b data-ar="المراكز التخصصية">Specialist centers</b><span class="d" data-ar="القلب، الأورام، العيون">Cardiac, oncology, eye</span></span></a>
+          <a href="#facilities" class="mega-link"><span class="mega-ic !bg-emerg-50 !text-emerg-600 dark:!bg-emerg-500/15 dark:!text-red-300"><svg class="ico"><use href="#i-er"/></svg></span><span><b data-ar="أقسام الطوارئ">Emergency rooms</b><span class="d" data-ar="مفتوحة على مدار الساعة">Open 24/7</span></span></a>
+        </div>
+        <div class="col-span-4 border-s border-slate-200 ps-8 dark:border-white/10">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="حسب المدينة">By city</p>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[.93rem]">
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="الدمام">Dammam</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="الخبر">Khobar</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="القطيف">Qatif</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="الجبيل">Jubail</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="الظهران">Dhahran</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="رأس تنورة">Ras Tanura</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="الخفجي">Khafji</a>
+            <a href="#" class="rounded-lg px-2 py-1.5 text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" data-ar="النعيرية">Nairyah</a>
+          </div>
+        </div>
+        <a href="#facilities" class="group relative col-span-4 overflow-hidden rounded-3xl bg-linear-to-br from-brand-50 to-brand-100 p-6 dark:from-deep-900 dark:to-night-950">
+          <svg class="absolute inset-0 h-full w-full" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M300 0C260 30 270 60 235 85 210 102 230 130 205 150 185 165 195 190 180 200H300Z" class="fill-brand-200 dark:fill-deep-800"/><g class="stroke-white dark:stroke-white/10" stroke-width="4" fill="none"><path d="M0 125C75 120 125 100 210 95"/><path d="M100 0C110 60 130 130 125 200"/></g></svg>
+          <span class="pin" style="left:62%;top:48%"><i class="bg-deep-900 dark:bg-brand-400"></i></span><span class="pin" style="left:48%;top:36%"><i class="bg-brand-500"></i></span><span class="pin" style="left:40%;top:70%"><i class="bg-support-500"></i></span>
+          <span class="relative block w-fit rounded-2xl bg-white/90 p-4 shadow-soft dark:bg-night-900/90">
+            <b class="block text-deep-900 dark:text-white" data-ar="اعثر على أقرب منشأة">Find the nearest facility</b>
+            <span class="text-sm text-slate-500 dark:text-slate-400" data-ar="خريطة تفاعلية بالمسافة والدوام">Interactive map with distance &amp; hours</span>
+          </span>
+        </a>
+      </div>
+    </div>
+    <!-- Research -->
+    <div id="m-res" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="Research and innovation">
+      <div class="wrap grid grid-cols-12 gap-8 py-8">
+        <div class="col-span-4">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="البحث">Research</p>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-book"/></svg></span><span><b data-ar="الأبحاث السريرية">Clinical research</b><span class="d" data-ar="دراسات وتجارب سريرية">Studies &amp; clinical trials</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-note"/></svg></span><span><b data-ar="لجنة أخلاقيات البحث">Research ethics (IRB)</b><span class="d" data-ar="قدّم طلبك وتابعه">Submit and track applications</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-news"/></svg></span><span><b data-ar="المنشورات العلمية">Publications</b><span class="d" data-ar="أوراق ومؤتمرات">Papers &amp; conferences</span></span></a>
+        </div>
+        <div class="col-span-4 border-s border-slate-200 ps-8 dark:border-white/10">
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="التعليم والابتكار">Education &amp; innovation</p>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-doc"/></svg></span><span><b data-ar="الإقامة والزمالة">Residency &amp; fellowship</b><span class="d" data-ar="برامج معتمدة">Accredited programs</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-bulb"/></svg></span><span><b data-ar="حاضنة الابتكار">Innovation hub</b><span class="d" data-ar="من الفكرة إلى الحل">From idea to solution</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-video"/></svg></span><span><b data-ar="الصحة الرقمية">Digital health</b><span class="d" data-ar="رعاية ذكية ومتصلة">Smart, connected care</span></span></a>
+        </div>
+        <div class="col-span-4 rounded-3xl bg-deep-900 p-6 text-white dark:bg-white/5">
+          <p class="text-xs font-bold uppercase tracking-widest text-brand-300 rtl:tracking-normal" data-ar="مؤتمر قادم">Upcoming conference</p>
+          <b class="mt-3 block text-xl leading-snug" data-ar="المؤتمر الدولي الثاني لأمراض الدم واضطرابات النزف">2nd International Hematology &amp; Bleeding Disorders Conference</b>
+          <a href="#" class="btn btn-sand mt-5 !py-2.5 text-sm" data-ar="سجّل الآن">Register now</a>
+        </div>
+      </div>
+    </div>
+    <!-- About -->
+    <div id="m-about" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="About EHC">
+      <div class="wrap grid grid-cols-12 gap-8 py-8">
+        <div class="col-span-8 grid grid-cols-2 gap-1">
+          <p class="col-span-2 mb-2 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="تعرّف علينا">Get to know us</p>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-star"/></svg></span><span><b data-ar="من نحن">Who we are</b><span class="d" data-ar="رؤيتنا ورسالتنا وقيمنا">Vision, mission &amp; values</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-users"/></svg></span><span><b data-ar="القيادة">Leadership</b><span class="d" data-ar="مجلس الإدارة والفريق التنفيذي">Board &amp; executive team</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-target"/></svg></span><span><b data-ar="الاستراتيجية">Strategy</b><span class="d" data-ar="التحول الصحي ورؤية 2030">Health transformation &amp; Vision 2030</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-news"/></svg></span><span><b data-ar="المركز الإعلامي">Newsroom</b><span class="d" data-ar="الأخبار والفعاليات">News &amp; events</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-brief"/></svg></span><span><b data-ar="الوظائف">Careers</b><span class="d" data-ar="انضم إلى فريقنا">Join our team</span></span></a>
+          <a href="#" class="mega-link"><span class="mega-ic"><svg class="ico"><use href="#i-flag"/></svg></span><span><b data-ar="البلاغات والنزاهة">Whistleblowing &amp; integrity</b><span class="d" data-ar="قناة بلاغات آمنة">Safe reporting channel</span></span></a>
+        </div>
+        <div class="col-span-4 grid grid-cols-2 gap-3">
+          <div class="rounded-2xl bg-deep-900 p-4 text-white dark:bg-brand-500/15"><b class="block text-3xl">##</b><span class="text-sm text-brand-100" data-ar="مستشفى">hospitals</span></div>
+          <div class="rounded-2xl bg-brand-50 p-4 dark:bg-white/5"><b class="block text-3xl text-deep-900 dark:text-white">###</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="مركز رعاية أولية">primary care centers</span></div>
+          <div class="rounded-2xl bg-brand-50 p-4 dark:bg-white/5"><b class="block text-3xl text-deep-900 dark:text-white">##K</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="موظف">staff</span></div>
+          <div class="rounded-2xl bg-brand-50 p-4 dark:bg-white/5"><b class="block text-3xl text-deep-900 dark:text-white">#.#M</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="زيارة سنويًا">visits / year</span></div>
+          <p class="col-span-2 text-[.7rem] text-slate-400" data-ar="أرقام توضيحية">Placeholder figures</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+<div id="megaDim" class="pointer-events-none fixed inset-0 z-30 bg-deep-950/30 opacity-0 backdrop-blur-[2px] transition-opacity duration-200 dark:bg-black/50"></div>
+
+<!-- Mobile drawer -->
+<div id="drawer" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-deep-950/50" onclick="drawer(false)"></div>
+  <aside class="absolute inset-y-0 end-0 flex w-[min(380px,100%)] flex-col overflow-y-auto bg-white p-5 dark:bg-night-900" aria-label="Menu">
+    <div class="mb-4 flex items-center justify-between">
+      <img class="lg-en h-9 dark:brightness-0 dark:invert" src="../dist/img/logo-en.png" alt="EHC"><img class="lg-ar hidden h-9 dark:brightness-0 dark:invert" src="../dist/img/logo-ar.png" alt="EHC">
+      <button onclick="drawer(false)" class="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-white/15" aria-label="Close menu"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <a class="btn btn-primary mb-4 w-full" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجز موعدًا">Book appointment</span></a>
+    <details class="group border-b border-slate-200 py-3 dark:border-white/10" open><summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span data-ar="الخدمات">Services</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180"><use href="#i-chev"/></svg></summary>
+      <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300"><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="التخصصات الطبية">Medical specialties</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="الرعاية المنزلية">Home healthcare</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="الرعاية الافتراضية">Virtual care</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="التطعيمات والفحوصات">Vaccines &amp; screening</a></div></details>
+    <details class="group border-b border-slate-200 py-3 dark:border-white/10"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span data-ar="المرضى والزوار">Patients</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180"><use href="#i-chev"/></svg></summary>
+      <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300"><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="ابحث عن طبيب">Find a doctor</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="النتائج والتقارير">Results &amp; reports</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="أوقات الزيارة">Visiting hours</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="حقوق المرضى">Patient rights</a></div></details>
+    <details class="group border-b border-slate-200 py-3 dark:border-white/10"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span data-ar="المنشآت">Facilities</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180"><use href="#i-chev"/></svg></summary>
+      <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300"><a href="#facilities" onclick="drawer(false)" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="أقرب منشأة">Nearest facility</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="المستشفيات">Hospitals</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="مراكز الرعاية الأولية">Primary care centers</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="أقسام الطوارئ">Emergency rooms</a></div></details>
+    <details class="group border-b border-slate-200 py-3 dark:border-white/10"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span data-ar="البحث والابتكار">Research</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180"><use href="#i-chev"/></svg></summary>
+      <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300"><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="الأبحاث السريرية">Clinical research</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="الإقامة والزمالة">Residency &amp; fellowship</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="حاضنة الابتكار">Innovation hub</a></div></details>
+    <details class="group border-b border-slate-200 py-3 dark:border-white/10"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span data-ar="عن التجمع">About</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180"><use href="#i-chev"/></svg></summary>
+      <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300"><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="من نحن">Who we are</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="القيادة">Leadership</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="الوظائف">Careers</a><a href="#" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5" data-ar="المركز الإعلامي">Newsroom</a></div></details>
+    <div class="mt-auto grid grid-cols-2 gap-2 pt-6">
+      <a href="tel:997" class="rounded-2xl bg-emerg-600 p-3 text-center font-bold text-white"><small class="block text-xs font-medium" data-ar="طوارئ">Emergency</small>997</a>
+      <a href="tel:937" class="rounded-2xl bg-brand-50 p-3 text-center font-bold text-deep-900 dark:bg-white/5 dark:text-white"><small class="block text-xs font-medium" data-ar="استشارة">Advice</small>937</a>
+    </div>
+  </aside>
+</div>
+
+<main id="main">
+<!-- HERO -->
+<section id="hero" class="hero-bg-0 relative overflow-hidden text-white transition-[background] duration-700">
+  <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08]"></div>
+  <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:grid-cols-[1.05fr_.95fr] lg:pb-[120px] lg:pt-10">
+    <div>
+      <div class="slide anim-fadeup">
+        <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium"><b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900" data-ar="تجمع الشرقية الصحي">EHC</b><span data-ar="رعاية لكل فرد في المنطقة الشرقية">Care for everyone in the Eastern Province</span></span>
+        <h1 class="mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal" data-ar="صحتك<br><em class='not-italic text-brand-300'>في أيدٍ أمينة.</em>">Your health,<br><em class="not-italic text-brand-300">in trusted hands.</em></h1>
+        <p class="mb-8 max-w-[540px] text-[1.15rem] text-white/85" data-ar="من أول زيارة لطبيب الأسرة إلى أدق العمليات، فريق واحد يرافقك في كل خطوة.">From your first family-doctor visit to the most advanced surgery, one team is with you every step of the way.</p>
+        <div class="flex flex-wrap gap-3"><a class="btn btn-sand btn-lg" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجز موعدك الآن">Book your visit</span></a><a class="btn btn-outline btn-lg" href="#"><span data-ar="اكتشف خدماتنا">Explore our services</span></a></div>
+      </div>
+      <div class="slide anim-fadeup hidden">
+        <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium"><b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900" data-ar="حملة موسمية">Seasonal campaign</b><span data-ar="لقاح الإنفلونزا ٢٠٢٦">Flu vaccine 2026</span></span>
+        <h1 class="mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal" data-ar="شتاؤك أجمل<br><em class='not-italic text-support-300'>بجرعة واحدة.</em>">One shot.<br><em class="not-italic text-support-300">A healthier winter.</em></h1>
+        <p class="mb-8 max-w-[540px] text-[1.15rem] text-white/85" data-ar="لقاح الإنفلونزا الموسمية متاح الآن في جميع المراكز الصحية. سريع، آمن، ومجاني.">The seasonal flu vaccine is now available at every primary health center. Quick, safe and free.</p>
+        <div class="flex flex-wrap gap-3"><a class="btn btn-sand btn-lg" href="#facilities"><svg class="ico"><use href="#i-pin"/></svg><span data-ar="أقرب مركز تطعيم">Nearest vaccine center</span></a><a class="btn btn-outline btn-lg" href="#"><span data-ar="الأسئلة الشائعة">FAQs</span></a></div>
+        <div class="mt-4 text-[.8rem] text-white/65" data-ar="* وفق الفئات المستهدفة والتعليمات المعتمدة.">* Eligibility per current Ministry of Health guidance.</div>
+      </div>
+      <div class="slide anim-fadeup hidden">
+        <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium"><b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900" data-ar="أكتوبر الوردي">Pink October</b><span data-ar="شهر التوعية بسرطان الثدي">Breast cancer awareness month</span></span>
+        <h1 class="mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal" data-ar="الكشف المبكر<br><em class='not-italic text-highlight-500'>ينقذ الحياة.</em>">Early detection<br><em class="not-italic text-highlight-500">saves lives.</em></h1>
+        <p class="mb-8 max-w-[540px] text-[1.15rem] text-white/85" data-ar="احجزي فحص الماموجرام في أقرب منشأة. دقائق قليلة قد تصنع الفرق.">Book your mammogram screening at a facility near you. A few minutes can make all the difference.</p>
+        <div class="flex flex-wrap gap-3"><a class="btn btn-sand btn-lg" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجزي الفحص">Book a screening</span></a><a class="btn btn-outline btn-lg" href="#"><span data-ar="اعرفي المزيد">Learn more</span></a></div>
+      </div>
+      <div class="mt-8 flex gap-2 sm:mt-11 sm:gap-3.5" role="tablist" aria-label="Campaigns" id="heroNav">
+        <button data-i="0" class="flex flex-1 flex-col gap-2 text-start text-[.7rem] font-semibold text-white/70 sm:w-[170px] sm:flex-none sm:text-[.8rem] [&.prog-on]:text-white"><span class="bar block h-[3px] overflow-hidden rounded bg-white/25"><i class="block h-full w-0 bg-white"></i></span><span class="hidden sm:inline" data-ar="في أيدٍ أمينة">Trusted hands</span></button>
+        <button data-i="1" class="flex flex-1 flex-col gap-2 text-start text-[.7rem] font-semibold text-white/70 sm:w-[170px] sm:flex-none sm:text-[.8rem] [&.prog-on]:text-white"><span class="bar block h-[3px] overflow-hidden rounded bg-white/25"><i class="block h-full w-0 bg-white"></i></span><span class="hidden sm:inline" data-ar="لقاح الإنفلونزا">Flu vaccine</span></button>
+        <button data-i="2" class="flex flex-1 flex-col gap-2 text-start text-[.7rem] font-semibold text-white/70 sm:w-[170px] sm:flex-none sm:text-[.8rem] [&.prog-on]:text-white"><span class="bar block h-[3px] overflow-hidden rounded bg-white/25"><i class="block h-full w-0 bg-white"></i></span><span class="hidden sm:inline" data-ar="أكتوبر الوردي">Pink October</span></button>
+      </div>
+    </div>
+    <!-- CARE NAVIGATOR (replaces the orbit art from Concept B) -->
+    <div class="relative" id="navigator">
+      <div class="mark-bg mark-white pointer-events-none absolute -end-10 -top-10 h-44 w-44 opacity-10"></div>
+      <div class="relative rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl">
+        <div class="mb-5 flex items-center gap-3">
+          <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico"><use href="#i-compass"/></svg></span>
+          <div><b class="block text-lg leading-tight" data-ar="مرشد الرعاية">Care navigator</b><span class="text-sm text-white/75" data-ar="أجب عن سؤالين وسنرشدك للخطوة الصحيحة">Answer two questions, we'll point you to the right place</span></div>
+        </div>
+        <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">1</span><span data-ar="لمن الرعاية؟">Who needs care?</span></p>
+        <div class="mb-5 flex flex-wrap gap-2" id="navWho">
+          <button class="nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="true" data-v="me" data-ar="لي">Me</button>
+          <button class="nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="child" data-ar="طفلي">My child</button>
+          <button class="nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="parent" data-ar="والدي / والدتي">My parent</button>
+        </div>
+        <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">2</span><span data-ar="ماذا تحتاج؟">What do you need?</span></p>
+        <div class="mb-5 grid grid-cols-3 gap-2" id="navNeed">
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-emerg-500 aria-pressed:bg-emerg-600" aria-pressed="false" data-v="urgent"><svg class="ico !h-5 !w-5"><use href="#i-er"/></svg><span data-ar="حالة عاجلة">Urgent help</span></button>
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="true" data-v="visit"><svg class="ico !h-5 !w-5"><use href="#i-doc"/></svg><span data-ar="زيارة طبيب">See a doctor</span></button>
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="results"><svg class="ico !h-5 !w-5"><use href="#i-lab"/></svg><span data-ar="نتائج فحوصات">Test results</span></button>
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="vaccine"><svg class="ico !h-5 !w-5"><use href="#i-shield"/></svg><span data-ar="تطعيم">Vaccination</span></button>
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="refill"><svg class="ico !h-5 !w-5"><use href="#i-note"/></svg><span data-ar="تجديد وصفة">Prescription refill</span></button>
+          <button class="nv-need flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900" aria-pressed="false" data-v="home"><svg class="ico !h-5 !w-5"><use href="#i-home"/></svg><span data-ar="رعاية منزلية">Care at home</span></button>
+        </div>
+        <div id="navOut" class="rounded-2xl bg-white p-4 text-deep-950 transition dark:bg-night-900 dark:text-white" aria-live="polite">
+          <div class="flex items-start gap-3">
+            <span id="navIc" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-cal"/></svg></span>
+            <div class="min-w-0 flex-1"><b id="navT" class="block leading-snug"></b><span id="navD" class="block text-sm text-slate-500 dark:text-slate-400"></span></div>
+          </div>
+          <a id="navCta" href="#" class="btn btn-primary mt-3 w-full !py-2.5 text-sm"></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK BAR -->
+<div class="wrap relative z-[5] -mt-20">
+  <div class="grid grid-cols-2 gap-1.5 rounded-[22px] bg-white p-2.5 shadow-soft sm:grid-cols-3 sm:rounded-[28px] xl:grid-cols-[repeat(5,1fr)_auto] dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+    <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="#"><span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-cal"/></svg></span><div><b class="block text-[.95rem]" data-ar="احجز موعدًا">Book</b><span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400" data-ar="عبر صحتي أو 937">via Sehhaty or 937</span></div></a>
+    <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="#"><span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-doc"/></svg></span><div><b class="block text-[.95rem]" data-ar="ابحث عن طبيب">Find a doctor</b><span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400" data-ar="حسب التخصص">by specialty</span></div></a>
+    <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="#facilities"><span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-pin"/></svg></span><div><b class="block text-[.95rem]" data-ar="أقرب منشأة">Nearest facility</b><span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400" data-ar="مستشفى أو مركز">hospital or center</span></div></a>
+    <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="#"><span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-lab"/></svg></span><div><b class="block text-[.95rem]" data-ar="النتائج">Results</b><span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400" data-ar="مختبر وأشعة">lab &amp; radiology</span></div></a>
+    <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="#facilities"><span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300"><svg class="ico"><use href="#i-er"/></svg></span><div><b class="block text-[.95rem]" data-ar="الطوارئ">Emergency rooms</b><span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400" data-ar="على مدار الساعة">open 24/7</span></div></a>
+    <a class="col-span-2 flex items-center justify-center gap-2.5 rounded-[20px] bg-emerg-600 px-5 py-3 font-bold text-white sm:col-span-1 xl:justify-start" href="tel:997"><svg class="ico"><use href="#i-phone"/></svg><span><small class="block text-[.72rem] font-medium opacity-90" data-ar="حالة طارئة؟ اتصل">Emergency? Call</small><b class="text-[1.3rem] leading-none">997</b></span></a>
+  </div>
+</div>
+
+
+<!-- ER WAIT TIMES (new) -->
+<section class="pb-4 pt-14">
+  <div class="wrap">
+    <div class="rv mb-7 flex flex-wrap items-end justify-between gap-4">
+      <div><div class="eyebrow !text-emerg-600 dark:!text-red-300" data-ar="الطوارئ الآن">Emergency rooms right now</div>
+        <h2 class="h2 !text-[clamp(1.6rem,3vw,2.4rem)]" data-ar="اعرف قبل أن <em>تذهب</em>">Know before <em>you go</em></h2></div>
+      <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[.8rem] text-slate-600 dark:border-white/10 dark:bg-night-900 dark:text-slate-300"><span class="relative flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span></span><span data-ar="تحديث مباشر · بيانات توضيحية">Live update · illustrative data</span> <b id="erUpd" class="font-semibold">0s</b></div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" id="erGrid">
+      <a href="#" class="rv card group p-5 transition hover:-translate-y-1 hover:shadow-soft" data-w="18"><div class="flex items-start justify-between gap-3"><div><b class="block leading-snug" data-ar="مجمع الدمام الطبي">Dammam Medical Complex</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الدمام · 4.2 كم">Dammam · 4.2 km</span></div><span class="er-badge whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold"></span></div><div class="mt-4 flex items-baseline gap-1"><b class="er-min text-[2.4rem] font-extrabold leading-none text-deep-900 dark:text-white">18</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="دقيقة انتظار تقريبًا">min est. wait</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><i class="er-bar block h-full rounded-full transition-all duration-700"></i></div><span class="link mt-4 text-sm"><span data-ar="الاتجاهات">Directions</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></span></a>
+      <a href="#" class="rv card group p-5 transition hover:-translate-y-1 hover:shadow-soft" data-w="42"><div class="flex items-start justify-between gap-3"><div><b class="block leading-snug" data-ar="مستشفى الملك فهد التخصصي">King Fahad Specialist Hospital</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الدمام · 6.8 كم">Dammam · 6.8 km</span></div><span class="er-badge whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold"></span></div><div class="mt-4 flex items-baseline gap-1"><b class="er-min text-[2.4rem] font-extrabold leading-none text-deep-900 dark:text-white">42</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="دقيقة انتظار تقريبًا">min est. wait</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><i class="er-bar block h-full rounded-full transition-all duration-700"></i></div><span class="link mt-4 text-sm"><span data-ar="الاتجاهات">Directions</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></span></a>
+      <a href="#" class="rv card group p-5 transition hover:-translate-y-1 hover:shadow-soft" data-w="65"><div class="flex items-start justify-between gap-3"><div><b class="block leading-snug" data-ar="مستشفى (اسم المستشفى)">Hospital (name)</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الخبر · 9.1 كم">Khobar · 9.1 km</span></div><span class="er-badge whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold"></span></div><div class="mt-4 flex items-baseline gap-1"><b class="er-min text-[2.4rem] font-extrabold leading-none text-deep-900 dark:text-white">65</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="دقيقة انتظار تقريبًا">min est. wait</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><i class="er-bar block h-full rounded-full transition-all duration-700"></i></div><span class="link mt-4 text-sm"><span data-ar="الاتجاهات">Directions</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></span></a>
+      <div class="rv flex flex-col justify-between rounded-[22px] bg-emerg-600 p-5 text-white">
+        <div><b class="block text-lg leading-snug" data-ar="حالة تهدد الحياة؟ لا تنتظر.">Life-threatening? Don't wait.</b><span class="mt-1 block text-sm text-white/85" data-ar="اتصل بالهلال الأحمر فورًا. أوقات الانتظار لا تنطبق على الحالات الحرجة.">Call the Red Crescent now. Wait times don't apply to critical cases.</span></div>
+        <div class="mt-4 grid grid-cols-2 gap-2"><a href="tel:997" class="rounded-xl bg-white py-2 text-center font-extrabold text-emerg-600">997</a><a href="tel:911" class="rounded-xl bg-white/15 py-2 text-center font-extrabold">911</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="mask-x overflow-hidden whitespace-nowrap pb-5 pt-14" aria-hidden="true"><div id="mq" class="anim-marquee inline-flex gap-12 text-[clamp(2rem,4.5vw,3.6rem)] font-bold"></div></div>
+
+<!-- STATEMENT -->
+<section class="py-16 lg:pb-24 lg:pt-10">
+  <div class="wrap grid items-center gap-14 lg:grid-cols-[1.1fr_.9fr]">
+    <div class="rv">
+      <div class="eyebrow" data-ar="لماذا تجمع الشرقية">Why EHC</div>
+      <p class="m-0 text-[clamp(1.6rem,3vw,2.4rem)] font-semibold leading-snug text-deep-900 dark:text-white" data-ar="أكبر شبكة رعاية صحية في المنطقة الشرقية، <em class='not-italic text-brand-500 dark:text-brand-300 bg-[linear-gradient(transparent_62%,rgba(36,144,204,.18)_62%)]'>قريبة منك</em>، ومبنية حول احتياجك أنت.">The Eastern Province's largest care network, <em class="not-italic text-brand-500 dark:text-brand-300 bg-[linear-gradient(transparent_62%,rgba(36,144,204,.18)_62%)]">close to home</em> and built around what you need.</p>
+      <div class="mt-7 flex flex-wrap gap-3"><a class="btn btn-primary" href="#" data-ar="تعرّف علينا">Get to know us</a><a class="btn btn-ghost" href="#"><svg class="ico"><use href="#i-play"/></svg><span data-ar="شاهد الفيلم التعريفي">Watch our film</span></a></div>
+    </div>
+    <div class="rv">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-[22px] bg-deep-900 p-6 text-white dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20"><b class="block text-[2.1rem] leading-none sm:text-[2.8rem]">##</b><span class="text-sm text-brand-100" data-ar="مستشفى">hospitals</span></div>
+        <div class="rounded-[22px] bg-soft p-6 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><b class="block text-[2.1rem] leading-none text-deep-900 sm:text-[2.8rem] dark:text-white">###</b><span class="text-sm text-slate-600 dark:text-slate-400" data-ar="مركز رعاية أولية">primary care centers</span></div>
+        <div class="rounded-[22px] bg-soft p-6 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><b class="block text-[2.1rem] leading-none text-deep-900 sm:text-[2.8rem] dark:text-white">#.#<sup class="text-[.5em] text-brand-500">M</sup></b><span class="text-sm text-slate-600 dark:text-slate-400" data-ar="زيارة سنويًا">visits every year</span></div>
+        <div class="rounded-[22px] bg-soft p-6 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><b class="block text-[2.1rem] leading-none text-deep-900 sm:text-[2.8rem] dark:text-white">##<sup class="text-[.5em] text-brand-500">K</sup></b><span class="text-sm text-slate-600 dark:text-slate-400" data-ar="من الكوادر الصحية">healthcare professionals</span></div>
+      </div>
+      <div class="mt-3 text-[.72rem] text-slate-500" data-ar="الأرقام مواضع مؤقتة تُستبدل بالبيانات الرسمية.">Figures are placeholders, to be replaced with official data.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FACILITY FINDER (from Concept A) -->
+<section id="facilities" class="scroll-mt-28 bg-soft py-16 lg:py-24 dark:bg-night-900/60">
+  <div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+      <div><div class="eyebrow" data-ar="المنشآت">Facilities</div><h2 class="h2" data-ar="اعثر على <em>أقرب منشأة</em> لك">Find a facility <em>near you</em></h2>
+        <p class="mt-3.5 max-w-[560px] text-[1.05rem] text-slate-600 dark:text-slate-400" data-ar="مستشفيات ومراكز رعاية أولية ومراكز تخصصية في الدمام والخبر والقطيف والجبيل وغيرها.">Hospitals, primary care and specialist centers across Dammam, Khobar, Qatif, Jubail and beyond.</p></div>
+      <a class="link" href="#"><span data-ar="عرض الخريطة الكاملة">Open full map</span><svg class="ico flip"><use href="#i-arrow"/></svg></a>
+    </div>
+    <div class="rv grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
+      <div class="relative min-h-[320px] overflow-hidden rounded-[22px] border border-slate-200 bg-linear-to-b from-brand-50 to-brand-100 lg:min-h-[460px] dark:border-white/10 dark:from-deep-950 dark:to-night-950" aria-label="Illustrative facility map">
+        <svg class="absolute inset-0 h-full w-full" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <path d="M600 0C520 60 540 120 470 170 420 205 460 260 410 300 370 330 390 380 360 420H600Z" class="fill-brand-200 dark:fill-deep-800/70"/>
+          <g class="stroke-white dark:stroke-white/10" stroke-width="6" fill="none"><path d="M0 250C150 240 250 200 420 190"/><path d="M200 0C220 120 260 260 250 420"/><path d="M60 80C180 120 300 110 470 60"/></g>
+          <g class="stroke-white/70 dark:stroke-white/5" stroke-width="2" fill="none"><path d="M0 330C200 320 300 300 380 350"/><path d="M340 0C330 100 350 200 330 300"/><path d="M90 0C120 150 80 300 120 420"/></g>
+        </svg>
+        <div id="pins">
+          <span class="pin" data-t="hosp er" style="left:62%;top:44%"><label class="mb-1.5 whitespace-nowrap rounded-md bg-white px-2 py-0.5 text-[.72rem] font-semibold shadow-soft dark:bg-night-900" data-ar="الدمام">Dammam</label><i class="!h-5 !w-5 bg-deep-900 dark:bg-brand-400"></i></span>
+          <span class="pin" data-t="hosp er" style="left:72%;top:66%"><label class="mb-1.5 whitespace-nowrap rounded-md bg-white px-2 py-0.5 text-[.72rem] font-semibold shadow-soft dark:bg-night-900" data-ar="الخبر">Khobar</label><i class="!h-5 !w-5 bg-deep-900 dark:bg-brand-400"></i></span>
+          <span class="pin" data-t="hosp er" style="left:58%;top:22%"><label class="mb-1.5 whitespace-nowrap rounded-md bg-white px-2 py-0.5 text-[.72rem] font-semibold shadow-soft dark:bg-night-900" data-ar="القطيف">Qatif</label><i class="!h-5 !w-5 bg-deep-900 dark:bg-brand-400"></i></span>
+          <span class="pin" data-t="spec" style="left:40%;top:50%"><i class="bg-support-500"></i></span>
+          <span class="pin" data-t="phc" style="left:48%;top:36%"><i class="bg-brand-500"></i></span>
+          <span class="pin" data-t="phc" style="left:30%;top:30%"><i class="bg-brand-500"></i></span>
+          <span class="pin" data-t="spec" style="left:52%;top:72%"><i class="bg-support-500"></i></span>
+          <span class="pin" data-t="phc" style="left:66%;top:56%"><i class="bg-brand-500"></i></span>
+          <span class="pin" data-t="spec" style="left:36%;top:80%"><i class="bg-support-500"></i></span>
+          <span class="pin" data-t="phc" style="left:24%;top:62%"><i class="bg-brand-500"></i></span>
+        </div>
+        <div class="absolute end-4 top-4 rounded-md bg-white/80 px-2 py-1 text-[.72rem] text-slate-500 dark:bg-night-900/80 dark:text-slate-400" data-ar="خريطة توضيحية">Illustrative map</div>
+        <div class="absolute bottom-4 start-4 flex flex-wrap gap-3.5 rounded-xl bg-white px-3.5 py-2.5 text-[.78rem] shadow-soft dark:bg-night-900">
+          <span class="inline-flex items-center gap-1.5"><i class="h-2.5 w-2.5 rounded-full bg-deep-900 dark:bg-brand-400"></i><span data-ar="مستشفى">Hospital</span></span>
+          <span class="inline-flex items-center gap-1.5"><i class="h-2.5 w-2.5 rounded-full bg-brand-500"></i><span data-ar="مركز صحي">Health center</span></span>
+          <span class="inline-flex items-center gap-1.5"><i class="h-2.5 w-2.5 rounded-full bg-support-500"></i><span data-ar="مركز تخصصي">Specialist</span></span>
+        </div>
+      </div>
+      <div class="card flex flex-col gap-3.5 p-5">
+        <label class="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3.5 text-slate-400 focus-within:border-brand-500 dark:border-white/15"><svg class="ico"><use href="#i-search"/></svg><span class="sr-only">City or district</span><input type="text" class="h-12 min-w-0 flex-1 bg-transparent text-deep-950 outline-hidden placeholder:text-slate-400 dark:text-white" placeholder="City or district…" data-ar-ph="المدينة أو الحي…"></label>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filter facilities" id="facChips">
+          <button class="chip" aria-pressed="true" data-f="all" data-ar="الكل">All</button>
+          <button class="chip" aria-pressed="false" data-f="hosp" data-ar="مستشفيات">Hospitals</button>
+          <button class="chip" aria-pressed="false" data-f="phc" data-ar="مراكز صحية">Health centers</button>
+          <button class="chip" aria-pressed="false" data-f="spec" data-ar="تخصصية">Specialist</button>
+          <button class="chip" aria-pressed="false" data-f="er" data-ar="طوارئ 24/7">ER 24/7</button>
+        </div>
+        <div id="facList" class="flex flex-col gap-2.5">
+          <a href="#" data-t="hosp er" class="flex items-center gap-3.5 rounded-xl border border-slate-200 p-3 transition hover:border-brand-500 dark:border-white/10 dark:hover:border-brand-400"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-hosp"/></svg></span><div class="min-w-0 flex-1"><b class="block text-[.93rem]" data-ar="مجمع الدمام الطبي">Dammam Medical Complex</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الدمام · 4.2 كم">Dammam · 4.2 km</span></div><span class="whitespace-nowrap rounded-full bg-emerg-50 px-2 py-0.5 text-[.7rem] font-bold text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300" data-ar="طوارئ">ER</span></a>
+          <a href="#" data-t="hosp er" class="flex items-center gap-3.5 rounded-xl border border-slate-200 p-3 transition hover:border-brand-500 dark:border-white/10 dark:hover:border-brand-400"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-hosp"/></svg></span><div class="min-w-0 flex-1"><b class="block text-[.93rem]" data-ar="مستشفى الملك فهد التخصصي">King Fahad Specialist Hospital</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الدمام · 6.8 كم">Dammam · 6.8 km</span></div><span class="whitespace-nowrap rounded-full bg-emerg-50 px-2 py-0.5 text-[.7rem] font-bold text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300" data-ar="طوارئ">ER</span></a>
+          <a href="#" data-t="spec" class="hidden items-center gap-3.5 rounded-xl border border-slate-200 p-3 transition hover:border-brand-500 dark:border-white/10 dark:hover:border-brand-400 [&.show]:flex"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300"><svg class="ico"><use href="#i-star"/></svg></span><div class="min-w-0 flex-1"><b class="block text-[.93rem]" data-ar="مركز تخصصي (اسم المركز)">Specialist center (name)</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="الدمام · 5.0 كم">Dammam · 5.0 km</span></div><span class="whitespace-nowrap rounded-full bg-support-50 px-2 py-0.5 text-[.7rem] font-bold text-support-500 dark:bg-support-500/15 dark:text-support-300" data-ar="بموعد">By appt.</span></a>
+          <a href="#" data-t="phc" class="flex items-center gap-3.5 rounded-xl border border-slate-200 p-3 transition hover:border-brand-500 dark:border-white/10 dark:hover:border-brand-400"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-clinic"/></svg></span><div class="min-w-0 flex-1"><b class="block text-[.93rem]" data-ar="مركز صحي (اسم المركز)">Primary care center (name)</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="حي · 1.1 كم">District · 1.1 km</span></div><span class="whitespace-nowrap rounded-full bg-support-50 px-2 py-0.5 text-[.7rem] font-bold text-support-500 dark:bg-support-500/15 dark:text-support-300" data-ar="مفتوح الآن">Open now</span></a>
+          <a href="#" data-t="phc" class="flex items-center gap-3.5 rounded-xl border border-slate-200 p-3 transition hover:border-brand-500 dark:border-white/10 dark:hover:border-brand-400"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-clinic"/></svg></span><div class="min-w-0 flex-1"><b class="block text-[.93rem]" data-ar="مركز صحي (اسم المركز)">Primary care center (name)</b><span class="text-[.8rem] text-slate-500 dark:text-slate-400" data-ar="حي · 2.7 كم">District · 2.7 km</span></div><span class="whitespace-nowrap rounded-full bg-support-50 px-2 py-0.5 text-[.7rem] font-bold text-support-500 dark:bg-support-500/15 dark:text-support-300" data-ar="مفتوح الآن">Open now</span></a>
+        </div>
+        <a class="btn btn-ghost mt-auto" href="#"><svg class="ico"><use href="#i-locate"/></svg><span data-ar="استخدم موقعي">Use my location</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- LIFE-STAGE JOURNEYS (new) -->
+<section class="py-16 lg:py-24">
+  <div class="wrap">
+    <div class="rv mb-10 flex flex-wrap items-end justify-between gap-6">
+      <div><div class="eyebrow" data-ar="رحلتك الصحية">Your health journey</div><h2 class="h2" data-ar="رعاية تناسب <em>كل مرحلة</em> من العمر">Care for <em>every stage</em> of life</h2>
+        <p class="mt-3.5 max-w-[560px] text-[1.05rem] text-slate-600 dark:text-slate-400" data-ar="اختر مرحلتك لترى الفحوصات والخدمات الموصى بها، ثم احجز بخطوة واحدة.">Pick a life stage to see recommended check-ups and services, then book in one step.</p></div>
+    </div>
+    <div class="rv mb-8 flex gap-2 overflow-x-auto rounded-2xl bg-soft p-1.5 dark:bg-night-900 dark:ring-1 dark:ring-white/10" role="tablist" id="jTabs">
+      <button role="tab" data-j="j1" aria-selected="true" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white"><svg class="ico"><use href="#i-heart"/></svg><span data-ar="الحمل والولادة">Pregnancy</span></button>
+      <button role="tab" data-j="j2" aria-selected="false" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white"><svg class="ico"><use href="#i-baby"/></svg><span data-ar="الأطفال">Children</span></button>
+      <button role="tab" data-j="j3" aria-selected="false" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white"><svg class="ico"><use href="#i-doc"/></svg><span data-ar="البالغون">Adults</span></button>
+      <button role="tab" data-j="j4" aria-selected="false" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white"><svg class="ico"><use href="#i-users"/></svg><span data-ar="كبار السن">Seniors</span></button>
+    </div>
+    <!-- panels: each = intro card + steps -->
+    <div class="jp grid gap-6 lg:grid-cols-[.8fr_1.2fr]" id="j1">
+      <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br from-highlight-500 to-highlight-800 p-7 text-white"><span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]"></span><b class="relative block text-2xl leading-snug" data-ar="نرافقك من أول نبضة">With you from the very first heartbeat</b><p class="relative mt-2 text-white/85" data-ar="متابعة الحمل، الولادة الآمنة، ودعم ما بعد الولادة في منشآت قريبة منك.">Antenatal follow-up, safe delivery and postnatal support at facilities near you.</p><a href="#" class="btn relative mt-6 bg-white text-highlight-800" data-ar="احجزي زيارة متابعة">Book an antenatal visit</a></div>
+      <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-highlight-500 dark:border-night-950"></span><span class="text-xs font-bold text-highlight-500" data-ar="الثلث الأول">First trimester</span><b class="block" data-ar="زيارة التسجيل وفحوصات الحمل الأولى">Booking visit &amp; first pregnancy tests</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-highlight-500 dark:border-night-950"></span><span class="text-xs font-bold text-highlight-500" data-ar="الثلث الثاني">Second trimester</span><b class="block" data-ar="فحص الموجات فوق الصوتية التفصيلي">Detailed ultrasound scan</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-highlight-500 dark:border-night-950"></span><span class="text-xs font-bold text-highlight-500" data-ar="الثلث الثالث">Third trimester</span><b class="block" data-ar="خطة الولادة وجولة في جناح الولادة">Birth plan &amp; maternity ward tour</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-highlight-500 dark:border-night-950"></span><span class="text-xs font-bold text-highlight-500" data-ar="بعد الولادة">After birth</span><b class="block" data-ar="زيارة ما بعد الولادة ودعم الرضاعة">Postnatal check &amp; breastfeeding support</b></li>
+      </ol>
+    </div>
+    <div class="jp hidden gap-6 lg:grid-cols-[.8fr_1.2fr]" id="j2">
+      <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br from-accent-400 to-[#C9711C] p-7 text-white"><span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]"></span><b class="relative block text-2xl leading-snug" data-ar="طفولة صحية، مستقبل أقوى">A healthy childhood, a stronger future</b><p class="relative mt-2 text-white/90" data-ar="فحوصات المواليد، جدول التطعيمات، ومتابعة النمو حتى سن المدرسة.">Newborn screening, the vaccination schedule and growth checks through school age.</p><a href="#" class="btn relative mt-6 bg-white text-[#7A3E00]" data-ar="جدول التطعيمات">Vaccination schedule</a></div>
+      <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-accent-400 dark:border-night-950"></span><span class="text-xs font-bold text-accent-500" data-ar="حديثو الولادة">Newborn</span><b class="block" data-ar="فحص حديثي الولادة والسمع">Newborn &amp; hearing screening</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-accent-400 dark:border-night-950"></span><span class="text-xs font-bold text-accent-500" data-ar="أول سنتين">First two years</span><b class="block" data-ar="التطعيمات الأساسية ومتابعة النمو">Core vaccinations &amp; growth checks</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-accent-400 dark:border-night-950"></span><span class="text-xs font-bold text-accent-500" data-ar="ما قبل المدرسة">Pre-school</span><b class="block" data-ar="تطعيمات دخول المدرسة وفحص النظر">School-entry vaccines &amp; vision check</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-accent-400 dark:border-night-950"></span><span class="text-xs font-bold text-accent-500" data-ar="سن المدرسة">School age</span><b class="block" data-ar="الصحة المدرسية وصحة الفم والأسنان">School health &amp; dental care</b></li>
+      </ol>
+    </div>
+    <div class="jp hidden gap-6 lg:grid-cols-[.8fr_1.2fr]" id="j3">
+      <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br from-brand-500 to-deep-900 p-7 text-white"><span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]"></span><b class="relative block text-2xl leading-snug" data-ar="الوقاية تبدأ بفحص سنوي">Prevention starts with a yearly check-up</b><p class="relative mt-2 text-white/85" data-ar="اعرف أرقامك، اكتشف المخاطر مبكرًا، وابقَ على المسار الصحيح.">Know your numbers, catch risks early and stay on track.</p><a href="#" class="btn relative mt-6 bg-white text-deep-900" data-ar="احجز فحصًا دوريًا">Book a check-up</a></div>
+      <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-brand-500 dark:border-night-950"></span><span class="text-xs font-bold text-brand-500 dark:text-brand-300" data-ar="سنويًا">Every year</span><b class="block" data-ar="فحص عام وقياس ضغط الدم والوزن">General check-up, blood pressure &amp; weight</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-brand-500 dark:border-night-950"></span><span class="text-xs font-bold text-brand-500 dark:text-brand-300" data-ar="كل موسم">Every season</span><b class="block" data-ar="لقاح الإنفلونزا الموسمية">Seasonal flu vaccine</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-brand-500 dark:border-night-950"></span><span class="text-xs font-bold text-brand-500 dark:text-brand-300" data-ar="حسب العمر وعوامل الخطورة">By age &amp; risk</span><b class="block" data-ar="فحص السكري والكوليسترول">Diabetes &amp; cholesterol screening</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-brand-500 dark:border-night-950"></span><span class="text-xs font-bold text-brand-500 dark:text-brand-300" data-ar="حسب توصية الطبيب">As your doctor advises</span><b class="block" data-ar="فحوصات الكشف المبكر عن السرطان">Cancer screening</b></li>
+      </ol>
+    </div>
+    <div class="jp hidden gap-6 lg:grid-cols-[.8fr_1.2fr]" id="j4">
+      <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br from-support-500 to-support-900 p-7 text-white"><span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]"></span><b class="relative block text-2xl leading-snug" data-ar="رعاية بكرامة، قريبة من المنزل">Dignified care, close to home</b><p class="relative mt-2 text-white/85" data-ar="متابعة الأمراض المزمنة، الرعاية المنزلية، ودعم الأسرة.">Chronic-condition follow-up, home healthcare and support for families.</p><a href="#" class="btn relative mt-6 bg-white text-support-900" data-ar="اطلب رعاية منزلية">Request home care</a></div>
+      <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-support-500 dark:border-night-950"></span><span class="text-xs font-bold text-support-500 dark:text-support-300" data-ar="كل موسم">Every season</span><b class="block" data-ar="لقاحات الإنفلونزا والمكورات الرئوية">Flu &amp; pneumococcal vaccines</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-support-500 dark:border-night-950"></span><span class="text-xs font-bold text-support-500 dark:text-support-300" data-ar="بانتظام">Regularly</span><b class="block" data-ar="متابعة الأمراض المزمنة ومراجعة الأدوية">Chronic care &amp; medication review</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-support-500 dark:border-night-950"></span><span class="text-xs font-bold text-support-500 dark:text-support-300" data-ar="سنويًا">Every year</span><b class="block" data-ar="فحص النظر والسمع وتقييم خطر السقوط">Vision, hearing &amp; fall-risk check</b></li>
+        <li class="card relative p-4"><span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-support-500 dark:border-night-950"></span><span class="text-xs font-bold text-support-500 dark:text-support-300" data-ar="عند الحاجة">When needed</span><b class="block" data-ar="الرعاية المنزلية والتأهيل">Home healthcare &amp; rehabilitation</b></li>
+      </ol>
+    </div>
+    <p class="mt-5 text-[.75rem] text-slate-500" data-ar="إرشادات عامة؛ يحدد طبيبك ما يناسبك.">General guidance only; your doctor will advise what's right for you.</p>
+  </div>
+</section>
+
+<!-- CAMPAIGNS -->
+<section class="py-16 lg:py-24">
+  <div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+      <div><div class="eyebrow" data-ar="الحملات الصحية">Health campaigns</div><h2 class="h2" data-ar="يحدث <em>الآن</em> في تجمع الشرقية">Happening <em>now</em> at EHC</h2></div>
+      <a class="link" href="#"><span data-ar="كل الحملات">All campaigns</span><svg class="ico flip"><use href="#i-arrow"/></svg></a>
+    </div>
+    <!-- HEALTH CALENDAR (new) -->
+    <div class="rv mb-8 rounded-[22px] border border-slate-200 bg-soft p-4 dark:border-white/10 dark:bg-night-900">
+      <div class="mb-3 flex items-center justify-between gap-3 px-1"><b class="text-sm text-deep-900 dark:text-white" data-ar="التقويم الصحي للعام">Health calendar</b><span class="text-xs text-slate-500 dark:text-slate-400" data-ar="اسحب للمزيد">Scroll for more</span></div>
+      <div class="scrollbar-thin flex snap-x gap-2.5 overflow-x-auto pb-1" id="cal">
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-deep-900 p-3.5 text-white ring-2 ring-brand-400 dark:bg-brand-500"><span class="text-[.7rem] font-bold uppercase text-brand-300 dark:text-white/80" data-ar="سبتمبر · الآن">Sep · now</span><b class="mt-1 block text-sm leading-snug" data-ar="اليوم الوطني ولقاح الإنفلونزا">National Day &amp; flu vaccine</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-highlight-500" data-ar="أكتوبر">Oct</span><b class="mt-1 block text-sm leading-snug" data-ar="أكتوبر الوردي">Pink October</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-brand-500" data-ar="نوفمبر">Nov</span><b class="mt-1 block text-sm leading-snug" data-ar="اليوم العالمي للسكري">World Diabetes Day</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-support-500" data-ar="ديسمبر">Dec</span><b class="mt-1 block text-sm leading-snug" data-ar="حملة الشتاء الصحي">Healthy winter campaign</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-highlight-500" data-ar="فبراير">Feb</span><b class="mt-1 block text-sm leading-snug" data-ar="اليوم العالمي للسرطان">World Cancer Day</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-brand-500" data-ar="مارس">Mar</span><b class="mt-1 block text-sm leading-snug" data-ar="اليوم العالمي للكلى">World Kidney Day</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-support-500" data-ar="أبريل">Apr</span><b class="mt-1 block text-sm leading-snug" data-ar="يوم الصحة العالمي">World Health Day</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-highlight-500" data-ar="يونيو">Jun</span><b class="mt-1 block text-sm leading-snug" data-ar="اليوم العالمي للمتبرعين بالدم">World Blood Donor Day</b></div>
+        <div class="w-[150px] shrink-0 snap-start rounded-2xl bg-white p-3.5 dark:bg-white/5"><span class="text-[.7rem] font-bold uppercase text-accent-500" data-ar="أغسطس">Aug</span><b class="mt-1 block text-sm leading-snug" data-ar="أسبوع الرضاعة الطبيعية">World Breastfeeding Week</b></div>
+      </div>
+    </div>
+    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr]">
+      <a class="rv group relative isolate flex min-h-[380px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-br from-support-500 to-support-900 p-7 text-white transition hover:-translate-y-1.5 md:col-span-2 lg:col-span-1 lg:min-h-[440px]" href="#">
+        <span class="mark-bg mark-white absolute -end-16 -top-16 -z-10 h-[300px] w-[300px] opacity-[.18]"></span>
+        <span class="absolute start-6 top-6 rounded-full bg-white/20 px-3.5 py-1.5 text-[.78rem] font-bold backdrop-blur" data-ar="مجانًا">Free</span>
+        <span class="absolute end-6 top-6 rounded-2xl bg-white px-3 py-1.5 text-center leading-tight text-deep-950"><b class="block text-[1.3rem]">24</b><span class="text-[.7rem] uppercase text-slate-500" data-ar="سبتمبر">Sep</span></span>
+        <span class="absolute start-7 top-[90px] grid h-[92px] w-[92px] place-items-center rounded-[28px] bg-white/20"><svg class="ico !h-[46px] !w-[46px] ![stroke-width:1.5]"><use href="#i-lab"/></svg></span>
+        <h3 class="mb-2.5 text-[clamp(1.5rem,2.4vw,2.1rem)] font-bold leading-tight" data-ar="حملة لقاح الإنفلونزا الموسمية">Seasonal flu vaccination campaign</h3><p class="mb-5 text-[.95rem] text-white/90" data-ar="في جميع المراكز الصحية دون موعد مسبق.">At every primary health center, no appointment needed.</p><span class="btn w-fit bg-white text-deep-950" data-ar="اعثر على مركز">Find a center</span></a>
+      <a class="rv group relative isolate flex min-h-[380px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-br from-highlight-500 to-highlight-800 p-7 text-white transition hover:-translate-y-1.5 lg:min-h-[440px]" href="#">
+        <span class="mark-bg mark-white absolute -end-16 -top-16 -z-10 h-[300px] w-[300px] opacity-[.18]"></span>
+        <span class="absolute start-6 top-6 rounded-full bg-white/20 px-3.5 py-1.5 text-[.78rem] font-bold backdrop-blur" data-ar="أكتوبر الوردي">Pink October</span>
+        <span class="absolute end-6 top-6 rounded-2xl bg-white px-3 py-1.5 text-center leading-tight text-deep-950"><b class="block text-[1.3rem]">01</b><span class="text-[.7rem] uppercase text-slate-500" data-ar="أكتوبر">Oct</span></span>
+        <span class="absolute start-7 top-[90px] grid h-[92px] w-[92px] place-items-center rounded-[28px] bg-white/20"><svg class="ico !h-[46px] !w-[46px] ![stroke-width:1.5]"><use href="#i-heart"/></svg></span>
+        <h3 class="mb-2.5 text-[clamp(1.5rem,2.4vw,2.1rem)] font-bold leading-tight" data-ar="الكشف المبكر عن سرطان الثدي">Early breast cancer screening</h3><p class="mb-5 text-[.95rem] text-white/90" data-ar="احجزي فحصك الآن.">Book your screening today.</p><span class="btn w-fit bg-white text-deep-950" data-ar="احجزي">Book now</span></a>
+      <a class="rv group relative isolate flex min-h-[380px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-br from-accent-400 to-[#C9711C] p-7 text-white transition hover:-translate-y-1.5 lg:min-h-[440px]" href="#">
+        <span class="mark-bg mark-white absolute -end-16 -top-16 -z-10 h-[300px] w-[300px] opacity-[.18]"></span>
+        <span class="absolute start-6 top-6 rounded-full bg-white/20 px-3.5 py-1.5 text-[.78rem] font-bold backdrop-blur" data-ar="العودة للمدارس">Back to school</span>
+        <span class="absolute end-6 top-6 rounded-2xl bg-white px-3 py-1.5 text-center leading-tight text-deep-950"><b class="block text-[1.3rem]">09</b><span class="text-[.7rem] uppercase text-slate-500" data-ar="سبتمبر">Sep</span></span>
+        <span class="absolute start-7 top-[90px] grid h-[92px] w-[92px] place-items-center rounded-[28px] bg-white/20"><svg class="ico !h-[46px] !w-[46px] ![stroke-width:1.5]"><use href="#i-baby"/></svg></span>
+        <h3 class="mb-2.5 text-[clamp(1.5rem,2.4vw,2.1rem)] font-bold leading-tight" data-ar="حملة «تعلّم بصحة»">“Learn Healthy” campaign</h3><p class="mb-5 text-[.95rem] text-white/90" data-ar="صحة طلابنا تبدأ من هنا.">Student health starts here.</p><span class="btn w-fit bg-white text-[#7A3E00]" data-ar="اعرف المزيد">Learn more</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- EXCELLENCE -->
+<section class="relative overflow-hidden bg-deep-900 py-16 text-white lg:py-24 dark:bg-deep-950 dark:ring-1 dark:ring-white/5">
+  <div class="mark-bg mark-white absolute -bottom-52 -start-52 h-[600px] w-[600px] opacity-[.05]"></div>
+  <div class="wrap relative">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+      <div><div class="eyebrow !text-brand-300" data-ar="مراكز التميّز">Centers of excellence</div><h2 class="h2 !text-white" data-ar="حيث يلتقي <em class='!text-brand-300'>الخبرة</em> بالتقنية">Where <em class="!text-brand-300">expertise</em> meets technology</h2>
+        <p class="mt-3.5 max-w-[560px] text-[1.05rem] text-on-deep" data-ar="مراكز متخصصة بمعايير عالمية، دون الحاجة للسفر بعيدًا عن المنطقة.">Specialist centers built to international standards, without leaving the region.</p></div>
+      <div class="flex gap-2"><button onclick="rail(-1)" class="grid h-12 w-12 place-items-center rounded-full border border-white/30 hover:bg-white/10" aria-label="Previous"><svg class="ico rotate-180 rtl:rotate-0"><use href="#i-arrow"/></svg></button><button onclick="rail(1)" class="grid h-12 w-12 place-items-center rounded-full border border-white/30 hover:bg-white/10" aria-label="Next"><svg class="ico flip"><use href="#i-arrow"/></svg></button></div>
+    </div>
+    <div id="rail" class="scrollbar-thin grid snap-x snap-mandatory auto-cols-[minmax(280px,1fr)] grid-flow-col gap-5 overflow-x-auto pb-3 sm:auto-cols-[minmax(300px,1fr)]">
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] bg-linear-to-br from-brand-500 to-support-500 p-7 transition hover:-translate-y-1" href="#"><span class="text-[4rem] font-bold leading-none text-white/30">01</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-white/20"><svg class="ico"><use href="#i-heart"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="مركز القلب">Cardiac center</h3><p class="text-[.92rem] text-brand-50" data-ar="من التشخيص إلى القسطرة والجراحة وإعادة التأهيل.">From diagnosis to cath lab, surgery and rehabilitation.</p><span class="font-semibold" data-ar="اكتشف ←">Explore →</span></a>
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[.06] p-7 transition hover:-translate-y-1 hover:bg-white/10" href="#"><span class="text-[4rem] font-bold leading-none text-brand-300/25">02</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-300/15 text-brand-300"><svg class="ico"><use href="#i-onc"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="مركز الأورام">Oncology center</h3><p class="text-[.92rem] text-on-deep" data-ar="فرق متعددة التخصصات وخطة علاج واحدة لكل مريض.">Multidisciplinary teams and one treatment plan per patient.</p><span class="font-semibold text-brand-300" data-ar="اكتشف ←">Explore →</span></a>
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[.06] p-7 transition hover:-translate-y-1 hover:bg-white/10" href="#"><span class="text-[4rem] font-bold leading-none text-brand-300/25">03</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-300/15 text-brand-300"><svg class="ico"><use href="#i-scal"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="الجراحات المتقدمة">Advanced surgery</h3><p class="text-[.92rem] text-on-deep" data-ar="جراحات دقيقة بأحدث التقنيات.">Precision procedures with the latest technology.</p><span class="font-semibold text-brand-300" data-ar="اكتشف ←">Explore →</span></a>
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[.06] p-7 transition hover:-translate-y-1 hover:bg-white/10" href="#"><span class="text-[4rem] font-bold leading-none text-brand-300/25">04</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-300/15 text-brand-300"><svg class="ico"><use href="#i-baby"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="صحة الأم والطفل">Women &amp; children</h3><p class="text-[.92rem] text-on-deep" data-ar="رعاية متكاملة من الحمل حتى الطفولة.">Complete care from pregnancy through childhood.</p><span class="font-semibold text-brand-300" data-ar="اكتشف ←">Explore →</span></a>
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[.06] p-7 transition hover:-translate-y-1 hover:bg-white/10" href="#"><span class="text-[4rem] font-bold leading-none text-brand-300/25">05</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-300/15 text-brand-300"><svg class="ico"><use href="#i-bulb"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="الابتكار والصحة الرقمية">Innovation &amp; digital health</h3><p class="text-[.92rem] text-on-deep" data-ar="رعاية افتراضية ومراقبة عن بُعد وتحليلات ذكية.">Virtual care, remote monitoring and smart analytics.</p><span class="font-semibold text-brand-300" data-ar="اكتشف ←">Explore →</span></a>
+      <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[.06] p-7 transition hover:-translate-y-1 hover:bg-white/10" href="#"><span class="text-[4rem] font-bold leading-none text-brand-300/25">06</span><span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-300/15 text-brand-300"><svg class="ico"><use href="#i-book"/></svg></span><h3 class="mt-auto text-[1.35rem] font-bold" data-ar="البحث والتدريب">Research &amp; training</h3><p class="text-[.92rem] text-on-deep" data-ar="برامج زمالة وأبحاث سريرية بالشراكة مع الجامعات.">Fellowships and clinical research with university partners.</p><span class="font-semibold text-brand-300" data-ar="اكتشف ←">Explore →</span></a>
+    </div>
+  </div>
+</section>
+
+
+<!-- KNOW YOUR NUMBERS (new) -->
+<section class="py-16 lg:py-24">
+  <div class="wrap">
+    <div class="rv mb-10"><div class="eyebrow" data-ar="أدوات صحية">Health tools</div><h2 class="h2" data-ar="اعرف <em>أرقامك</em>">Know your <em>numbers</em></h2>
+      <p class="mt-3.5 max-w-[560px] text-[1.05rem] text-slate-600 dark:text-slate-400" data-ar="أدوات سريعة تساعدك على فهم صحتك، ومتى تحتاج إلى زيارة طبيبك.">Quick tools to understand your health, and when it's time to see your doctor.</p></div>
+    <div class="grid gap-5 lg:grid-cols-[1.25fr_.75fr]">
+      <div class="rv card p-6 sm:p-8">
+        <div class="mb-6 flex items-center gap-3"><span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico"><use href="#i-target"/></svg></span><div><b class="block text-lg" data-ar="حاسبة مؤشر كتلة الجسم">Body mass index (BMI)</b><span class="text-sm text-slate-500 dark:text-slate-400" data-ar="للبالغين فوق ١٨ عامًا">For adults over 18</span></div></div>
+        <div class="grid gap-8 sm:grid-cols-2">
+          <div class="grid gap-6">
+            <label class="block"><span class="mb-2 flex justify-between text-sm font-semibold"><span data-ar="الطول">Height</span><span><b id="hV">170</b> <span data-ar="سم">cm</span></span></span><input id="hIn" type="range" min="140" max="210" value="170" class="w-full accent-brand-500"></label>
+            <label class="block"><span class="mb-2 flex justify-between text-sm font-semibold"><span data-ar="الوزن">Weight</span><span><b id="wV">72</b> <span data-ar="كجم">kg</span></span></span><input id="wIn" type="range" min="40" max="160" value="72" class="w-full accent-brand-500"></label>
+          </div>
+          <div class="rounded-2xl bg-soft p-5 text-center dark:bg-white/5">
+            <span class="text-sm text-slate-500 dark:text-slate-400" data-ar="مؤشرك">Your BMI</span>
+            <b id="bmiV" class="block text-[3.2rem] font-extrabold leading-none text-deep-900 dark:text-white">24.9</b>
+            <span id="bmiC" class="mt-2 inline-block rounded-full px-3 py-1 text-sm font-bold"></span>
+          </div>
+        </div>
+        <div class="relative mt-8" dir="ltr">
+          <div class="flex h-3 overflow-hidden rounded-full"><i class="w-[14%] bg-brand-300"></i><i class="w-[26%] bg-emerald-500"></i><i class="w-[20%] bg-accent-400"></i><i class="w-[40%] bg-highlight-500"></i></div>
+          <span id="bmiM" class="absolute -top-1.5 h-6 w-6 -translate-x-1/2 rounded-full border-4 border-white bg-deep-900 shadow-soft transition-all duration-300 dark:border-night-900 dark:bg-white" style="left:50%"></span>
+          <div class="mt-2 flex justify-between text-[.7rem] text-slate-500"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+        </div>
+        <p id="bmiTip" class="mt-5 text-sm text-slate-600 dark:text-slate-300"></p>
+        <div class="mt-5 flex flex-wrap gap-3"><a href="#" class="btn btn-primary !py-2.5 text-sm" data-ar="احجز استشارة تغذية">Book a nutrition consult</a><a href="#" class="btn btn-ghost !py-2.5 text-sm" data-ar="برامج نمط الحياة الصحي">Healthy lifestyle programs</a></div>
+      </div>
+      <div class="grid gap-5">
+        <div class="rv rounded-[22px] bg-deep-900 p-6 text-white dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20"><span class="text-xs font-bold uppercase tracking-widest text-brand-300 rtl:tracking-normal" data-ar="ضغط الدم">Blood pressure</span><b class="mt-2 block text-[2.4rem] font-extrabold leading-none">&lt;120/80</b><span class="mt-1 block text-sm text-brand-100" data-ar="القراءة الطبيعية للبالغين (ملم زئبق)">Normal adult reading (mmHg)</span><a href="#" class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-300"><span data-ar="افحص ضغطك مجانًا">Get a free BP check</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></a></div>
+        <div class="rv rounded-[22px] bg-soft p-6 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><span class="text-xs font-bold uppercase tracking-widest text-support-500 rtl:tracking-normal dark:text-support-300" data-ar="سكر الدم الصائم">Fasting blood sugar</span><b class="mt-2 block text-[2.4rem] font-extrabold leading-none text-deep-900 dark:text-white">&lt;100</b><span class="mt-1 block text-sm text-slate-500 dark:text-slate-400" data-ar="القراءة الطبيعية (ملغم/دل)">Normal reading (mg/dL)</span><a href="#" class="link mt-4 text-sm"><span data-ar="فحص السكري">Diabetes screening</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></a></div>
+        <p class="text-[.72rem] text-slate-500" data-ar="قيم مرجعية عامة وليست تشخيصًا. استشر طبيبك.">General reference values, not a diagnosis. Talk to your doctor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section class="py-16 lg:py-24">
+  <div class="wrap">
+    <div class="rv mb-11"><div class="eyebrow" data-ar="قصص مرضانا">Patient stories</div><h2 class="h2" data-ar="قصص <em>تُلهمنا</em> كل يوم">Stories that <em>move us</em> every day</h2></div>
+    <div class="grid gap-7 lg:grid-cols-2">
+      <a class="rv relative flex min-h-[380px] items-end overflow-hidden rounded-[22px] bg-linear-to-br from-brand-400 to-deep-900 p-7 text-white lg:min-h-[440px]" href="#">
+        <span class="mark-bg mark-white absolute -end-20 -top-20 h-[460px] w-[460px] opacity-[.12]"></span>
+        <span class="absolute left-1/2 top-1/2 grid h-24 w-24 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-brand-500 shadow-[0_0_0_14px_rgba(255,255,255,.18),0_0_0_28px_rgba(255,255,255,.08)]"><svg class="ico !h-[34px] !w-[34px]"><use href="#i-play"/></svg></span>
+        <div class="relative"><b class="block text-[1.3rem]" data-ar="«عدتُ أمشي من جديد»">“I walked again”</b><span class="text-[.88rem] text-brand-100" data-ar="قصة مريض · مجمع الدمام الطبي · 2:40">Patient story · Dammam Medical Complex · 2:40</span></div>
+      </a>
+      <div class="flex flex-col gap-4">
+        <div class="rv relative flex-1 rounded-[22px] bg-soft p-7 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><span class="absolute -top-1.5 end-6 font-serif text-[6rem] leading-none text-brand-100 dark:text-brand-500/20">“</span><div class="mb-2.5 text-[.9rem] tracking-[2px] text-accent-400">★★★★★</div><p class="relative mb-4 text-[1.1rem] font-medium text-deep-900 dark:text-white" data-ar="«استقبال راقٍ ومتابعة دقيقة. شعرت أنني بين أهلي.»">“Warm welcome and careful follow-up. I felt like I was among family.”</p><div class="flex items-center gap-3 text-[.85rem] text-slate-500 dark:text-slate-400"><i class="grid h-10 w-10 place-items-center rounded-full bg-brand-500 font-bold not-italic text-white">م</i><span data-ar="مراجع · مستشفى الولادة والأطفال (اقتباس توضيحي)">Visitor · Maternity &amp; Children's Hospital (illustrative)</span></div></div>
+        <div class="rv relative flex-1 rounded-[22px] bg-soft p-7 dark:bg-night-900 dark:ring-1 dark:ring-white/10"><span class="absolute -top-1.5 end-6 font-serif text-[6rem] leading-none text-brand-100 dark:text-brand-500/20">“</span><div class="mb-2.5 text-[.9rem] tracking-[2px] text-accent-400">★★★★★</div><p class="relative mb-4 text-[1.1rem] font-medium text-deep-900 dark:text-white" data-ar="«حجزت عبر صحتي وخلال أيام كنت عند الاستشاري.»">“I booked through Sehhaty and saw the consultant within days.”</p><div class="flex items-center gap-3 text-[.85rem] text-slate-500 dark:text-slate-400"><i class="grid h-10 w-10 place-items-center rounded-full bg-support-500 font-bold not-italic text-white">ع</i><span data-ar="مريض · عيادات القلب (اقتباس توضيحي)">Patient · Cardiology clinics (illustrative)</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APP PROMO -->
+<section class="pb-16 lg:pb-24">
+  <div class="wrap">
+    <div class="rv relative grid gap-10 overflow-hidden rounded-[26px] bg-linear-to-br from-brand-500 via-brand-700 to-deep-900 px-6 py-9 text-white sm:px-11 sm:py-11 lg:grid-cols-[1.1fr_.9fr] lg:rounded-[36px] lg:p-16 dark:from-deep-800 dark:via-deep-900 dark:to-night-950 dark:ring-1 dark:ring-white/10">
+      <div>
+        <div class="eyebrow !text-white" data-ar="تطبيق صحتي">Sehhaty app</div>
+        <h2 class="h2 !text-white" data-ar="مستشفاك<br>في جيبك.">Your hospital,<br>in your pocket.</h2>
+        <p class="mb-6 mt-4 max-w-[480px] text-[1.05rem] text-brand-50" data-ar="احجز مواعيدك، اطّلع على نتائجك ووصفاتك، واستشر طبيبك افتراضيًا، في أي وقت ومن أي مكان.">Book appointments, see your results and prescriptions, and consult your doctor virtually, anytime, anywhere.</p>
+        <ul class="mb-8 grid gap-3">
+          <li class="flex items-center gap-3"><i class="grid h-7 w-7 place-items-center rounded-full bg-white/20 text-[.8rem] not-italic">✓</i><span data-ar="حجز وإعادة جدولة خلال ثوانٍ">Book and reschedule in seconds</span></li>
+          <li class="flex items-center gap-3"><i class="grid h-7 w-7 place-items-center rounded-full bg-white/20 text-[.8rem] not-italic">✓</i><span data-ar="نتائج المختبر والأشعة فور صدورها">Lab and radiology results as soon as they're ready</span></li>
+          <li class="flex items-center gap-3"><i class="grid h-7 w-7 place-items-center rounded-full bg-white/20 text-[.8rem] not-italic">✓</i><span data-ar="استشارات افتراضية مع أطبائنا">Virtual consultations with our doctors</span></li>
+        </ul>
+        <div class="flex flex-wrap gap-3"><a class="flex items-center gap-2.5 rounded-2xl bg-night-950 px-4.5 px-5 py-2.5 leading-tight" href="#"><svg class="ico"><use href="#i-app"/></svg><span><small class="block text-[.68rem] opacity-75" data-ar="حمّله من">Download on the</small><b>App Store</b></span></a><a class="flex items-center gap-2.5 rounded-2xl bg-night-950 px-5 py-2.5 leading-tight" href="#"><svg class="ico"><use href="#i-app"/></svg><span><small class="block text-[.68rem] opacity-75" data-ar="متوفر على">Get it on</small><b>Google Play</b></span></a></div>
+      </div>
+      <div class="relative hidden place-items-center lg:grid" aria-hidden="true">
+        <div class="absolute end-0 top-10 z-10 flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-[.8rem] text-deep-950 shadow-[0_16px_30px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span><span data-ar="نتيجة التحليل جاهزة">Your lab result is ready</span></div>
+        <div class="relative h-[540px] w-[270px] -rotate-6 rounded-[44px] bg-night-950 p-3 shadow-[0_40px_80px_rgba(0,0,0,.35)] rtl:rotate-6">
+          <div class="flex h-full flex-col overflow-hidden rounded-[34px] bg-soft text-deep-950 dark:bg-night-900 dark:text-white">
+            <div class="bg-brand-500 px-[18px] pb-[22px] pt-[34px] text-white"><small class="text-[.72rem] opacity-85" data-ar="مرحبًا">Good morning</small><b class="block text-[1.05rem]" data-ar="موعدك القادم">Your next visit</b></div>
+            <div class="mx-3.5 -mt-3.5 mb-2.5 rounded-2xl bg-white p-3.5 text-[.78rem] shadow-[0_6px_16px_rgba(10,42,79,.1)] dark:bg-deep-900"><div class="flex justify-between text-slate-500 dark:text-slate-400"><span data-ar="طب الأسرة">Family medicine</span><span class="font-bold text-emerald-600 dark:text-emerald-400" data-ar="مؤكد">Confirmed</span></div><b class="my-1 block text-[.88rem]" data-ar="الأحد، ١٠:٣٠ صباحًا">Sunday, 10:30 AM</b><span class="text-slate-500 dark:text-slate-400" data-ar="مركز صحي (اسم المركز)">Health center (name)</span></div>
+            <div class="grid grid-cols-2 gap-2 px-3.5 text-[.72rem] font-semibold">
+              <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-cal"/></svg><span data-ar="المواعيد">Appointments</span></div>
+              <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-lab"/></svg><span data-ar="النتائج">Results</span></div>
+              <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-note"/></svg><span data-ar="الوصفات">Prescriptions</span></div>
+              <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-chat"/></svg><span data-ar="استشارة">Consult</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="absolute bottom-[60px] start-0 z-10 flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-[.8rem] text-deep-950 shadow-[0_16px_30px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white"><svg class="ico text-brand-500"><use href="#i-cal"/></svg><span data-ar="تذكير: موعدك غدًا">Reminder: visit tomorrow</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCTORS -->
+<section class="pb-16 lg:pb-24">
+  <div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6"><div><div class="eyebrow" data-ar="أطباؤنا">Our doctors</div><h2 class="h2" data-ar="نخبة من <em>الاستشاريين</em>">Meet our <em>consultants</em></h2><p class="mt-3.5 max-w-[560px] text-[1.05rem] text-slate-600 dark:text-slate-400" data-ar="ابحث حسب التخصص أو المنشأة أو اللغة، واحجز مباشرة.">Search by specialty, facility or language, then book directly.</p></div><a class="link" href="#"><span data-ar="دليل الأطباء">Doctor directory</span><svg class="ico flip"><use href="#i-arrow"/></svg></a></div>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rv relative isolate flex min-h-[360px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-b from-brand-400 to-deep-900 text-white"><span class="absolute start-4 top-4 rounded-full bg-white/20 px-2.5 py-1 text-[.72rem] font-semibold">AR · EN</span><div class="absolute inset-0 -z-10 grid place-items-center pb-28"><span class="grid h-[120px] w-[120px] place-items-center rounded-full border-2 border-white/40 bg-white/20 text-[2.2rem] font-bold">DN</span></div><div class="bg-linear-to-b from-transparent to-black/35 p-5"><b class="block text-[1.1rem]" data-ar="د. اسم الطبيب">Dr. Doctor Name</b><span class="text-[.85rem] opacity-90" data-ar="استشاري جراحة القلب">Cardiac surgery consultant</span><div class="mt-3.5 flex gap-2"><a href="#" class="flex-1 rounded-full bg-white py-2 text-center text-[.85rem] font-semibold text-deep-950" data-ar="احجز">Book</a><a href="#" class="flex-1 rounded-full border border-white/50 py-2 text-center text-[.85rem] font-semibold" data-ar="الملف">Profile</a></div></div></div>
+      <div class="rv relative isolate flex min-h-[360px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-b from-support-400 to-support-900 text-white"><span class="absolute start-4 top-4 rounded-full bg-white/20 px-2.5 py-1 text-[.72rem] font-semibold">AR · EN</span><div class="absolute inset-0 -z-10 grid place-items-center pb-28"><span class="grid h-[120px] w-[120px] place-items-center rounded-full border-2 border-white/40 bg-white/20 text-[2.2rem] font-bold">DN</span></div><div class="bg-linear-to-b from-transparent to-black/35 p-5"><b class="block text-[1.1rem]" data-ar="د. اسم الطبيبة">Dr. Doctor Name</b><span class="text-[.85rem] opacity-90" data-ar="استشارية طب الأطفال">Pediatrics consultant</span><div class="mt-3.5 flex gap-2"><a href="#" class="flex-1 rounded-full bg-white py-2 text-center text-[.85rem] font-semibold text-deep-950" data-ar="احجز">Book</a><a href="#" class="flex-1 rounded-full border border-white/50 py-2 text-center text-[.85rem] font-semibold" data-ar="الملف">Profile</a></div></div></div>
+      <div class="rv relative isolate flex min-h-[360px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-b from-[#5B8DEF] to-[#1B2F6B] text-white"><span class="absolute start-4 top-4 rounded-full bg-white/20 px-2.5 py-1 text-[.72rem] font-semibold">AR · EN</span><div class="absolute inset-0 -z-10 grid place-items-center pb-28"><span class="grid h-[120px] w-[120px] place-items-center rounded-full border-2 border-white/40 bg-white/20 text-[2.2rem] font-bold">DN</span></div><div class="bg-linear-to-b from-transparent to-black/35 p-5"><b class="block text-[1.1rem]" data-ar="د. اسم الطبيب">Dr. Doctor Name</b><span class="text-[.85rem] opacity-90" data-ar="استشاري جراحة العظام">Orthopedic surgery consultant</span><div class="mt-3.5 flex gap-2"><a href="#" class="flex-1 rounded-full bg-white py-2 text-center text-[.85rem] font-semibold text-deep-950" data-ar="احجز">Book</a><a href="#" class="flex-1 rounded-full border border-white/50 py-2 text-center text-[.85rem] font-semibold" data-ar="الملف">Profile</a></div></div></div>
+      <div class="rv relative isolate flex min-h-[360px] flex-col justify-end overflow-hidden rounded-[22px] bg-linear-to-b from-[#E88AA5] to-[#6B1E47] text-white"><span class="absolute start-4 top-4 rounded-full bg-white/20 px-2.5 py-1 text-[.72rem] font-semibold">AR · EN</span><div class="absolute inset-0 -z-10 grid place-items-center pb-28"><span class="grid h-[120px] w-[120px] place-items-center rounded-full border-2 border-white/40 bg-white/20 text-[2.2rem] font-bold">DN</span></div><div class="bg-linear-to-b from-transparent to-black/35 p-5"><b class="block text-[1.1rem]" data-ar="د. اسم الطبيبة">Dr. Doctor Name</b><span class="text-[.85rem] opacity-90" data-ar="استشارية طب العيون">Ophthalmology consultant</span><div class="mt-3.5 flex gap-2"><a href="#" class="flex-1 rounded-full bg-white py-2 text-center text-[.85rem] font-semibold text-deep-950" data-ar="احجز">Book</a><a href="#" class="flex-1 rounded-full border border-white/50 py-2 text-center text-[.85rem] font-semibold" data-ar="الملف">Profile</a></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section class="pb-16 lg:pb-24">
+  <div class="wrap">
+    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6"><div><div class="eyebrow" data-ar="المركز الإعلامي">Newsroom</div><h2 class="h2" data-ar="آخر <em>الأخبار</em>">Latest <em>news</em></h2></div><a class="link" href="#"><span data-ar="كل الأخبار">All news</span><svg class="ico flip"><use href="#i-arrow"/></svg></a></div>
+    <div class="grid gap-5 md:grid-cols-3">
+      <a class="rv card overflow-hidden transition hover:-translate-y-1 hover:shadow-soft" href="#"><div class="relative aspect-video overflow-hidden bg-linear-to-br from-deep-800 to-brand-400"><span class="mark-bg mark-white absolute -bottom-16 -end-10 h-56 w-56 opacity-20"></span></div><div class="p-5"><div class="flex items-center gap-2 text-[.78rem] text-slate-500 dark:text-slate-400"><span class="rounded-full bg-brand-50 px-2.5 py-0.5 text-[.72rem] font-bold text-brand-500 dark:bg-brand-500/15 dark:text-brand-300" data-ar="خدمات جديدة">New service</span><span data-ar="سبتمبر 2026">Sep 2026</span></div><h3 class="mt-2.5 text-[1.08rem] font-bold leading-snug text-deep-900 dark:text-white" data-ar="مجمع الدمام الطبي يفتتح مختبرًا لاضطرابات النوم">Dammam Medical Complex opens a sleep disorders laboratory</h3></div></a>
+      <a class="rv card overflow-hidden transition hover:-translate-y-1 hover:shadow-soft" href="#"><div class="relative aspect-video overflow-hidden bg-linear-to-br from-highlight-800 to-highlight-500"><span class="mark-bg mark-white absolute -bottom-16 -end-10 h-56 w-56 opacity-20"></span></div><div class="p-5"><div class="flex items-center gap-2 text-[.78rem] text-slate-500 dark:text-slate-400"><span class="rounded-full bg-brand-50 px-2.5 py-0.5 text-[.72rem] font-bold text-brand-500 dark:bg-brand-500/15 dark:text-brand-300" data-ar="إنجازات">Awards</span><span data-ar="سبتمبر 2026">Sep 2026</span></div><h3 class="mt-2.5 text-[1.08rem] font-bold leading-snug text-deep-900 dark:text-white" data-ar="مستشفى الملك فهد التخصصي يحصد جوائز من جمعية القلب الأمريكية">King Fahad Specialist Hospital earns American Heart Association awards</h3></div></a>
+      <a class="rv card overflow-hidden transition hover:-translate-y-1 hover:shadow-soft" href="#"><div class="relative aspect-video overflow-hidden bg-linear-to-br from-support-900 to-support-500"><span class="mark-bg mark-white absolute -bottom-16 -end-10 h-56 w-56 opacity-20"></span></div><div class="p-5"><div class="flex items-center gap-2 text-[.78rem] text-slate-500 dark:text-slate-400"><span class="rounded-full bg-brand-50 px-2.5 py-0.5 text-[.72rem] font-bold text-brand-500 dark:bg-brand-500/15 dark:text-brand-300" data-ar="مؤتمرات">Conference</span><span data-ar="سبتمبر 2026">Sep 2026</span></div><h3 class="mt-2.5 text-[1.08rem] font-bold leading-snug text-deep-900 dark:text-white" data-ar="التجمع ينظم المؤتمر الدولي الثاني لأمراض الدم">EHC hosts the 2nd International Hematology Conference</h3></div></a>
+    </div>
+  </div>
+</section>
+
+
+<!-- CAREERS + VOLUNTEER (new) -->
+<section class="pb-4">
+  <div class="wrap grid gap-5 md:grid-cols-2">
+    <a href="#" class="rv group relative overflow-hidden rounded-[26px] bg-linear-to-br from-deep-900 to-deep-700 p-8 text-white dark:from-deep-950 dark:to-deep-800 dark:ring-1 dark:ring-white/10">
+      <span class="mark-bg mark-white absolute -bottom-20 -end-20 h-72 w-72 opacity-10 transition duration-700 group-hover:rotate-45"></span>
+      <span class="text-xs font-bold uppercase tracking-widest text-brand-300 rtl:tracking-normal" data-ar="الوظائف">Careers</span>
+      <b class="mt-2 block max-w-sm text-[1.8rem] leading-tight" data-ar="اصنع أثرًا في حياة الملايين">Make a difference to millions of lives</b>
+      <p class="mt-2 max-w-sm text-brand-100" data-ar="انضم إلى أكبر فريق رعاية صحية في المنطقة الشرقية.">Join the Eastern Province's largest healthcare team.</p>
+      <span class="btn btn-sand mt-6 !py-2.5 text-sm"><span data-ar="تصفح الوظائف">Browse open roles</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></span>
+    </a>
+    <a href="#" class="rv group relative overflow-hidden rounded-[26px] bg-linear-to-br from-support-500 to-support-800 p-8 text-white dark:ring-1 dark:ring-white/10">
+      <span class="mark-bg mark-white absolute -bottom-20 -end-20 h-72 w-72 opacity-10 transition duration-700 group-hover:rotate-45"></span>
+      <span class="text-xs font-bold uppercase tracking-widest text-support-300 rtl:tracking-normal" data-ar="التطوع">Volunteering</span>
+      <b class="mt-2 block max-w-sm text-[1.8rem] leading-tight" data-ar="ساعة من وقتك تصنع فرقًا">One hour of your time makes a difference</b>
+      <p class="mt-2 max-w-sm text-white/85" data-ar="تطوّع في حملاتنا ومنشآتنا عبر المنصة الوطنية للعمل التطوعي.">Volunteer at our campaigns and facilities through the national volunteering platform.</p>
+      <span class="btn mt-6 bg-white !py-2.5 text-sm text-support-800"><span data-ar="سجّل كمتطوع">Sign up to volunteer</span><svg class="ico flip !h-4 !w-4"><use href="#i-arrow"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<div class="wrap mt-16"><div class="flex flex-wrap items-center justify-center gap-7 border-y border-slate-200 py-10 text-base font-bold tracking-[.06em] text-slate-400 dark:border-white/10 dark:text-slate-500"><span class="tracking-normal text-deep-900 dark:text-white" data-ar="معتمدون من">Accredited by</span><span>CBAHI</span><span>CAP</span><span>HIMSS</span><span>AHA</span></div></div>
+
+<!-- FINAL CTA -->
+<section class="relative overflow-hidden py-28 text-center">
+  <div class="mark-bg anim-spin-slow absolute left-[calc(50%-260px)] top-[calc(50%-260px)] h-[520px] w-[520px] opacity-[.07] dark:opacity-[.1]"></div>
+  <div class="wrap relative">
+    <h2 class="h2 rv !text-[clamp(2.2rem,5vw,4rem)]" data-ar="موعدك القادم<br><em>على بُعد دقيقة.</em>">Your next appointment<br><em>is a minute away.</em></h2>
+    <p class="rv mx-auto mb-8 mt-4 max-w-[560px] text-[1.1rem] text-slate-600 dark:text-slate-400" data-ar="احجز عبر صحتي أو اتصل على 937. ونحن هنا دائمًا في الحالات الطارئة.">Book through Sehhaty or call 937. And we're always here in an emergency.</p>
+    <div class="rv flex flex-wrap justify-center gap-3"><a class="btn btn-primary btn-lg" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجز الآن">Book now</span></a><a class="btn btn-ghost btn-lg" href="tel:937"><svg class="ico"><use href="#i-phone"/></svg><span data-ar="اتصل 937">Call 937</span></a></div>
+  </div>
+</section>
+</main>
+
+<footer class="bg-deep-900 pb-6 pt-16 text-[.9rem] text-on-deep dark:border-t dark:border-white/10 dark:bg-night-950">
+  <div class="wrap">
+    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div>
+        <a href="#"><img class="lg-en h-14 brightness-0 invert" src="../dist/img/logo-en.png" alt="Eastern Health Cluster"><img class="lg-ar hidden h-14 brightness-0 invert" src="../dist/img/logo-ar.png" alt="تجمع الشرقية الصحي"></a>
+        <div class="mt-5 grid gap-2.5">
+          <a href="#" class="flex items-center gap-2 hover:text-white"><svg class="ico !h-[18px] !w-[18px]"><use href="#i-pin"/></svg><span data-ar="الدمام، المنطقة الشرقية، المملكة العربية السعودية">Dammam, Eastern Province, Saudi Arabia</span></a>
+          <a href="#" class="flex items-center gap-2 hover:text-white"><svg class="ico !h-[18px] !w-[18px]"><use href="#i-phone"/></svg>920022231</a>
+          <a href="#" class="flex items-center gap-2 hover:text-white"><svg class="ico !h-[18px] !w-[18px]"><use href="#i-mail"/></svg>info@ehc.med.sa</a>
+        </div>
+      </div>
+      <div><h4 class="mb-3.5 font-semibold text-white" data-ar="المرضى والزوار">Patients &amp; visitors</h4><ul class="grid gap-2"><li><a href="#" class="hover:text-white" data-ar="احجز موعدًا">Book appointment</a></li><li><a href="#" class="hover:text-white" data-ar="ابحث عن طبيب">Find a doctor</a></li><li><a href="#facilities" class="hover:text-white" data-ar="المنشآت">Facilities</a></li><li><a href="#" class="hover:text-white" data-ar="حقوق المرضى">Patient rights</a></li><li><a href="#" class="hover:text-white" data-ar="الموسوعة الصحية">Health encyclopedia</a></li></ul></div>
+      <div><h4 class="mb-3.5 font-semibold text-white" data-ar="عن التجمع">About EHC</h4><ul class="grid gap-2"><li><a href="#" class="hover:text-white" data-ar="من نحن">Who we are</a></li><li><a href="#" class="hover:text-white" data-ar="الحملات">Campaigns</a></li><li><a href="#" class="hover:text-white" data-ar="الوظائف">Careers</a></li><li><a href="#" class="hover:text-white" data-ar="البحث والتدريب">Research &amp; training</a></li><li><a href="#" class="hover:text-white" data-ar="البلاغات والنزاهة">Whistleblowing &amp; integrity</a></li></ul></div>
+      <div><h4 class="mb-3.5 font-semibold text-white" data-ar="روابط مهمة">Important links</h4><ul class="grid gap-2"><li><a href="#" class="hover:text-white" data-ar="وزارة الصحة">Ministry of Health</a></li><li><a href="#" class="hover:text-white" data-ar="الصحة القابضة">Health Holding</a></li><li><a href="#" class="hover:text-white" data-ar="المنصة الوطنية الموحدة">Unified National Platform</a></li><li><a href="#" class="hover:text-white" data-ar="هيئة الهلال الأحمر السعودي">Saudi Red Crescent Authority</a></li><li><a href="#" class="hover:text-white" data-ar="الهيئة السعودية للتخصصات الصحية">Saudi Commission for Health Specialties</a></li></ul></div>
+    </div>
+    <div class="mt-10 flex flex-wrap justify-between gap-4 border-t border-white/10 pt-5 text-[.8rem]"><span data-ar="© 2026 تجمع الشرقية الصحي. جميع الحقوق محفوظة.">© 2026 Eastern Health Cluster. All rights reserved.</span><span><a href="#" class="hover:text-white" data-ar="سياسة الخصوصية">Privacy</a> · <a href="#" class="hover:text-white" data-ar="الشروط">Terms</a> · <a href="#" class="hover:text-white" data-ar="إمكانية الوصول">Accessibility</a></span></div>
+  </div>
+</footer>
+
+<nav class="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t border-slate-200 bg-white shadow-[0_-8px_24px_rgba(10,42,79,.08)] sm:hidden dark:border-white/10 dark:bg-night-900" aria-label="Quick actions">
+  <a class="flex flex-col items-center gap-0.5 px-1 py-2.5 text-[.72rem] font-semibold text-emerg-600 dark:text-red-300" href="tel:997"><svg class="ico"><use href="#i-er"/></svg><span data-ar="طوارئ">Emergency</span></a>
+  <a class="flex flex-col items-center gap-0.5 px-1 py-2.5 text-[.72rem] font-semibold text-brand-500 dark:text-brand-300" href="#"><svg class="ico"><use href="#i-cal"/></svg><span data-ar="احجز">Book</span></a>
+  <a class="flex flex-col items-center gap-0.5 px-1 py-2.5 text-[.72rem] font-semibold text-slate-600 dark:text-slate-300" href="#facilities"><svg class="ico"><use href="#i-pin"/></svg><span data-ar="الأقرب">Nearest</span></a>
+</nav>
+<div class="h-[68px] sm:hidden"></div>
+
+
+<!-- SEARCH PALETTE (new) -->
+<div id="search" class="fixed inset-0 z-[90] hidden" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="absolute inset-0 bg-deep-950/60 backdrop-blur-sm" onclick="searchUi(false)"></div>
+  <div class="relative mx-auto mt-[8vh] w-[min(680px,calc(100%-32px))] overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_rgba(0,0,0,.35)] dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+    <label class="flex items-center gap-3 border-b border-slate-200 px-5 dark:border-white/10"><svg class="ico text-brand-500"><use href="#i-search"/></svg><span class="sr-only">Search</span><input id="sIn" type="text" autocomplete="off" class="h-16 min-w-0 flex-1 bg-transparent text-lg outline-hidden placeholder:text-slate-400" placeholder="Search doctors, specialties, facilities, services…" data-ar-ph="ابحث عن طبيب، تخصص، منشأة، خدمة…"><kbd class="rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-400 dark:border-white/15">Esc</kbd></label>
+    <div id="sRes" class="max-h-[60vh] overflow-y-auto p-3">
+      <p class="s-h px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="اقتراحات">Suggested</p>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="book appointment احجز موعد"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-cal"/></svg></span><span class="flex-1" data-ar="احجز موعدًا">Book an appointment</span><span class="text-xs text-slate-400" data-ar="إجراء">Action</span></a>
+      <a href="#facilities" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="emergency er nearest طوارئ أقرب"><span class="mega-ic !h-9 !w-9 !bg-emerg-50 !text-emerg-600 dark:!bg-emerg-500/15 dark:!text-red-300"><svg class="ico"><use href="#i-er"/></svg></span><span class="flex-1" data-ar="أقرب قسم طوارئ">Nearest emergency room</span><span class="text-xs text-slate-400" data-ar="منشأة">Facility</span></a>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="flu vaccine influenza لقاح الإنفلونزا تطعيم"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-shield"/></svg></span><span class="flex-1" data-ar="لقاح الإنفلونزا">Flu vaccine</span><span class="text-xs text-slate-400" data-ar="حملة">Campaign</span></a>
+      <p class="s-h px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="التخصصات">Specialties</p>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="cardiology heart قلب"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-heart"/></svg></span><span class="flex-1" data-ar="أمراض القلب">Cardiology</span><span class="text-xs text-slate-400" data-ar="تخصص">Specialty</span></a>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="pediatrics children child أطفال"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-baby"/></svg></span><span class="flex-1" data-ar="طب الأطفال">Pediatrics</span><span class="text-xs text-slate-400" data-ar="تخصص">Specialty</span></a>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="ophthalmology eye عيون"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-eye"/></svg></span><span class="flex-1" data-ar="طب العيون">Ophthalmology</span><span class="text-xs text-slate-400" data-ar="تخصص">Specialty</span></a>
+      <p class="s-h px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" data-ar="المنشآت">Facilities</p>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="dammam medical complex hospital مجمع الدمام الطبي مستشفى"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-hosp"/></svg></span><span class="flex-1" data-ar="مجمع الدمام الطبي">Dammam Medical Complex</span><span class="text-xs text-slate-400" data-ar="مستشفى">Hospital</span></a>
+      <a href="#" class="s-i flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 dark:hover:bg-white/5" data-k="king fahad specialist hospital الملك فهد التخصصي مستشفى"><span class="mega-ic !h-9 !w-9"><svg class="ico"><use href="#i-hosp"/></svg></span><span class="flex-1" data-ar="مستشفى الملك فهد التخصصي">King Fahad Specialist Hospital</span><span class="text-xs text-slate-400" data-ar="مستشفى">Hospital</span></a>
+      <p id="sNone" class="hidden px-3 py-8 text-center text-slate-500" data-ar="لا نتائج. جرّب كلمة أخرى أو اتصل على 937.">No results. Try another word, or call 937.</p>
+    </div>
+    <div class="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-xs text-slate-400 dark:border-white/10"><span data-ar="نتائج توضيحية">Illustrative results</span><span><kbd class="rounded border border-slate-200 px-1 dark:border-white/15">Ctrl</kbd> + <kbd class="rounded border border-slate-200 px-1 dark:border-white/15">K</kbd></span></div>
+  </div>
+</div>
+
+<!-- ASK EHC ASSISTANT (new) -->
+<button id="chatBtn" onclick="chat(true)" class="fixed bottom-[84px] end-5 z-[60] flex items-center gap-2.5 rounded-full bg-brand-500 p-2 sm:pe-5 font-bold text-white shadow-[0_14px_34px_rgba(36,144,204,.45)] transition hover:bg-brand-600 sm:bottom-6" aria-label="Ask EHC">
+  <span class="grid h-10 w-10 place-items-center rounded-full bg-white"><img src="../dist/img/mark.png" alt="" class="h-7 w-7"></span><span class="hidden sm:inline" data-ar="اسأل التجمع">Ask EHC</span>
+</button>
+<div id="chatBox" class="invisible fixed bottom-[84px] end-5 z-[75] flex h-[min(560px,calc(100vh-120px))] w-[min(380px,calc(100%-40px))] translate-y-4 flex-col overflow-hidden rounded-3xl bg-white opacity-0 shadow-[0_30px_80px_rgba(0,0,0,.3)] transition-all duration-300 sm:bottom-6 [&.open]:visible [&.open]:translate-y-0 [&.open]:opacity-100 dark:bg-night-900 dark:ring-1 dark:ring-white/10" role="dialog" aria-label="Ask EHC assistant">
+  <div class="flex items-center gap-3 bg-linear-to-br from-brand-500 to-deep-900 p-4 text-white">
+    <span class="grid h-10 w-10 place-items-center rounded-full bg-white"><img src="../dist/img/mark.png" alt="" class="h-7 w-7"></span>
+    <div class="flex-1"><b class="block leading-tight" data-ar="مساعد التجمع">EHC assistant</b><span class="flex items-center gap-1.5 text-xs text-white/80"><i class="h-2 w-2 rounded-full bg-emerald-400"></i><span data-ar="متصل · ردود تجريبية">Online · demo replies</span></span></div>
+    <button onclick="chat(false)" class="grid h-9 w-9 place-items-center rounded-full bg-white/15" aria-label="Close"><svg class="ico !h-5 !w-5"><use href="#i-x"/></svg></button>
+  </div>
+  <div id="chatLog" class="flex flex-1 flex-col gap-3 overflow-y-auto p-4 text-sm"></div>
+  <div id="chatQs" class="flex flex-wrap gap-2 border-t border-slate-200 p-3 dark:border-white/10"></div>
+  <form id="chatForm" class="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-white/10"><input id="chatIn" class="h-11 min-w-0 flex-1 rounded-full border border-slate-200 bg-transparent px-4 text-sm outline-hidden focus:border-brand-500 dark:border-white/15" placeholder="Type your question…" data-ar-ph="اكتب سؤالك…"><button class="grid h-11 w-11 place-items-center rounded-full bg-brand-500 text-white" aria-label="Send"><svg class="ico flip !h-5 !w-5"><use href="#i-arrow"/></svg></button></form>
+</div>
+
+<!-- Design notes -->
+<button onclick="notes(true)" class="fixed bottom-[84px] start-5 z-[60] flex items-center gap-2 rounded-full bg-accent-400 p-3 sm:px-[18px] font-bold text-[#2B2000] shadow-[0_10px_30px_rgba(0,0,0,.2)] sm:bottom-5"><svg class="ico"><use href="#i-note"/></svg><span class="hidden sm:inline" data-ar="ملاحظات التصميم">Design notes</span></button>
+<aside id="notes" class="invisible fixed inset-y-0 end-0 z-[70] w-[min(420px,100%)] translate-x-[105%] overflow-y-auto bg-white p-7 shadow-[-20px_0_60px_rgba(0,0,0,.2)] transition-all duration-300 rtl:-translate-x-[105%] [&.open]:visible [&.open]:translate-x-0 dark:bg-night-900" aria-label="Design notes">
+  <button onclick="notes(false)" class="absolute end-[18px] top-[18px] grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-white/15" aria-label="Close"><svg class="ico"><use href="#i-x"/></svg></button>
+  <h3 class="mb-1 text-lg font-bold text-deep-900 dark:text-white" data-ar="النسخة ج — المحسّنة">Concept C: enhanced</h3>
+  <div class="mb-5 text-[.85rem] text-slate-500 dark:text-slate-400" data-ar="كل ما في النسخة ب، مع أفكار جديدة">Everything in Concept B, plus new ideas</div>
+  <ol class="grid list-decimal gap-3.5 ps-5 text-[.88rem] text-slate-600 dark:text-slate-300">
+    <li><b class="block text-deep-900 dark:text-white" data-ar="خط Cairo">Cairo typeface</b><span data-ar="خط واحد للعربية والإنجليزية بإيقاع متناسق.">One typeface for Arabic and English, with a consistent rhythm across both.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="مرشد الرعاية">Care navigator</b><span data-ar="سؤالان (لمن؟ ماذا تحتاج؟) يوجّهان الزائر للخطوة الصحيحة، والحالات العاجلة تظهر باللون الأحمر مع 997.">Two questions (who? what do you need?) route visitors to the right next step. Urgent needs turn red and point to 997.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="أوقات انتظار الطوارئ">Live ER wait times</b><span data-ar="لوحة مباشرة لأقرب أقسام الطوارئ مع مؤشر الازدحام (بيانات توضيحية).">A live board of the nearest emergency rooms with a busy indicator. Needs a real data feed; illustrative here.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="بحث سريع">Instant search</b><span data-ar="نافذة بحث موحدة تفتح بزر البحث أو Ctrl+K.">A unified search palette for doctors, specialties, facilities and services; opens from the search icon or Ctrl+K.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="رحلات صحية حسب العمر">Life-stage journeys</b><span data-ar="الحمل، الأطفال، البالغون، كبار السن: خطوات موصى بها وحجز مباشر.">Pregnancy, children, adults and seniors, each with recommended steps and a direct booking action.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="التقويم الصحي">Health calendar</b><span data-ar="حملات العام في شريط واحد لتخطيط الاتصال المؤسسي.">The year's campaigns in one strip, which also gives the comms team a planning view.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="اعرف أرقامك">Know your numbers</b><span data-ar="حاسبة مؤشر كتلة الجسم وقيم مرجعية لضغط الدم والسكر مع دعوة للحجز.">An interactive BMI calculator plus blood-pressure and blood-sugar reference values, each linked to a booking.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="مساعد التجمع">Ask EHC assistant</b><span data-ar="نموذج لمساعد محادثة بردود جاهزة يمكن ربطه لاحقًا بقاعدة المعرفة.">A chat assistant mock-up with scripted replies. It could later be connected to EHC's knowledge base.</span></li>
+    <li><b class="block text-deep-900 dark:text-white" data-ar="الوظائف والتطوع">Careers &amp; volunteering</b><span data-ar="بطاقتان لجذب الكفاءات والمتطوعين.">Two cards to attract talent and volunteers.</span></li>
+  </ol>
+  <h4 class="mb-2 mt-6 text-sm font-bold text-deep-900 dark:text-white" data-ar="لوحة الألوان">Palette</h4>
+  <div class="flex flex-wrap gap-2 text-center text-[.62rem] text-slate-500">
+    <div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-brand-500"></i>Sky</div><div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-deep-900"></i>Ocean</div><div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-night-950 ring-1 ring-white/10"></i>Night</div><div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-accent-400"></i>Sand</div><div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-support-500"></i>Mint</div><div class="w-[52px]"><i class="mb-1 block h-9 rounded-lg bg-highlight-500"></i>Coral</div>
+  </div>
+</aside>
+
+<script src="../dist/js/ehc.js" defer></script>
+
+</body>
+</html>

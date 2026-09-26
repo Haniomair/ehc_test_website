@@ -1,0 +1,4 @@
+/* Classes that only appear in C# allow-lists (BlockSection.cs, ThemeResolver) and not in any view file.
+   Tailwind can't see them, so list them here. Keep in sync with reference/EHC.Web/Blocks/BlockSection.cs. */
+@source inline("bg-soft dark:bg-night-900/60 bg-deep-900 dark:bg-deep-950 bg-brand-500 text-white");
+@source inline("py-0 py-10 py-16 lg:py-24 py-24 lg:py-32");

@@ -6,6 +6,8 @@ using System.Text.Unicode;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
+using EHC.Web.Site;
 using EHC.Web.Themes;
 
 namespace EHC.Web.Composers;
@@ -21,9 +23,24 @@ public sealed class EhcComposer : IComposer
         builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
         builder.Services.AddScoped<IThemeResolver, ThemeResolver>();
+        builder.Services.AddScoped<ISiteContext, SiteContext>();
         builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, LanguageSeeder>();
+        builder.AddNotificationHandler<ContentSavingNotification, ThemeContrastGuard>();
 
-        // Phase 3: builder.AddNotificationHandler<ContentSavingNotification, ThemeContrastGuard>();
+        // "/" has no content of its own: send visitors to the default (Arabic) site.
+        builder.Services.Configure<UmbracoPipelineOptions>(o => o.AddFilter(new UmbracoPipelineFilter("EhcRootRedirect")
+        {
+            PrePipeline = app => app.Use(async (context, next) =>
+            {
+                if (context.Request.Path == "/" && (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method)))
+                {
+                    context.Response.Redirect("/ar/" + context.Request.QueryString, permanent: false);
+                    return;
+                }
+                await next(context);
+            }),
+        }));
+
         // Phase 5: builder.Services.AddHttpClient<IErWaitTimeProvider, ...>();
     }
 }

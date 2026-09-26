@@ -1,0 +1,72 @@
+@* Featured card in a mega panel. One of: megaFeaturedCampaign, megaFeaturedApp, megaFeaturedMap, megaFeaturedStats. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.MegaFeaturedModel>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    var text = c.Value<string>("text");
+}
+@switch (c.ContentType.Alias)
+{
+    case "megaFeaturedCampaign":
+        var campaign = c.Value<IPublishedContent>("campaign");
+        if (campaign is null) { break; }
+        var campaignTitle = campaign.Value<string>("pageTitle");
+        <a href="@campaign.Url()" class="group relative flex h-full flex-col justify-end overflow-hidden rounded-3xl bg-linear-to-br from-support-500 to-support-900 p-6 text-white">
+            <span class="mark-bg mark-white absolute -end-10 -top-10 h-56 w-56 opacity-20" aria-hidden="true"></span>
+            @if (!string.IsNullOrWhiteSpace(campaign.Value<string>("tag")))
+            {
+                <span class="mb-auto w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-bold">@(campaign.Value<string>("tag"))</span>
+            }
+            <b class="mt-10 text-2xl leading-tight">@(string.IsNullOrWhiteSpace(campaignTitle) ? campaign.Name : campaignTitle)</b>
+            @if (!string.IsNullOrWhiteSpace(campaign.Value<string>("intro")))
+            {
+                <span class="mt-2 text-sm text-white/85">@(campaign.Value<string>("intro"))</span>
+            }
+        </a>
+        break;
+
+    case "megaFeaturedApp":
+        <div class="flex h-full flex-col justify-between rounded-3xl bg-linear-to-br from-brand-500 to-deep-900 p-6 text-white">
+            <div class="flex items-center gap-3"><span class="grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-500"><svg class="ico" aria-hidden="true"><use href="#i-app" /></svg></span><b class="text-lg">@title</b></div>
+            @if (!string.IsNullOrWhiteSpace(text)) { <p class="my-4 text-sm text-white/85">@text</p> }
+            @if (Model.Site.AppLinks.Count > 0)
+            {
+                <div class="flex gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Mega.AppStores")">
+                    @foreach (var store in Model.Site.AppLinks)
+                    {
+                        <a href="@store.Url" target="@store.Target" class="rounded-xl bg-night-950 px-3 py-2 text-xs font-semibold">@store.Name</a>
+                    }
+                </div>
+            }
+        </div>
+        break;
+
+    case "megaFeaturedMap":
+        var mapLink = c.Value<Link>("link");
+        <a href="@(mapLink?.Url ?? "#")" class="group relative block h-full min-h-[200px] overflow-hidden rounded-3xl bg-linear-to-br from-brand-50 to-brand-100 p-6 dark:from-deep-900 dark:to-night-950">
+            <svg class="absolute inset-0 h-full w-full" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M300 0C260 30 270 60 235 85 210 102 230 130 205 150 185 165 195 190 180 200H300Z" class="fill-brand-200 dark:fill-deep-800" /><g class="stroke-white dark:stroke-white/10" stroke-width="4" fill="none"><path d="M0 125C75 120 125 100 210 95" /><path d="M100 0C110 60 130 130 125 200" /></g></svg>
+            <span class="relative block w-fit rounded-2xl bg-white/90 p-4 shadow-soft dark:bg-night-900/90">
+                <b class="block text-deep-900 dark:text-white">@title</b>
+                @if (!string.IsNullOrWhiteSpace(text)) { <span class="text-sm text-slate-500 dark:text-slate-400">@text</span> }
+            </span>
+        </a>
+        break;
+
+    case "megaFeaturedStats":
+        var stats = c.Value<BlockListModel>("stats")?.ToList() ?? [];
+        <div class="grid grid-cols-2 gap-3">
+            @for (var i = 0; i < stats.Count; i++)
+            {
+                var s = stats[i].Content;
+                <div class="@(i == 0 ? "rounded-2xl bg-deep-900 p-4 text-white dark:bg-brand-500/15" : "rounded-2xl bg-brand-50 p-4 dark:bg-white/5")">
+                    <b class="block text-3xl @(i == 0 ? "" : "text-deep-900 dark:text-white")">@(s.Value<string>("value"))@(s.Value<string>("suffix"))</b>
+                    <span class="text-sm @(i == 0 ? "text-brand-100" : "text-slate-500 dark:text-slate-400")">@(s.Value<string>("label"))</span>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(title)) { <p class="col-span-2 text-[.7rem] text-slate-400">@title</p> }
+        </div>
+        break;
+}

@@ -1,0 +1,57 @@
+@* Footer: contact column (Site settings) + link columns and legal links (Settings › Navigation). *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@{
+    var columns = Model.FooterColumns?.ToList() ?? [];
+    var copyright = string.Format(Umbraco.GetDictionaryValue("EHC.Footer.Copyright") ?? "{0}", DateTime.UtcNow.Year);
+}
+<footer class="bg-deep-900 pb-6 pt-16 text-[.9rem] text-on-deep dark:border-t dark:border-white/10 dark:bg-night-950">
+    <div class="wrap">
+        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div>
+                <a href="@(Model.Home?.Url() ?? "/")" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")"><img class="h-14 brightness-0 invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")"></a>
+                <div class="mt-5 grid gap-2.5">
+                    <span class="flex items-center gap-2"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-pin" /></svg><span>@Umbraco.GetDictionaryValue("EHC.Footer.Address")</span></span>
+                    @if (Model.UnifiedNumber is { } unified)
+                    {
+                        <span class="flex items-center gap-2"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-phone" /></svg>@unified</span>
+                    }
+                    @if (Model.Email is { } email)
+                    {
+                        <span class="flex items-center gap-2"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-mail" /></svg>@email</span>
+                    }
+                </div>
+            </div>
+            @foreach (var col in columns)
+            {
+                var heading = col.Content.Value<string>("heading");
+                var links = col.Content.Value<IEnumerable<Link>>("links")?.ToList() ?? [];
+                if (string.IsNullOrWhiteSpace(heading) && links.Count == 0) { continue; }
+                <div>
+                    @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="mb-3.5 text-base font-semibold text-white">@heading</h2> }
+                    <ul class="grid gap-2">
+                        @foreach (var l in links)
+                        {
+                            <li><a href="@l.Url" target="@l.Target" class="hover:text-white">@l.Name</a></li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+        <div class="mt-10 flex flex-wrap justify-between gap-4 border-t border-white/10 pt-5 text-[.8rem]">
+            <span>@copyright</span>
+            @if (Model.UtilityLinks.Count > 0)
+            {
+                <span>
+                    @for (var i = 0; i < Model.UtilityLinks.Count; i++)
+                    {
+                        var l = Model.UtilityLinks[i];
+                        if (i > 0) { <text> · </text> }
+                        <a href="@l.Url" target="@l.Target" class="hover:text-white">@l.Name</a>
+                    }
+                </span>
+            }
+        </div>
+    </div>
+</footer>

@@ -11,7 +11,6 @@
 @source "../../../src/EHC.Web/Views";
 @source "../../preview";
 @source "../js";
-@source "../../../reference/EHC.Web";
 
 /* Class-based dark mode (toggled by the header button / system setting) */
 @custom-variant dark (&:where(.dark, .dark *));

@@ -1,0 +1,6 @@
+@* "Staging / placeholders" notice, switched on in Site settings (showConceptRibbon). *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@if (Model.ShowStagingRibbon)
+{
+    <div class="border-b border-accent-400/40 bg-accent-400/15 px-3 py-1.5 text-center text-[.8rem] text-deep-900 dark:border-white/10 dark:bg-accent-400/10 dark:text-accent-400">@Umbraco.GetDictionaryValue("EHC.Common.StagingRibbon")</div>
+}

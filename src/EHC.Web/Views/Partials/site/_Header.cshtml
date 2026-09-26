@@ -1,0 +1,126 @@
+@* Sticky header + desktop mega menu, driven by Settings › Navigation › megaMenu. Items with columns or a featured
+   card open a panel (keyboard: Enter/Space toggles, ArrowDown moves into the panel, Esc closes); others are plain links. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@{
+    var items = Model.MegaMenu?.ToList() ?? [];
+    const string trigger = "mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300";
+    const string iconButton = "grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-300";
+}
+<header id="hdr" class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-night-950/85">
+    <div class="wrap flex h-[66px] items-center gap-5 lg:h-20">
+        <a href="@(Model.Home?.Url() ?? "/")" class="shrink-0" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")">
+            <img class="block h-9 w-auto lg:h-[52px] dark:brightness-0 dark:invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")">
+        </a>
+        @if (items.Count > 0)
+        {
+            <nav class="hidden min-w-0 flex-1 justify-center gap-0.5 xl:flex" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.PrimaryNav")">
+                @for (var i = 0; i < items.Count; i++)
+                {
+                    var c = items[i].Content;
+                    var label = c.Value<string>("label");
+                    if (string.IsNullOrWhiteSpace(label)) { continue; }
+                    var hasPanel = (c.Value<BlockListModel>("columns")?.Any() ?? false) || (c.Value<BlockListModel>("featured")?.Any() ?? false);
+                    var link = c.Value<Link>("link");
+                    if (hasPanel)
+                    {
+                        <button type="button" class="@trigger" aria-expanded="false" aria-controls="m-@i" data-mega="m-@i"><span>@label</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></button>
+                    }
+                    else if (link is not null)
+                    {
+                        <a class="@trigger" href="@link.Url" target="@link.Target">@label</a>
+                    }
+                }
+            </nav>
+        }
+        <div class="ms-auto flex items-center gap-2 xl:ms-0">
+            <button type="button" data-action="search-open" class="@iconButton" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.Search")" aria-haspopup="dialog" aria-controls="search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg></button>
+            <button type="button" data-action="dark" class="@iconButton dark:text-accent-400" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.DarkMode")" aria-pressed="false"><svg class="ico dark:hidden" aria-hidden="true"><use href="#i-moon" /></svg><svg class="ico hidden dark:block" aria-hidden="true"><use href="#i-sun" /></svg></button>
+            @if (Model.HeaderCta is { } cta)
+            {
+                <a class="btn btn-primary hidden sm:inline-flex" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
+            }
+            <button type="button" data-action="drawer-open" class="@iconButton xl:hidden" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.OpenMenu")" aria-haspopup="dialog" aria-controls="drawer"><svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg></button>
+        </div>
+    </div>
+
+    @if (items.Count > 0)
+    {
+        <div id="megaWrap" class="absolute inset-x-0 top-full hidden xl:block">
+            @for (var i = 0; i < items.Count; i++)
+            {
+                var c = items[i].Content;
+                var columns = c.Value<BlockListModel>("columns")?.ToList() ?? [];
+                var featured = c.Value<BlockListModel>("featured")?.FirstOrDefault();
+                if (columns.Count == 0 && featured is null) { continue; }
+                var link = c.Value<Link>("link");
+                var colsClass = columns.Count switch { 1 => "grid-cols-1", 2 => "grid-cols-2", _ => "grid-cols-3" };
+                <div id="m-@i" class="mega-panel absolute inset-x-0 top-0 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="@(c.Value<string>("label"))">
+                    <div class="wrap grid grid-cols-12 gap-8 py-8">
+                        @if (columns.Count > 0)
+                        {
+                            <div class="@(featured is null ? "col-span-12" : "col-span-8")">
+                                <div class="grid @colsClass gap-8">
+                                    @for (var j = 0; j < columns.Count; j++)
+                                    {
+                                        var col = columns[j].Content;
+                                        var links = col.Value<BlockListModel>("links")?.ToList() ?? [];
+                                        var wide = columns.Count == 1 && links.Count > 4;
+                                        <div class="@(j > 0 ? "border-s border-slate-200 ps-8 dark:border-white/10" : "")">
+                                            @if (!string.IsNullOrWhiteSpace(col.Value<string>("heading")))
+                                            {
+                                                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal">@(col.Value<string>("heading"))</p>
+                                            }
+                                            <div class="grid gap-1 @(wide ? "grid-cols-2" : "")">
+                                                @foreach (var l in links)
+                                                {
+                                                    var title = l.Content.Value<string>("title");
+                                                    if (string.IsNullOrWhiteSpace(title)) { continue; }
+                                                    var target = l.Content.Value<Link>("link");
+                                                    var icon = l.Content.Value<string>("icon");
+                                                    var desc = l.Content.Value<string>("description");
+                                                    if (string.IsNullOrWhiteSpace(icon) && string.IsNullOrWhiteSpace(desc))
+                                                    {
+                                                        <a href="@(target?.Url ?? "#")" class="rounded-lg px-2 py-1.5 text-[.93rem] text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5">@title</a>
+                                                    }
+                                                    else
+                                                    {
+                                                        var emergency = icon == "er";
+                                                        <a href="@(target?.Url ?? "#")" class="mega-link">
+                                                            @if (!string.IsNullOrWhiteSpace(icon))
+                                                            {
+                                                                <span class="mega-ic @(emergency ? "!bg-emerg-50 !text-emerg-600 dark:!bg-emerg-500/15 dark:!text-red-300" : "")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+                                                            }
+                                                            <span><b>@title</b>@if (!string.IsNullOrWhiteSpace(desc)) {<span class="d">@desc</span>}</span>
+                                                        </a>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @if (link is not null && !string.IsNullOrWhiteSpace(link.Url) && link.Url != "#")
+                                {
+                                    <a href="@link.Url" class="link mt-4 ps-3 text-sm"><span>@(c.Value<string>("label"))</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+                                }
+                            </div>
+                        }
+                        @if (featured is not null)
+                        {
+                            <div class="@(columns.Count == 0 ? "col-span-12" : "col-span-4")">
+                                @await Html.PartialAsync("site/_MegaFeatured", new MegaFeaturedModel(featured.Content, Model))
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</header>
+@if (items.Count > 0)
+{
+    @* outside <header>: its backdrop-filter would otherwise contain this fixed overlay *@
+    <div id="megaDim" class="pointer-events-none fixed inset-0 z-30 bg-deep-950/30 opacity-0 backdrop-blur-[2px] transition-opacity duration-200 dark:bg-black/50"></div>
+}

@@ -1,0 +1,17 @@
+@* Search palette (Ctrl+K / search button). Results come from /api/search in phase 5; until then it only takes input. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+<div id="search" class="fixed inset-0 z-[90] hidden" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+    <div class="absolute inset-0 bg-deep-950/60 backdrop-blur-sm" data-action="search-close"></div>
+    <div class="relative mx-auto mt-[8vh] w-[min(680px,calc(100%-32px))] overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_rgba(0,0,0,.35)] dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+        <h2 id="searchTitle" class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Title")</h2>
+        <label class="flex items-center gap-3 border-b border-slate-200 px-5 dark:border-white/10">
+            <svg class="ico text-brand-500" aria-hidden="true"><use href="#i-search" /></svg>
+            <span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Title")</span>
+            <input id="sIn" type="search" autocomplete="off" class="h-16 min-w-0 flex-1 bg-transparent text-lg outline-hidden placeholder:text-slate-400" placeholder="@Umbraco.GetDictionaryValue("EHC.Search.Placeholder")">
+            <button type="button" data-action="search-close" class="rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-400 dark:border-white/15" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Close")">Esc</button>
+        </label>
+        <div id="sRes" class="max-h-[60vh] overflow-y-auto p-3" aria-live="polite">
+            <p class="px-3 py-8 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Search.Hint")</p>
+        </div>
+    </div>
+</div>

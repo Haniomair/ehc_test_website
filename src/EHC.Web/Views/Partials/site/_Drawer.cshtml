@@ -1,0 +1,63 @@
+@* Mobile / tablet menu (below xl). Same navigation data as the mega menu, as disclosure groups. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@{
+    var items = Model.MegaMenu?.ToList() ?? [];
+}
+<div id="drawer" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.Menu")">
+    <div class="absolute inset-0 bg-deep-950/50" data-action="drawer-close"></div>
+    <div class="absolute inset-y-0 end-0 flex w-[min(380px,100%)] flex-col overflow-y-auto bg-white p-5 dark:bg-night-900">
+        <div class="mb-4 flex items-center justify-between">
+            <img class="h-9 dark:brightness-0 dark:invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")">
+            <button type="button" data-action="drawer-close" class="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-white/15" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.CloseMenu")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>
+        </div>
+        @if (Model.HeaderCta is { } cta)
+        {
+            <a class="btn btn-primary mb-4 w-full" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
+        }
+        @for (var i = 0; i < items.Count; i++)
+        {
+            var c = items[i].Content;
+            var label = c.Value<string>("label");
+            if (string.IsNullOrWhiteSpace(label)) { continue; }
+            var links = (c.Value<BlockListModel>("columns") ?? Enumerable.Empty<BlockListItem>())
+                .SelectMany(col => col.Content.Value<BlockListModel>("links") ?? Enumerable.Empty<BlockListItem>())
+                .Select(l => (Title: l.Content.Value<string>("title"), Url: l.Content.Value<Link>("link")?.Url ?? "#"))
+                .Where(l => !string.IsNullOrWhiteSpace(l.Title))
+                .ToList();
+            var link = c.Value<Link>("link");
+            if (links.Count == 0)
+            {
+                if (link is not null)
+                {
+                    <a href="@link.Url" class="block border-b border-slate-200 py-3 font-semibold text-deep-900 dark:border-white/10 dark:text-white">@label</a>
+                }
+                continue;
+            }
+            <details class="group border-b border-slate-200 py-3 dark:border-white/10" open="@(i == 0)">
+                <summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span>@label</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
+                <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300">
+                    @foreach (var l in links)
+                    {
+                        <a href="@l.Url" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5">@l.Title</a>
+                    }
+                </div>
+            </details>
+        }
+        @if (Model.Emergency is not null || Model.Advice is not null)
+        {
+            <div class="mt-auto grid grid-cols-2 gap-2 pt-6">
+                @if (Model.Emergency is { } e)
+                {
+                    <a href="tel:@e.Dial" class="rounded-2xl bg-emerg-600 p-3 text-center font-bold text-white"><small class="block text-xs font-medium">@Umbraco.GetDictionaryValue("EHC.Mobile.Emergency")</small>@e.Number</a>
+                }
+                @if (Model.Advice is { } a)
+                {
+                    <a href="tel:@a.Dial" class="rounded-2xl bg-brand-50 p-3 text-center font-bold text-deep-900 dark:bg-white/5 dark:text-white"><small class="block text-xs font-medium">@Umbraco.GetDictionaryValue("EHC.Mobile.Advice")</small>@a.Number</a>
+                }
+            </div>
+        }
+    </div>
+</div>

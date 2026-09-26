@@ -1,26 +1,35 @@
-@* Master layout: culture/direction + active theme on <html>. *@
-@using System.Globalization
+@* Master layout: culture/direction + active theme on <html>, site chrome around the page body. *@
 @using EHC.Web.Blocks
-@using EHC.Web.Themes
+@using EHC.Web.Site
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
-@inject IThemeResolver Themes
+@inject ISiteContext Site
 @{
     Layout = null;
-    var culture = CultureInfo.CurrentUICulture;          // set by Umbraco from the hostname/culture
-    var isRtl = culture.TextInfo.IsRightToLeft;
-    var theme = Themes.Resolve(Model);
+    var site = Site.Get(Model);                           // culture comes from the hostname (/ar, /en)
+    var theme = site.Theme;
     var metaTitle = Model.Value<string>("metaTitle");
     if (string.IsNullOrWhiteSpace(metaTitle)) { metaTitle = Model.Name; }
+    var metaDescription = Model.Value<string>("metaDescription");
 }
 <!DOCTYPE html>
 @* Razor drops a null style attribute; data-theme goes through HtmlAttributes.Data (Razor keeps empty data-* attributes). Keep it last: attributes after a C# expression are no longer dropped. *@
-<html lang="@culture.TwoLetterISOLanguageName" dir="@(isRtl ? "rtl" : "ltr")" style="@theme.InlineStyle"@HtmlAttributes.Data("theme", theme.PresetKey)>
+<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" style="@theme.InlineStyle"@HtmlAttributes.Data("theme", theme.PresetKey)>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@metaTitle</title>
-    <meta name="description" content="@(Model.Value<string>("metaDescription"))">
-    @* hreflang alternates: see docs/05-bilingual.md *@
+    @if (!string.IsNullOrWhiteSpace(metaDescription))
+    {
+        <meta name="description" content="@metaDescription">
+    }
+    @if (Model.Value<bool>("noIndex"))
+    {
+        <meta name="robots" content="noindex">
+    }
+    @foreach (var alt in site.Alternates)
+    {
+        <link rel="alternate" hreflang="@alt.Language" href="@alt.Url">
+    }
     <script src="~/assets/js/theme-init.js" asp-append-version="true"></script>  @* sets .dark before paint; no inline script (CSP) *@
     <link rel="preload" href="~/assets/fonts/cairo-arabic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="~/assets/css/ehc.css" asp-append-version="true">
@@ -29,14 +38,19 @@
     @await Html.PartialAsync("site/_Icons")
     <a href="#main" class="absolute start-3 -top-16 z-[100] rounded-lg bg-deep-900 px-3.5 py-2.5 text-white focus:top-3">@Umbraco.GetDictionaryValue("EHC.Common.SkipToContent")</a>
 
+    @await Html.PartialAsync("site/_StagingRibbon", site)
     @await Html.PartialAsync("site/_Ribbon", theme)
-    @* phase 3: site/_UtilityBar, site/_Header (logo from theme or settings), site/_MegaMenu, site/_MobileDrawer *@
+    @await Html.PartialAsync("site/_UtilityBar", site)
+    @await Html.PartialAsync("site/_Header", site)
+    @await Html.PartialAsync("site/_Drawer", site)
 
-    <main id="main">
+    <main id="main" tabindex="-1">
         @RenderBody()
     </main>
 
-    @* phase 3: site/_Footer, site/_MobileActionBar, site/_SearchPalette *@
-    <script src="~/assets/js/ehc.js" asp-append-version="true" defer></script>
+    @await Html.PartialAsync("site/_Footer", site)
+    @await Html.PartialAsync("site/_MobileBar", site)
+    @await Html.PartialAsync("site/_Search")
+    <script src="~/assets/js/site.js" asp-append-version="true" defer></script>
 </body>
 </html>

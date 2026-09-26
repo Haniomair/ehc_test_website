@@ -1,0 +1,11 @@
+@* Block 19 "Rich text": body from the restricted editor (h2/h3, bold, italic, lists, links). *@
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var body = Model.Content.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    if (string.IsNullOrWhiteSpace(body)) { return; }
+}
+<div class="wrap">
+    <div class="rte mx-auto max-w-[760px]">@Html.Raw(body)</div>
+</div>

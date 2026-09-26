@@ -7,7 +7,7 @@ using EHC.Web.Themes;
 
 namespace EHC.Web.Site;
 
-public sealed record PhoneNumber(string Label, string Number, bool IsEmergency)
+public sealed record ContactNumber(string Label, string Number, bool IsEmergency)
 {
     /// <summary>Digits and + only, for tel: links.</summary>
     public string Dial => new(Number.Where(c => char.IsDigit(c) || c == '+').ToArray());
@@ -25,9 +25,9 @@ public sealed class SiteData
     public string Language => Culture.TwoLetterISOLanguageName;
     public required ResolvedTheme Theme { get; init; }
     public required string LogoUrl { get; init; }
-    public required IReadOnlyList<PhoneNumber> Phones { get; init; }
-    public PhoneNumber? Emergency => Phones.FirstOrDefault(p => p.IsEmergency);
-    public PhoneNumber? Advice => Phones.FirstOrDefault(p => !p.IsEmergency);
+    public required IReadOnlyList<ContactNumber> Phones { get; init; }
+    public ContactNumber? Emergency => Phones.FirstOrDefault(p => p.IsEmergency);
+    public ContactNumber? Advice => Phones.FirstOrDefault(p => !p.IsEmergency);
     public string? UnifiedNumber { get; init; }
     public string? Email { get; init; }
     public BlockListModel? MegaMenu { get; init; }
@@ -70,7 +70,7 @@ public sealed class SiteContext(IThemeResolver themes) : ISiteContext
                    ?? (isAr ? "/assets/img/logo-ar.png" : "/assets/img/logo-en.png");
 
         var phones = settings?.Value<BlockListModel>("emergencyNumbers")?
-            .Select(b => new PhoneNumber(b.Content.Value<string>("label") ?? "", b.Content.Value<string>("number") ?? "", b.Content.Value<bool>("isEmergency")))
+            .Select(b => new ContactNumber(b.Content.Value<string>("label") ?? "", b.Content.Value<string>("number") ?? "", b.Content.Value<bool>("isEmergency")))
             .Where(p => !string.IsNullOrWhiteSpace(p.Number))
             .ToList() ?? [];
 

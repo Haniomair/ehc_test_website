@@ -1,0 +1,39 @@
+@* Block 3 "Quick actions": task tiles + emergency call. Placed right after a hero it overlaps the hero's bottom
+   edge (give it spacing "none"). The emergency number defaults to the first emergency number in Site settings. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject ISiteContext Site
+@{
+    var c = Model.Content;
+    var actions = c.Value<BlockListModel>("actions")?.Select(a => a.Content).Where(a => !string.IsNullOrWhiteSpace(a.Value<string>("label"))).ToList() ?? [];
+    var site = Site.Get(Umbraco.AssignedContentItem);
+    var number = c.Value<string>("emergencyNumber");
+    var emergency = string.IsNullOrWhiteSpace(number) ? site.Emergency : new ContactNumber("", number.Trim(), true);
+    if (actions.Count == 0 && emergency is null) { return; }
+}
+<div class="wrap relative z-[5] -mt-20">
+    <div class="grid grid-cols-2 gap-1.5 rounded-[22px] bg-white p-2.5 shadow-soft sm:grid-cols-3 sm:rounded-[28px] xl:grid-flow-col xl:auto-cols-fr dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+        @foreach (var a in actions)
+        {
+            var link = a.Value<Link>("link");
+            var icon = a.Value<string>("icon");
+            var isEmergency = a.Value<bool>("isEmergency");
+            var sub = a.Value<string>("sub");
+            <a class="flex flex-col items-start gap-2 rounded-[20px] p-2.5 transition hover:bg-brand-50 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 dark:hover:bg-white/5" href="@(link?.Url ?? "#")" target="@link?.Target">
+                <span class="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] @(isEmergency ? "bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300" : "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300")">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg> }
+                </span>
+                <span><b class="block text-[.95rem]">@(a.Value<string>("label"))</b>@if (!string.IsNullOrWhiteSpace(sub)) {<span class="hidden text-[.78rem] text-slate-500 sm:block dark:text-slate-400">@sub</span>}</span>
+            </a>
+        }
+        @if (emergency is not null)
+        {
+            <a class="col-span-2 flex items-center justify-center gap-2.5 rounded-[20px] bg-emerg-600 px-5 py-3 font-bold text-white sm:col-span-1 xl:justify-start" href="tel:@emergency.Dial">
+                <svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>
+                <span><small class="block text-[.72rem] font-medium opacity-90">@Umbraco.GetDictionaryValue("EHC.QuickActions.EmergencyCall")</small><b class="text-[1.3rem] leading-none">@emergency.Number</b></span>
+            </a>
+        }
+    </div>
+</div>

@@ -53,6 +53,16 @@
   .mega-link b { @apply block text-[.93rem] font-semibold text-deep-900 dark:text-white; }
   .mega-link span.d { @apply block text-[.8rem] leading-snug text-slate-500 dark:text-slate-400; }
   .mega-ic { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300; }
+  /* rich text from the restricted editor (richTextBlock, content pages) */
+  .rte { @apply text-[1.05rem] leading-relaxed text-slate-700 dark:text-slate-300; }
+  .rte > * + * { margin-top: 1em; }
+  .rte h2 { @apply mt-10 text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-snug text-deep-900 dark:text-white; }
+  .rte h3 { @apply mt-8 text-xl font-bold text-deep-900 dark:text-white; }
+  .rte ul { @apply list-disc ps-6; }
+  .rte ol { @apply list-decimal ps-6; }
+  .rte li + li { margin-top: .35em; }
+  .rte a { @apply font-semibold text-brand-600 underline underline-offset-4 hover:text-brand-500 dark:text-brand-300; }
+  .rte strong { @apply font-bold text-deep-900 dark:text-white; }
 }
 
 /* ---------------------------------------------- hand-written utilities */
@@ -76,7 +86,7 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 .anim-marquee { animation: ehc-mq 40s linear infinite; }
 html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .anim-fadeup { animation: ehc-fadeUp .7s ease both; }
-.prog-on .bar i { animation: ehc-prog 7s linear forwards; }
+.prog-on .bar i { animation: ehc-prog var(--hero-interval, 7s) linear forwards; }
 .rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
 .rv.in { opacity: 1; transform: none; }
 

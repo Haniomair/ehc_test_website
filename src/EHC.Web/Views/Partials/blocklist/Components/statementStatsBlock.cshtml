@@ -1,0 +1,47 @@
+@* Block 6 "Statement + stats" ("Why EHC"). Italic text in the statement is shown as the highlighted phrase.
+   Stats: keep "##" placeholders until official figures are approved. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var eyebrow = c.Value<string>("eyebrow");
+    var statement = c.Value<IHtmlEncodedString>("statement")?.ToHtmlString();
+    var ctas = c.Value<IEnumerable<Link>>("ctas")?.ToList() ?? [];
+    var stats = c.Value<BlockListModel>("stats")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("value"))).ToList() ?? [];
+    if (string.IsNullOrWhiteSpace(statement) && stats.Count == 0) { return; }
+}
+<div class="wrap grid items-center gap-14 @(stats.Count > 0 && !string.IsNullOrWhiteSpace(statement) ? "lg:grid-cols-[1.1fr_.9fr]" : "")">
+    @if (!string.IsNullOrWhiteSpace(statement))
+    {
+        <div class="rv">
+            @if (!string.IsNullOrWhiteSpace(eyebrow)) { <div class="eyebrow">@eyebrow</div> }
+            <div class="text-[clamp(1.6rem,3vw,2.4rem)] font-semibold leading-snug text-deep-900 dark:text-white [&_em]:not-italic [&_em]:text-brand-500 [&_em]:bg-[linear-gradient(transparent_62%,color-mix(in_srgb,var(--brand-500)_18%,transparent)_62%)] dark:[&_em]:text-brand-300 [&_p]:m-0">@Html.Raw(statement)</div>
+            @if (ctas.Count > 0)
+            {
+                <div class="mt-7 flex flex-wrap gap-3">
+                    @for (var i = 0; i < ctas.Count; i++)
+                    {
+                        <a class="btn @(i == 0 ? "btn-primary" : "btn-ghost")" href="@ctas[i].Url" target="@ctas[i].Target">@ctas[i].Name</a>
+                    }
+                </div>
+            }
+        </div>
+    }
+    @if (stats.Count > 0)
+    {
+        <div class="rv">
+            <div class="grid grid-cols-2 gap-4">
+                @foreach (var s in stats)
+                {
+                    var hi = s.Value<bool>("highlight");
+                    <div class="rounded-[22px] p-6 @(hi ? "bg-deep-900 text-white dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20" : "bg-soft dark:bg-night-900 dark:ring-1 dark:ring-white/10")">
+                        <b class="block text-[2.1rem] leading-none sm:text-[2.8rem] @(hi ? "" : "text-deep-900 dark:text-white")">@(s.Value<string>("value"))@if (!string.IsNullOrWhiteSpace(s.Value<string>("suffix"))) {<sup class="text-[.5em] text-brand-500">@(s.Value<string>("suffix"))</sup>}</b>
+                        <span class="text-sm @(hi ? "text-brand-100" : "text-slate-600 dark:text-slate-400")">@(s.Value<string>("label"))</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

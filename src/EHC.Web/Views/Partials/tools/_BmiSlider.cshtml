@@ -1,0 +1,47 @@
+@* Slider BMI calculator (adults): updates as the sliders move. Shared by the "Know your numbers" section and the BMI
+   tool page. Category labels / tips: dictionary EHC.Bmi.*. Behaviour: components/bmi.js.
+   Scale 15–40: boundaries 18.5 / 25 / 30 sit at 14% / 40% / 60%, and the labels are placed at those points. *@
+@using System.Text.Json
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BmiSlider>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Bmi." + k) ?? "";
+    var id = Model.Id;
+    // [upper bound, label, tip, style]
+    var categories = JsonSerializer.Serialize(new object[]
+    {
+        new object[] { 18.5, D("Under"), D("UnderTip"), "under" },
+        new object[] { 25, D("Healthy"), D("HealthyTip"), "healthy" },
+        new object[] { 30, D("Over"), D("OverTip"), "over" },
+        new object[] { 999, D("Obese"), D("ObeseTip"), "obese" },
+    });
+    (string Label, string Position)[] ticks = [("15", "left-0"), ("18.5", "left-[14%] -translate-x-1/2"), ("25", "left-[40%] -translate-x-1/2"), ("30", "left-[60%] -translate-x-1/2"), ("40", "right-0")];
+}
+<div data-bmi data-categories="@categories">
+    @if (Model.ShowTitle)
+    {
+        <div class="mb-6 flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-target" /></svg></span>
+            <div><h3 class="text-lg font-bold">@D("Title")</h3><span class="text-sm text-slate-600 dark:text-slate-400">@D("Adults")</span></div>
+        </div>
+    }
+    <div class="grid gap-8 sm:grid-cols-2">
+        <div class="grid content-center gap-6">
+            <label class="block" for="@id-h"><span class="mb-2 flex justify-between text-sm font-semibold"><span>@D("Height")</span><span dir="ltr"><b data-bmi-hv>170</b> @D("Cm")</span></span><input id="@id-h" data-bmi-h type="range" min="120" max="220" value="170" class="w-full accent-brand-500"></label>
+            <label class="block" for="@id-w"><span class="mb-2 flex justify-between text-sm font-semibold"><span>@D("Weight")</span><span dir="ltr"><b data-bmi-wv>72</b> @D("Kg")</span></span><input id="@id-w" data-bmi-w type="range" min="30" max="200" value="72" class="w-full accent-brand-500"></label>
+        </div>
+        <div class="rounded-2xl bg-soft p-5 text-center dark:bg-white/5" aria-live="polite">
+            <span class="text-sm text-slate-600 dark:text-slate-400">@D("Yours")</span>
+            <b data-bmi-value class="block text-[3.2rem] font-extrabold leading-none text-deep-900 dark:text-white">24.9</b>
+            <span data-bmi-cat class="mt-2 inline-block rounded-full px-3 py-1 text-sm font-bold"></span>
+        </div>
+    </div>
+    <div class="relative mt-8" dir="ltr" aria-hidden="true">
+        <div class="flex h-3 overflow-hidden rounded-full"><i class="w-[14%] bg-brand-300"></i><i class="w-[26%] bg-emerald-500"></i><i class="w-[20%] bg-accent-400"></i><i class="w-[40%] bg-highlight-500"></i></div>
+        <span data-bmi-marker class="absolute -top-1.5 start-1/2 h-6 w-6 -translate-x-1/2 rounded-full border-4 border-white bg-deep-900 shadow-soft transition-all duration-300 dark:border-night-900 dark:bg-white"></span>
+        <div class="relative mt-2 h-4 text-xs text-slate-600 dark:text-slate-400">
+            @foreach (var t in ticks) { <span class="absolute top-0 @t.Position">@t.Label</span> }
+        </div>
+    </div>
+    <p data-bmi-tip class="mt-5 text-sm text-slate-600 dark:text-slate-300"></p>
+</div>

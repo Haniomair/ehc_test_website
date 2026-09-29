@@ -1,0 +1,24 @@
+@* Pull quote: large quote, attribution + role, optional portrait. Only real, approved quotes (with consent). *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var quote = c.Value<string>("quote");
+    if (string.IsNullOrWhiteSpace(quote)) { return; }
+    var image = c.Value<MediaWithCrops>("image");
+    var who = c.Value<string>("attribution");
+}
+<div class="wrap">
+    <figure class="rv relative mx-auto max-w-[900px] text-center">
+        <span class="block font-serif text-[7rem] leading-[.6] text-brand-200 dark:text-brand-500/40" aria-hidden="true">“</span>
+        <blockquote class="text-[clamp(1.4rem,2.8vw,2.1rem)] font-semibold leading-snug text-deep-900 dark:text-white">@quote</blockquote>
+        @if (!string.IsNullOrWhiteSpace(who))
+        {
+            <figcaption class="mt-8 flex items-center justify-center gap-4">
+                @if (image is not null) { <img src="@image.GetCropUrl(112, 112, furtherOptions: "format=webp&quality=80")" alt="" class="h-14 w-14 rounded-full object-cover" loading="lazy"> }
+                <span class="text-start"><b class="block text-deep-900 dark:text-white">@who</b>@if (!string.IsNullOrWhiteSpace(c.Value<string>("role"))) {<span class="text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("role"))</span>}</span>
+            </figcaption>
+        }
+    </figure>
+</div>

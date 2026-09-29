@@ -17,11 +17,11 @@
         ? c.Value<BlockListModel>("calendarItems")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? []
         : [];
     if (campaigns.Count == 0 && calendar.Count == 0) { return; }
-    string Tone(string? key) => key switch { "highlight" => "text-highlight-800 dark:text-highlight-500", "support" => "text-support-800 dark:text-support-300", "accent" => "text-deep-900 dark:text-accent-400", _ => "text-brand-600 dark:text-brand-300" };
+    string Tone(string? key) => key switch { "highlight" => "text-highlight-800 dark:text-highlight-300", "support" => "text-support-800 dark:text-support-300", "accent" => "text-deep-900 dark:text-accent-400", _ => "text-brand-600 dark:text-brand-300" };
     string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
 }
 <div class="wrap">
-    <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+    <div class="rv sec-head-row">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.Campaigns.Eyebrow"), c.Value<string>("heading"), null))
         @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.Campaigns.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
     </div>
@@ -34,7 +34,7 @@
                 {
                     var now = item.Value<bool>("isCurrent");
                     <li class="w-[150px] shrink-0 snap-start rounded-2xl p-3.5 @(now ? "bg-deep-900 text-white ring-2 ring-brand-400 dark:bg-brand-500" : "bg-white dark:bg-white/5")" aria-current="@(now ? "date" : null)">
-                        <span class="text-[.7rem] font-bold uppercase @(now ? "text-brand-300 dark:text-white/80" : Tone(item.Value<string>("color")))">@(item.Value<string>("month"))@if (now) {<text> · @D("EHC.Campaigns.Now")</text>}</span>
+                        <span class="text-xs font-bold uppercase @(now ? "text-brand-300 dark:text-white" : Tone(item.Value<string>("color")))">@(item.Value<string>("month"))@if (now) {<text> · @D("EHC.Campaigns.Now")</text>}</span>
                         <b class="mt-1 block text-sm leading-snug">@(item.Value<string>("title"))</b>
                     </li>
                 }

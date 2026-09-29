@@ -1,0 +1,50 @@
+@* "Was this page helpful?" at the end of content pages (not the home page; editors can hide it per page).
+   Yes → thank you. No → optional reason + short comment (with a warning not to include personal or medical details)
+   → thank you. Sent to POST /api/feedback by components/feedback.js; hidden without JS. One answer per page per day
+   per browser (remembered locally, nothing identifying is sent). *@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    if (Model.ContentType.Alias == "home" || Model.Value<bool>("hideFeedback")) { return; }
+    string T(string key) => Umbraco.GetDictionaryValue("EHC.Feedback." + key) ?? key;
+    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+}
+<section class="wrap pb-12 pt-4" aria-labelledby="fb-title" data-feedback data-page="@Model.Key" data-culture="@culture" hidden>
+    <div class="rounded-[22px] border border-slate-200 bg-soft p-6 sm:p-7 dark:border-white/10 dark:bg-night-900">
+        <div class="flex flex-wrap items-center justify-between gap-4" data-feedback-step="ask">
+            <h2 id="fb-title" class="text-lg font-bold text-deep-900 dark:text-white">@T("Question")</h2>
+            <div class="flex gap-3">
+                <button type="button" class="btn btn-ghost min-w-24 justify-center" data-feedback-answer="yes"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 012 2v4h6a2 2 0 012 2.3l-1.4 7A2 2 0 0117.6 20H7" /></svg>@T("Yes")</button>
+                <button type="button" class="btn btn-ghost min-w-24 justify-center" data-feedback-answer="no"><svg class="h-5 w-5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 012 2v4h6a2 2 0 012 2.3l-1.4 7A2 2 0 0117.6 20H7" /></svg>@T("No")</button>
+            </div>
+        </div>
+        <form class="grid gap-5" data-feedback-step="details" hidden novalidate>
+            <fieldset>
+                <legend class="mb-3 font-bold text-deep-900 dark:text-white">@T("ReasonTitle")</legend>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var r in EHC.Web.Feedback.FeedbackText.Reasons)
+                    {
+                        <label class="cursor-pointer">
+                            <input type="radio" name="reason" value="@r" class="peer sr-only">
+                            <span class="chip inline-block peer-checked:border-deep-900 peer-checked:bg-deep-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400 dark:peer-checked:border-brand-400 dark:peer-checked:bg-brand-600">@T("Reason." + r)</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <div class="grid gap-2">
+                <label for="fb-comment" class="font-semibold text-deep-900 dark:text-white">@T("Comment")</label>
+                <textarea id="fb-comment" name="comment" rows="3" dir="auto" maxlength="@EHC.Web.Feedback.FeedbackText.MaxComment" aria-describedby="fb-hint" class="w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm dark:border-white/15 dark:bg-white/5"></textarea>
+                <p id="fb-hint" class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><svg class="ico mt-0.5 !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-shield" /></svg>@T("CommentHint")</p>
+            </div>
+            @* honeypot: invisible to people, filled in by bots *@
+            <div class="absolute -start-[9999px]" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-primary">@T("Send")</button>
+                <button type="button" class="btn btn-ghost" data-feedback-skip>@T("Skip")</button>
+            </div>
+        </form>
+        <p class="flex items-center gap-3 font-semibold text-deep-900 dark:text-white" data-feedback-step="done" tabindex="-1" hidden><span class="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white" aria-hidden="true"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10" /></svg></span>@T("Thanks")</p>
+        <p class="text-sm font-semibold text-emerg-600" role="alert" data-feedback-error hidden>@T("Error")</p>
+    </div>
+</section>
+<script src="~/assets/js/components/feedback.js" asp-append-version="true" defer></script>

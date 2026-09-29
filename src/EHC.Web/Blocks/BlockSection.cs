@@ -6,8 +6,8 @@ using EHC.Web.Themes;
 
 namespace EHC.Web.Blocks;
 
-/// <summary>Wrapper decisions for one block: visible? which classes / id / theme?</summary>
-public sealed partial record BlockSection(bool Visible, string? AnchorId, string? ThemeOverride, string CssClass)
+/// <summary>Wrapper decisions for one block: visible? which classes / id? ThemeStyle = CSS variables of a section theme.</summary>
+public sealed partial record BlockSection(bool Visible, string? AnchorId, string? ThemeStyle, string CssClass)
 {
     // Allow-list: editors choose a key, never a class name. Keep in sync with frontend/src/css/_safelist.css.
     private static readonly Dictionary<string, string> Variants = new()
@@ -26,12 +26,14 @@ public sealed partial record BlockSection(bool Visible, string? AnchorId, string
         ["lg"] = "py-24 lg:py-32",
     };
 
+    private const string PlainMarker = "sec-plain";
+
     [GeneratedRegex("^[a-z0-9-]{1,60}$")]
     private static partial Regex SafeId();
 
     public static BlockSection From(IPublishedElement? settings, IPublishedValueFallback fallback, DateTime nowUtc)
     {
-        if (settings is null) return new(true, null, null, Spacing["md"]);
+        if (settings is null) return new(true, null, null, $"{Spacing["md"]} {PlainMarker}");
 
         if (settings.Value<bool>(fallback, "hide")) return new(false, null, null, "");
 
@@ -43,16 +45,17 @@ public sealed partial record BlockSection(bool Visible, string? AnchorId, string
         var variant = settings.Value<string>(fallback, "variant") ?? "default";
         var spacing = settings.Value<string>(fallback, "spacing") ?? "md";
         var anchor = settings.Value<string>(fallback, "anchorId");
-        var theme = settings.Value<string>(fallback, "themeOverride");
+        var theme = settings.Value<IPublishedContent>(fallback, "themeOverride");
 
-        var css = string.Join(' ',
-            Variants.GetValueOrDefault(variant, ""),
-            Spacing.GetValueOrDefault(spacing, Spacing["md"])).Trim();
+        var pad = Spacing.GetValueOrDefault(spacing, Spacing["md"]);
+        var bg = Variants.GetValueOrDefault(variant, "");
+        // padded sections on the page background are marked so two in a row share one gap (see ehc.css)
+        var css = string.Join(' ', bg, pad, bg.Length == 0 && pad.Length > 0 ? PlainMarker : "").Trim();
 
         return new(
             true,
             anchor is not null && SafeId().IsMatch(anchor) ? anchor : null,
-            theme is not null && theme != "default" && SafeId().IsMatch(theme) ? theme : null,
+            theme?.ContentType.Alias == "theme" ? ThemeResolver.Build(theme, fallback).InlineStyle : null,
             css);
     }
 }

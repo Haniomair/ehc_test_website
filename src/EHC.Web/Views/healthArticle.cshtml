@@ -1,0 +1,79 @@
+﻿@* Health article: header (topic, reading time, last clinical review with Hijri date), photo, body, sources; side
+   column with related health tools and more articles on the topic; then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var topic = Model.Value<string>("topic");
+    var body = Model.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    var image = Model.Value<MediaWithCrops>("image");
+    var alt = Model.Value<string>("imageAlt") ?? "";
+    var reviewed = Model.Value<DateOnly?>("reviewedDate");
+    var reviewer = Model.Value<string>("reviewedBy");
+    var sources = Model.Value<IEnumerable<Link>>("sources")?.ToList() ?? [];
+    var tools = Model.Value<IEnumerable<IPublishedContent>>("relatedTools")?.Where(t => t.IsVisible()).ToList() ?? [];
+    var more = Model.Ancestors().FirstOrDefault()?.Children()
+        .Where(a => a.ContentType.Alias == "healthArticle" && a.Key != Model.Key && topic is not null && a.Value<string>("topic") == topic)
+        .Take(4).ToList() ?? [];
+    if (topic is not null) { ViewData["eyebrow"] = Umbraco.GetDictionaryValue("EHC.Health.Topic." + topic); }
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Health." + k) ?? "";
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:py-14">
+    <article class="min-w-0">
+        <p class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+            <span class="inline-flex items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-clock" /></svg>@string.Format(D("ReadingTime"), HealthArticles.ReadingMinutes(body))</span>
+            @if (reviewed is not null)
+            {
+                <span class="inline-flex flex-wrap items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-shield" /></svg>@D("Reviewed") @Dates.Html(reviewed.Value)@if (!string.IsNullOrWhiteSpace(reviewer)) {<span>· @reviewer</span>}</span>
+            }
+        </p>
+        @if (image is not null)
+        {
+            <img src="@image.GetCropUrl(1200, 675, furtherOptions: "format=webp&quality=80")" alt="@alt" class="mb-8 aspect-video w-full rounded-[22px] object-cover" fetchpriority="high">
+        }
+        @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+        @if (sources.Count > 0)
+        {
+            <section class="mt-10 max-w-[760px] border-t border-slate-200 pt-6 dark:border-white/10" aria-labelledby="art-sources">
+                <h2 id="art-sources" class="mb-3 text-base font-bold text-deep-900 dark:text-white">@D("Sources")</h2>
+                <ol class="grid list-decimal gap-1.5 ps-5 text-sm">
+                    @foreach (var s in sources) { <li><a href="@s.Url" target="@s.Target" rel="@(s.Type == LinkType.External ? "noopener" : null)" class="link">@s.Name</a></li> }
+                </ol>
+            </section>
+        }
+        <p class="mt-8 max-w-[760px] rounded-2xl bg-soft p-4 text-sm text-slate-600 dark:bg-white/5 dark:text-slate-400">@D("Disclaimer")</p>
+    </article>
+    @if (tools.Count > 0 || more.Count > 0)
+    {
+        <aside class="grid content-start gap-6">
+            @if (tools.Count > 0)
+            {
+                <div class="card p-6">
+                    <h2 class="mb-4 text-base font-bold text-deep-900 dark:text-white">@D("RelatedTools")</h2>
+                    <ul class="grid gap-2">
+                        @foreach (var t in tools)
+                        {
+                            var tool = HealthTools.Find(t.Value<string>("tool"));
+                            <li><a href="@t.Url()" class="flex items-center gap-3 rounded-xl p-2 transition hover:bg-soft dark:hover:bg-white/5"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@(tool?.Icon ?? "target")" /></svg></span><span class="font-semibold text-deep-900 dark:text-white">@t.Name</span></a></li>
+                        }
+                    </ul>
+                </div>
+            }
+            @if (more.Count > 0)
+            {
+                <div class="card p-6">
+                    <h2 class="mb-4 text-base font-bold text-deep-900 dark:text-white">@D("More")</h2>
+                    <ul class="grid gap-3">
+                        @foreach (var a in more) { <li><a href="@a.Url()" class="link text-sm">@a.Name</a></li> }
+                    </ul>
+                </div>
+            }
+        </aside>
+    }
+</div>
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

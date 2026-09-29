@@ -1,0 +1,39 @@
+@* Daily calories (adults): Mifflin–St Jeor resting energy × activity factor. Weight loss / gain = −/+ 500 kcal a day,
+   never below 1,200 (women) or 1,500 (men). *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = (string)ViewData["toolId"]!;
+    (string Value, string Key)[] levels = [("1.2", "Cal.Act1"), ("1.375", "Cal.Act2"), ("1.55", "Cal.Act3"), ("1.725", "Cal.Act4"), ("1.9", "Cal.Act5")];
+}
+<form class="tool-grid" novalidate data-calc="calories">
+    <div class="grid content-start gap-5">
+        <p class="text-sm text-slate-600 dark:text-slate-400">@D("Cal.Intro")</p>
+        @await Html.PartialAsync("tools/_Sex", id)
+        <div class="grid gap-5 sm:grid-cols-3">
+            @await Html.PartialAsync("tools/_Field", new ToolField(id + "-a", "age", D("Age"), D("Years"), 18, 100, 1, "35"))
+            @await Html.PartialAsync("tools/_Field", new ToolField(id + "-h", "height", D("Height"), D("Cm"), 120, 230, 0.1, "170"))
+            @await Html.PartialAsync("tools/_Field", new ToolField(id + "-w", "weight", D("Weight"), D("Kg"), 30, 300, 0.1, "70"))
+        </div>
+        <div class="grid gap-2">
+            <label for="@(id)-act" class="text-sm font-semibold text-deep-900 dark:text-white">@D("Cal.Activity")</label>
+            <select id="@(id)-act" name="activity" class="field" required>
+                @foreach (var (value, key) in levels) { <option value="@value" selected="@(value == "1.375" ? "selected" : null)">@D(key)</option> }
+            </select>
+        </div>
+        @await Html.PartialAsync("tools/_Actions", D("Calculate"))
+    </div>
+    <div class="tool-result" data-tool-result aria-live="polite">
+        <p data-empty class="text-slate-600 dark:text-slate-400">@D("Empty")</p>
+        <div data-out hidden>
+            <span class="text-sm text-slate-600 dark:text-slate-400">@D("Cal.Maintain")</span>
+            <b class="tool-value"><span data-v="maintain"></span> <small class="text-lg font-bold">@D("Cal.PerDay")</small></b>
+            <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl bg-white p-4 dark:bg-white/5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Cal.Lose")</dt><dd class="text-xl font-extrabold text-deep-900 dark:text-white"><span data-v="lose"></span> <small class="text-sm font-semibold">@D("Cal.PerDay")</small></dd></div>
+                <div class="rounded-2xl bg-white p-4 dark:bg-white/5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Cal.Gain")</dt><dd class="text-xl font-extrabold text-deep-900 dark:text-white"><span data-v="gain"></span> <small class="text-sm font-semibold">@D("Cal.PerDay")</small></dd></div>
+            </dl>
+            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">@D("Cal.Note")</p>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,45 @@
+@* Stats band: a row of big numbers that count up when scrolled into view (numeric values only; "##" placeholders and
+   non-numeric values stay as typed; no animation under prefers-reduced-motion). Tone: light · deep · brand, or a photo
+   background (media fields) with the theme overlay. Optional icon per number.
+   JS: components/count-up.js. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var stats = c.Value<BlockListModel>("stats")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("value"))).ToList() ?? [];
+    if (stats.Count == 0) { return; }
+    var tone = c.Value<string>("tone") ?? "deep";
+    var (box, num, label) = tone switch
+    {
+        "light" => ("bg-soft dark:bg-night-900", "text-deep-900 dark:text-white", "text-slate-600 dark:text-slate-400"),
+        "brand" => ("bg-linear-to-br from-brand-600 to-deep-900 text-white", "text-white", "text-brand-50"),
+        _ => ("bg-deep-900 text-white dark:bg-deep-950", "text-white", "text-on-deep"),
+    };
+    var heading = c.Value<string>("heading");
+    var bg = MediaBackground.From(c) with { Lazy = true };
+    if (bg.HasMedia) { (box, num, label) = ("text-white", "text-white", "text-white/85"); tone = "deep"; }
+    var cols = stats.Count switch { 2 => "sm:grid-cols-2", 3 => "sm:grid-cols-3", _ => "grid-cols-2 lg:grid-cols-4" };
+}
+<div class="wrap">
+    <div class="relative overflow-hidden rounded-[28px] px-6 py-12 sm:px-12 @box @(bg.HasMedia ? "media-hero" : "")" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+        @if (bg.HasMedia) { @await Html.PartialAsync("site/_MediaBackground", bg) }
+        else { <span class="mark-bg mark-white absolute -end-20 -top-20 h-72 w-72 opacity-[.08]" aria-hidden="true"></span> }
+        @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="relative mb-10 text-center text-[clamp(1.5rem,2.6vw,2.1rem)] font-bold [&_em]:not-italic [&_em]:text-brand-300 @(tone == "light" ? "text-deep-900 dark:text-white [&_em]:text-brand-600" : "")">@Text.Emphasis(heading, Encoder)</h2> }
+        <dl class="relative grid gap-8 text-center @cols">
+            @foreach (var s in stats)
+            {
+                var icon = s.Value<string>("icon");
+                <div class="flex flex-col items-center">
+                    <dt class="order-2 mt-2 text-sm @label">@(s.Value<string>("label"))</dt>
+                    <dd class="text-[clamp(2.2rem,4.5vw,3.4rem)] font-extrabold leading-none @num">
+                        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl @(tone == "light" ? "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" : "bg-white/10 text-white ring-1 ring-white/20")" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-@icon" /></svg></span> }
+                        <span dir="ltr"><span data-count="@(s.Value<string>("value"))">@(s.Value<string>("value"))</span>@(s.Value<string>("suffix"))</span>
+                    </dd>
+                </div>
+            }
+        </dl>
+    </div>
+</div>
+<script src="~/assets/js/components/count-up.js" asp-append-version="true" defer></script>

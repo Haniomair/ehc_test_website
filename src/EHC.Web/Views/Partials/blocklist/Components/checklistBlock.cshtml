@@ -1,0 +1,42 @@
+@* Checklist: heading + list in 1–2 columns; markers: check · dot · number (numbered = ordered list). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var items = c.Value<IEnumerable<string>>("items")?.Where(i => !string.IsNullOrWhiteSpace(i)).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var marker = c.Value<string>("marker") ?? "check";
+    var listCss = "grid gap-3" + (c.Value<string>("columns") == "2" ? " sm:grid-cols-2" : "");
+    var heading = c.Value<string>("heading");
+}
+@{
+    void Items()
+    {
+        for (var i = 0; i < items.Count; i++)
+        {
+            <li class="flex items-start gap-3 rounded-2xl bg-soft p-4 dark:bg-night-900">
+                <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white" aria-hidden="true">
+                    @if (marker == "number") { @(i + 1) }
+                    else if (marker == "dot") { <span class="h-2 w-2 rounded-full bg-white"></span> }
+                    else { <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10" /></svg> }
+                </span>
+                <span>@items[i]</span>
+            </li>
+        }
+    }
+}
+<div class="wrap">
+    <div class="rv mx-auto max-w-[900px]">
+        @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="mb-6 text-[clamp(1.5rem,2.6vw,2rem)] font-bold text-deep-900 dark:text-white [&_em]:not-italic [&_em]:text-brand-600 dark:[&_em]:text-brand-300">@Text.Emphasis(heading, Encoder)</h2> }
+        @if (marker == "number")
+        {
+            <ol class="@listCss">@{ Items(); }</ol>
+        }
+        else
+        {
+            <ul class="@listCss">@{ Items(); }</ul>
+        }
+    </div>
+</div>

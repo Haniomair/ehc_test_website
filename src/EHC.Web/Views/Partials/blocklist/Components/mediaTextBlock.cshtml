@@ -1,0 +1,87 @@
+@* Image + text ("about" layout): photo on either side (rounded / framed / tilted / offset colour block), heading with
+   optional subheading and accent bar, rich text, bullets (tick · ring · dot; one or two columns), closing paragraph,
+   buttons and an optional floating badge (value + label, e.g. "## years"). Without an image the text spans the full width. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var heading = c.Value<string>("heading");
+    var body = c.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    if (string.IsNullOrWhiteSpace(heading) && string.IsNullOrWhiteSpace(body)) { return; }
+    var image = c.Value<MediaWithCrops>("image");
+    var imageFirst = c.Value<string>("imageSide") != "end";
+    var style = c.Value<string>("imageStyle") ?? "rounded";
+    var bullets = c.Value<IEnumerable<string>>("bullets")?.Where(b => !string.IsNullOrWhiteSpace(b)).ToList() ?? [];
+    var ctas = c.Value<IEnumerable<Link>>("ctas")?.ToList() ?? [];
+    var badgeValue = c.Value<string>("badgeValue");
+    var alt = c.Value<string>("imageAlt") ?? "";
+    var sub = c.Value<string>("subheading");
+    var marker = c.Value<string>("marker") ?? "check";
+    var bulletCols = c.Value<string>("bulletColumns") == "1" ? "" : "sm:grid-cols-2";
+    var closing = c.Value<string>("closing");
+}
+<div class="wrap grid items-center gap-12 @(image is not null ? "lg:grid-cols-2 lg:gap-16" : "")">
+    @if (image is not null)
+    {
+        <div class="rv relative @(imageFirst ? "" : "lg:order-2")">
+            @if (style == "tilted") { <div class="absolute -inset-3 rotate-2 rounded-[36px] bg-linear-to-br from-brand-400 to-accent-400 opacity-60 rtl:-rotate-2" aria-hidden="true"></div> }
+            @if (style == "offset") { <div class="absolute -end-6 top-8 bottom-8 w-1/3 rounded-e-[30px] bg-brand-100 dark:bg-brand-500/20" aria-hidden="true"></div> }
+            @if (style == "framed") { <div class="absolute -bottom-4 -end-4 h-full w-full rounded-[30px] border-2 border-brand-500/40" aria-hidden="true"></div> }
+            <img src="@image.GetCropUrl(960, 760, furtherOptions: "format=webp&quality=80")" alt="@alt" class="relative aspect-[6/4.75] w-full object-cover @(style == "offset" ? "w-[92%] rounded-[8px]" : "rounded-[30px] shadow-soft")" loading="lazy">
+            @if (!string.IsNullOrWhiteSpace(badgeValue))
+            {
+                <div class="absolute -bottom-6 start-6 rounded-2xl bg-white px-5 py-4 shadow-soft dark:bg-night-900">
+                    <b class="block text-3xl font-extrabold text-deep-900 dark:text-white">@badgeValue</b>
+                    <span class="text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("badgeLabel"))</span>
+                </div>
+            }
+        </div>
+    }
+    <div class="rv @(imageFirst ? "" : "lg:order-1")">
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("eyebrow"))) { <div class="eyebrow">@(c.Value<string>("eyebrow"))</div> }
+        @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="h2">@Text.Emphasis(heading, Encoder)</h2> }
+        @if (!string.IsNullOrWhiteSpace(sub))
+        {
+            <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">@sub</p>
+            <span class="mt-5 block h-1 w-24 rounded-full bg-brand-600" aria-hidden="true"></span>
+        }
+        @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte mt-5">@Html.Raw(body)</div> }
+        @if (bullets.Count > 0)
+        {
+            <ul class="mt-6 grid gap-3 @bulletCols">
+                @foreach (var b in bullets)
+                {
+                    <li class="flex items-start gap-3">
+                        @if (marker == "ring")
+                        {
+                            <span class="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 border-brand-600 dark:border-brand-300" aria-hidden="true"><span class="h-2 w-2 rounded-full bg-brand-600 dark:bg-brand-300"></span></span>
+                        }
+                        else if (marker == "dot")
+                        {
+                            <span class="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-brand-600 dark:bg-brand-300" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10" /></svg></span>
+                        }
+                        <span>@b</span>
+                    </li>
+                }
+            </ul>
+        }
+        @if (!string.IsNullOrWhiteSpace(closing))
+        {
+            <p class="mt-8 leading-relaxed text-slate-600 dark:text-slate-400">@closing</p>
+        }
+        @if (ctas.Count > 0)
+        {
+            <div class="mt-8 flex flex-wrap gap-3">
+                @for (var i = 0; i < ctas.Count; i++) { <a class="btn @(i == 0 ? "btn-primary" : "btn-ghost")" href="@ctas[i].Url" target="@ctas[i].Target">@ctas[i].Name</a> }
+            </div>
+        }
+    </div>
+</div>

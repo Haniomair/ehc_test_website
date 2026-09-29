@@ -1,0 +1,69 @@
+@* Image cards: photo cards (services, departments, programmes) with tag, title, text and link; hover zooms the photo.
+   Style: stacked (photo above text) · overlay (text on the photo). 2–4 columns. Photos are decorative (the title names
+   the card). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cols = c.Value<string>("columns") switch { "2" => "sm:grid-cols-2", "4" => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    var overlay = c.Value<string>("style") == "overlay";
+}
+@{
+    void Card(IPublishedElement it, Link? link)
+    {
+        var image = it.Value<MediaWithCrops>("image");
+        var tag = it.Value<string>("tag");
+        var text = it.Value<string>("text");
+        if (overlay)
+        {
+            <div class="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-deep-900">
+                @if (image is not null) { <img src="@image.GetCropUrl(640, 800, furtherOptions: "format=webp&quality=80")" alt="" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy"> }
+                <span class="absolute inset-0 bg-linear-to-t from-deep-950/95 via-deep-950/40 to-transparent" aria-hidden="true"></span>
+                <div class="absolute inset-x-0 bottom-0 grid gap-2 p-6 text-white">
+                    @if (!string.IsNullOrWhiteSpace(tag)) { <span class="w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">@tag</span> }
+                    <h3 class="text-xl font-bold">@(it.Value<string>("title"))</h3>
+                    @if (!string.IsNullOrWhiteSpace(text)) { <p class="text-sm text-white/85">@text</p> }
+                    @if (!string.IsNullOrWhiteSpace(link?.Name)) { <span class="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-200">@link.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card flex h-full flex-col overflow-hidden">
+                <div class="relative aspect-[16/11] overflow-hidden bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">
+                    @if (image is not null) { <img src="@image.GetCropUrl(720, 495, furtherOptions: "format=webp&quality=80")" alt="" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy"> }
+                    @if (!string.IsNullOrWhiteSpace(tag)) { <span class="absolute start-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-brand-700">@tag</span> }
+                </div>
+                <div class="flex flex-1 flex-col gap-2 p-6">
+                    <h3 class="text-lg font-bold text-deep-900 dark:text-white">@(it.Value<string>("title"))</h3>
+                    @if (!string.IsNullOrWhiteSpace(text)) { <p class="text-sm text-slate-600 dark:text-slate-400">@text</p> }
+                    @if (!string.IsNullOrWhiteSpace(link?.Name)) { <span class="link mt-auto pt-2 text-sm">@link.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
+                </div>
+            </div>
+        }
+    }
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="grid gap-6 @cols">
+        @foreach (var it in items)
+        {
+            var link = it.Value<Link>("link");
+            <li class="rv">
+                @if (link is not null)
+                {
+                    <a href="@link.Url" target="@link.Target" class="group block h-full rounded-[22px] transition hover:-translate-y-1">@{ Card(it, link); }</a>
+                }
+                else
+                {
+                    <div class="group h-full">@{ Card(it, null); }</div>
+                }
+            </li>
+        }
+    </ul>
+</div>

@@ -13,9 +13,16 @@
     var hours = Model.Value<BlockListModel>("openingHours")?.Select(h => h.Content).ToList() ?? [];
     var phone = Model.Value<string>("phone");
     var dial = new string((phone ?? "").Where(c => char.IsDigit(c) || c == '+').ToArray());
-    var point = hasMap ? JsonSerializer.Serialize(new[] { new { id = Model.Key, name = Model.Name, lat, lng, er, url = "" } }) : null;
+    var point = hasMap ? JsonSerializer.Serialize(new[] { new { id = Model.Key, name = Model.Name, type = Model.Value<string>("facilityType") ?? "", lat, lng, er, url = "" } }) : null;
     var inv = CultureInfo.InvariantCulture;
     ViewData["eyebrow"] = Umbraco.GetDictionaryValue("EHC.Facility.Type." + type);
+    var network = Model.Ancestors().FirstOrDefault(a => a.ContentType.Alias == "healthNetwork");
+    if (network is not null)
+    {
+        var enc = System.Text.Encodings.Web.HtmlEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
+        ViewData["extra"] = new Microsoft.AspNetCore.Html.HtmlString(
+            $"<a href=\"{enc.Encode(network.Url())}\" class=\"inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-deep-900 shadow-sm ring-1 ring-slate-200 transition hover:ring-brand-400 dark:bg-white/5 dark:text-white dark:ring-white/10\"><svg class=\"ico !h-4 !w-4 text-brand-600 dark:text-brand-300\" aria-hidden=\"true\"><use href=\"#i-hosp\" /></svg>{enc.Encode(network.Name)}</a>");
+    }
 }
 @await Html.PartialAsync("site/_PageHeader", Model)
 <div class="wrap grid gap-8 py-12 lg:grid-cols-[1fr_1.2fr] lg:py-16">

@@ -84,7 +84,7 @@
   // ---------- ER wait board ----------
   var erCards=[].slice.call(document.querySelectorAll('#erGrid [data-w]')),erT=0;
   function erLvl(w){return w<30?{c:'bg-emerald-500',b:'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',l:{en:'Quiet',ar:'هادئ'}}:w<55?{c:'bg-accent-400',b:'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',l:{en:'Moderate',ar:'متوسط'}}:{c:'bg-highlight-500',b:'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',l:{en:'Busy',ar:'مزدحم'}}}
-  function renderEr(){erCards.forEach(function(c){var w=+c.dataset.w,l=erLvl(w);c.querySelector('.er-min').textContent=w;var bar=c.querySelector('.er-bar');bar.className='er-bar block h-full rounded-full transition-all duration-700 '+l.c;bar.style.width=Math.min(100,w/90*100)+'%';var bd=c.querySelector('.er-badge');bd.className='er-badge whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold '+l.b;bd.textContent=T(l.l)})}
+  function renderEr(){erCards.forEach(function(c){var w=+c.dataset.w,l=erLvl(w);c.querySelector('.er-min').textContent=w;var bar=c.querySelector('.er-bar');bar.className='er-bar block h-full rounded-full transition-all duration-700 '+l.c;bar.style.width=Math.min(100,w/90*100)+'%';var bd=c.querySelector('.er-badge');bd.className='er-badge whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold '+l.b;bd.textContent=T(l.l)})}
   renderEr();window.hooks.push(renderEr);
   setInterval(function(){erT++;var u=document.getElementById('erUpd');if(u)u.textContent=(erT%15)+'s';if(erT%15===0&&!reduce){erCards.forEach(function(c){c.dataset.w=Math.max(8,Math.min(85,+c.dataset.w+Math.round((Math.random()-.5)*10)))});renderEr()}},1000);
   // ---------- journeys ----------

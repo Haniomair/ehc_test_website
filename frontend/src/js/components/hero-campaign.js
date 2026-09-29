@@ -4,7 +4,7 @@
    Safe to load more than once and with any number of heroes on the page. */
 (function () {
   'use strict';
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = document.documentElement.classList.contains('a11y-still') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   function init(root) {
     if (root.hasAttribute('data-hero-ready')) return;

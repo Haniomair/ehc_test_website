@@ -1,0 +1,48 @@
+@* Opening hours: rows of days + hours (same rows as facility pages), optional 24/7 emergency strip, phone and note.
+   Rows are free text so Ramadan / holiday hours can be typed as editors need them. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var rows = c.Value<BlockListModel>("hours")?.Select(h => h.Content).Where(h => !string.IsNullOrWhiteSpace(h.Value<string>("days"))).ToList() ?? [];
+    var er = c.Value<bool>("emergency247");
+    if (rows.Count == 0 && !er) { return; }
+    var phone = c.Value<string>("phone");
+    var dial = new string((phone ?? "").Where(ch => char.IsDigit(ch) || ch == '+').ToArray());
+    var heading = c.Value<string>("heading");
+}
+<div class="wrap">
+    <div class="rv mx-auto grid max-w-[980px] gap-8 overflow-hidden rounded-[26px] bg-white p-7 shadow-soft ring-1 ring-slate-100 sm:p-10 md:grid-cols-[.9fr_1.1fr] dark:bg-night-900 dark:ring-white/10">
+        <div class="flex flex-col gap-4">
+            <span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-clock" /></svg></span>
+            @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), string.IsNullOrWhiteSpace(heading) ? Umbraco.GetDictionaryValue("EHC.Facility.Hours") : heading, c.Value<string>("intro")))
+            @if (!string.IsNullOrWhiteSpace(dial))
+            {
+                <a href="tel:@dial" class="btn btn-primary mt-auto w-fit"><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg><span dir="ltr">@phone</span></a>
+            }
+        </div>
+        <div class="grid content-start gap-3">
+            @if (er)
+            {
+                <div class="flex items-center gap-3 rounded-2xl bg-emerg-600 px-5 py-4 text-white">
+                    <svg class="ico" aria-hidden="true"><use href="#i-er" /></svg>
+                    <b>@Umbraco.GetDictionaryValue("EHC.Facility.EmergencyOpen")</b>
+                </div>
+            }
+            @if (rows.Count > 0)
+            {
+                <dl class="divide-y divide-slate-100 rounded-2xl bg-soft px-5 dark:divide-white/10 dark:bg-white/5">
+                    @foreach (var r in rows)
+                    {
+                        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5">
+                            <dt class="font-semibold text-deep-900 dark:text-white">@(r.Value<string>("days"))</dt>
+                            <dd class="font-bold text-brand-700 dark:text-brand-300" dir="auto">@(r.Value<string>("hours"))</dd>
+                        </div>
+                    }
+                </dl>
+            }
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("note"))) { <p class="text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("note"))</p> }
+        </div>
+    </div>
+</div>

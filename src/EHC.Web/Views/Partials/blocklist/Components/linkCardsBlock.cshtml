@@ -1,0 +1,40 @@
+@* Link cards (e-services hub): icon, title, text, optional badge ("New", "External"); grid (2–4 columns) or compact
+   list. External links (other domains) get an "opens in a new window" hint when their target is _blank. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title")) && i.Value<Link>("link") is not null).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var list = c.Value<string>("layout") == "list";
+    var cols = c.Value<string>("columns") switch { "2" => "sm:grid-cols-2", "4" => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="grid @(list ? "gap-3 md:grid-cols-2" : $"gap-4 {cols}")">
+        @foreach (var it in items)
+        {
+            var link = it.Value<Link>("link")!;
+            var icon = it.Value<string>("icon");
+            var badge = it.Value<string>("badge");
+            var newWindow = link.Target == "_blank";
+            <li class="rv">
+                <a href="@link.Url" target="@link.Target" rel="@(newWindow ? "noopener" : null)" class="card group flex h-full gap-4 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-soft @(list ? "items-center p-4" : "flex-col p-6")">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300 @(list ? "h-11 w-11" : "h-14 w-14")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
+                    <span class="min-w-0 flex-1">
+                        <span class="flex flex-wrap items-center gap-2">
+                            <b class="text-deep-900 dark:text-white @(list ? "" : "text-lg")">@(it.Value<string>("title"))</b>
+                            @if (!string.IsNullOrWhiteSpace(badge)) { <span class="rounded-full bg-accent-400/25 px-2 py-0.5 text-xs font-bold text-deep-900 dark:text-accent-400">@badge</span> }
+                        </span>
+                        @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <span class="mt-1 block text-sm text-slate-600 dark:text-slate-400">@(it.Value<string>("text"))</span> }
+                    </span>
+                    <svg class="ico flip !h-5 !w-5 shrink-0 text-slate-400 transition group-hover:text-brand-600 @(list ? "" : "mt-auto")" aria-hidden="true"><use href="#i-arrow" /></svg>
+                    @if (newWindow) { <span class="sr-only">@D("EHC.Common.NewWindow")</span> }
+                </a>
+            </li>
+        }
+    </ul>
+</div>

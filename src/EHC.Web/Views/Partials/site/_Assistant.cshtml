@@ -1,0 +1,81 @@
+@* "Ask EHC" assistant — DEMO for review (docs/06: the real assistant needs its own privacy & safety review first).
+   Shown only when Ehc:Assistant:Demo is true. Replies are pre-written (dictionary EHC.Assistant.*), matched by keyword in
+   the browser (components/assistant.js); nothing the visitor types leaves the page. "Talk to a person" simulates live chat. *@
+@using System.Text.Json
+@using EHC.Web.Site
+@using Microsoft.Extensions.Configuration
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@inject IConfiguration Config
+@if (Config.GetValue<bool>("Ehc:Assistant:Demo"))
+{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Assistant." + k) ?? "";
+    string? Page(string alias) => Model.Home?.Children().FirstOrDefault(x => x.ContentType.Alias == alias)?.Url();
+    var emergency = Model.Emergency?.Number ?? "997";
+    var advice = Model.Advice?.Number ?? "937";
+    string Fill(string text) => text.Replace("{emergency}", emergency).Replace("{advice}", advice);
+    object Intent(string key, string? url, bool urgent = false) => new
+    {
+        key,
+        label = D(key + ".Label"),
+        link = urgent ? $"{Umbraco.GetDictionaryValue("EHC.QuickActions.EmergencyCall")} {emergency}" : D(key + ".Label"),
+        answer = Fill(D(key + ".Answer")),
+        keywords = D(key + ".Keywords").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+        url,
+        urgent,
+    };
+    var intents = new[]
+    {
+        Intent("Emergency", "tel:" + (Model.Emergency?.Dial ?? "997"), urgent: true),
+        Intent("Book", Model.HeaderCta?.Url),
+        Intent("Doctor", Page("doctorFolder")),
+        Intent("Nearest", Model.NearestLink?.Url ?? Page("facilityFolder")),
+        Intent("Vaccine", Page("campaignFolder")),
+        Intent("Tools", Page("healthToolsFolder")),
+        Intent("Library", Page("healthLibrary")),
+    };
+    var data = JsonSerializer.Serialize(new
+    {
+        intents,
+        agentKeywords = D("Agent.Keywords").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+        greetKeywords = D("Greeting.Keywords").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+        text = new
+        {
+            welcome = D("Welcome"),
+            greeting = D("Greeting.Answer"),
+            fallback = D("Fallback"),
+            agent = D("Agent.Label"),
+            connecting = D("Agent.Connecting"),
+            agentHello = D("Agent.Hello"),
+            agentReply = Fill(D("Agent.Reply")),
+            agentName = D("Agent.Name"),
+            botName = D("Title"),
+            back = D("Agent.Back"),
+            you = D("You"),
+            typing = D("Typing"),
+        },
+    });
+    <button type="button" data-action="assistant-open" class="fixed bottom-[84px] end-4 z-[45] inline-flex h-14 items-center gap-2 rounded-full bg-brand-600 px-4 text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand-700 sm:bottom-6 sm:end-6 sm:px-5 print:hidden" aria-haspopup="dialog" aria-controls="assistant" aria-expanded="false">
+        <svg class="ico !h-6 !w-6" aria-hidden="true"><use href="#i-chat" /></svg><span class="max-sm:sr-only font-semibold">@D("Open")</span>
+    </button>
+    <section id="assistant" class="assistant fixed inset-x-3 bottom-3 z-[90] flex h-[min(620px,calc(100dvh-1.5rem))] flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_30px_60px_rgba(10,42,79,.25)] ring-1 ring-slate-200 sm:inset-x-auto sm:end-6 sm:bottom-6 sm:w-[390px] dark:bg-night-900 dark:ring-white/10" role="dialog" aria-modal="false" aria-labelledby="assistant-title" data-assistant="@data" hidden>
+        <header class="flex items-center gap-3 bg-deep-900 px-4 py-3 text-white dark:bg-deep-950">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10" aria-hidden="true"><svg class="ico" data-assistant-avatar><use href="#i-bot" /></svg></span>
+            <div class="min-w-0 flex-1">
+                <h2 id="assistant-title" class="flex flex-wrap items-center gap-2 font-bold leading-tight"><span data-assistant-name>@D("Title")</span><span class="assistant-badge">@D("Demo")</span></h2>
+                <p class="flex items-center gap-1.5 text-xs text-on-deep"><span class="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true"></span><span data-assistant-status>@D("Status")</span></p>
+            </div>
+            <button type="button" data-action="assistant-close" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20" aria-label="@D("Close")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>
+        </header>
+        <p class="border-b border-slate-200 bg-accent-400/15 px-4 py-2 text-xs text-slate-700 dark:border-white/10 dark:text-slate-300">@D("DemoNote")</p>
+        <div class="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4" role="log" aria-live="polite" aria-label="@D("Log")" data-assistant-log tabindex="0"></div>
+        <div class="scrollbar-none flex gap-2 overflow-x-auto px-4 pb-3 sm:flex-wrap [&>*]:shrink-0" data-assistant-chips></div>
+        <form class="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-white/10" data-assistant-form>
+            <label class="sr-only" for="assistant-input">@D("Placeholder")</label>
+            <input id="assistant-input" type="text" autocomplete="off" maxlength="300" class="field !h-11 flex-1 !rounded-full" placeholder="@D("Placeholder")">
+            <button type="submit" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-600 text-white hover:bg-brand-700" aria-label="@D("Send")"><svg class="ico flip !h-5 !w-5" aria-hidden="true"><use href="#i-send" /></svg></button>
+        </form>
+        <p class="px-4 pb-3 text-center text-xs text-slate-500 dark:text-slate-400">@Fill(D("Disclaimer"))</p>
+    </section>
+    <script src="~/assets/js/components/assistant.js" asp-append-version="true" defer></script>
+}

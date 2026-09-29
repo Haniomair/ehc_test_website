@@ -1,0 +1,62 @@
+@* Split panels: full-width rows, half photo / half colour panel, alternating sides automatically (first row: photo at
+   the end). Each row has its own tone (light · soft · deep · brand), eyebrow, heading, text, bullets and button.
+   Use section spacing "none" so the rows meet the neighbouring sections. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var rows = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("heading"))).ToList() ?? [];
+    if (rows.Count == 0) { return; }
+    var startWithImage = c.Value<string>("imageSide") == "start";
+}
+<div>
+    @for (var i = 0; i < rows.Count; i++)
+    {
+        var r = rows[i];
+        var image = r.Value<MediaWithCrops>("image");
+        var tone = r.Value<string>("tone") ?? "light";
+        var dark = tone is "deep" or "brand";
+        var panel = tone switch
+        {
+            "deep" => "bg-deep-900 text-white dark:bg-deep-950",
+            "brand" => "bg-brand-600 text-white",
+            "soft" => "bg-soft dark:bg-night-900",
+            _ => "bg-white dark:bg-night-950",
+        };
+        var imageFirst = (i % 2 == 0) == startWithImage;
+        var bullets = r.Value<IEnumerable<string>>("bullets")?.Where(b => !string.IsNullOrWhiteSpace(b)).ToList() ?? [];
+        var body = r.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+        var link = r.Value<Link>("link");
+        var icon = r.Value<string>("icon");
+        <div class="grid lg:min-h-[520px] @(image is not null ? "lg:grid-cols-2" : "")">
+            @if (image is not null)
+            {
+                <div class="relative min-h-[260px] overflow-hidden @(imageFirst ? "" : "lg:order-2")">
+                    <img src="@image.GetCropUrl(1200, 1000, furtherOptions: "format=webp&quality=80")" alt="@(r.Value<string>("imageAlt"))" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
+                </div>
+            }
+            <div class="rv flex items-center px-6 py-14 sm:px-12 lg:px-16 @panel @(imageFirst ? "" : "lg:order-1")">
+                <div class="max-w-[560px]">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <span class="mb-5 grid h-14 w-14 place-items-center rounded-full @(dark ? "bg-white/10 ring-1 ring-white/25" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span> }
+                    @if (!string.IsNullOrWhiteSpace(r.Value<string>("eyebrow"))) { <p class="mb-2 text-sm @(dark ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@(r.Value<string>("eyebrow"))</p> }
+                    <h2 class="text-[clamp(1.5rem,2.6vw,2.1rem)] font-bold leading-snug @(dark ? "[&_em]:not-italic [&_em]:text-brand-200" : "text-deep-900 dark:text-white [&_em]:not-italic [&_em]:text-brand-600 dark:[&_em]:text-brand-300")">@Text.Emphasis(r.Value<string>("heading"), Encoder)</h2>
+                    @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte mt-4 @(dark ? "rte-on-dark" : "")">@Html.Raw(body)</div> }
+                    @if (bullets.Count > 0)
+                    {
+                        <ul class="mt-6 grid gap-3">
+                            @foreach (var b in bullets)
+                            {
+                                <li class="flex items-start gap-3"><span class="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 @(dark ? "border-white/70" : "border-brand-600 dark:border-brand-300")" aria-hidden="true"><span class="h-2 w-2 rounded-full @(dark ? "bg-white" : "bg-brand-600 dark:bg-brand-300")"></span></span><span>@b</span></li>
+                            }
+                        </ul>
+                    }
+                    @if (link is not null) { <a class="btn mt-8 @(dark ? "btn-sand" : "btn-primary")" href="@link.Url" target="@link.Target">@link.Name</a> }
+                </div>
+            </div>
+        </div>
+    }
+</div>

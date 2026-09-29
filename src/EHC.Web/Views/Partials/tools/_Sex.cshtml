@@ -1,0 +1,12 @@
+@* Male / female choice for the tools whose formulas differ by sex. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<string>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+}
+<fieldset class="grid gap-2">
+    <legend class="mb-2 text-sm font-semibold text-deep-900 dark:text-white">@D("Sex")</legend>
+    <div class="flex flex-wrap gap-2">
+        <label class="opt"><input type="radio" name="sex" value="male" required><span>@D("Male")</span></label>
+        <label class="opt"><input type="radio" name="sex" value="female"><span>@D("Female")</span></label>
+    </div>
+</fieldset>

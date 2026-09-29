@@ -36,9 +36,13 @@ public sealed class EhcComposer : IComposer
         });
 
         EHC.Web.Api.ApiSetup.Add(builder);
+        EHC.Web.Feedback.FeedbackSetup.Add(builder);
         Performance.Add(builder);
+        MapTiles.Add(builder);
+        ThemePreview.Add(builder);
         builder.Services.AddScoped<IThemeResolver, ThemeResolver>();
         builder.Services.AddScoped<ISiteContext, SiteContext>();
+        builder.Services.Configure<EmbedOptions>(builder.Config.GetSection("Ehc:Embed"));
         builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, LanguageSeeder>();
         builder.AddNotificationHandler<ContentSavingNotification, ThemeContrastGuard>();
 

@@ -13,7 +13,7 @@
 <div class="relative overflow-hidden bg-deep-900 py-16 text-white lg:py-24 dark:bg-deep-950 dark:ring-1 dark:ring-white/5">
     <div class="mark-bg mark-white absolute -bottom-52 -start-52 h-[600px] w-[600px] opacity-[.05]" aria-hidden="true"></div>
     <div class="wrap relative">
-        <div class="rv mb-11 flex flex-wrap items-end justify-between gap-6">
+        <div class="rv sec-head-row">
             @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), OnDark: true))
             @if (items.Count > 1)
             {
@@ -23,7 +23,7 @@
                 </div>
             }
         </div>
-        <div id="@id" class="scrollbar-thin grid snap-x snap-mandatory auto-cols-[minmax(280px,1fr)] grid-flow-col gap-5 overflow-x-auto pb-3 sm:auto-cols-[minmax(300px,1fr)]">
+        <div id="@id" class="scrollbar-none grid snap-x snap-mandatory auto-cols-[minmax(280px,1fr)] grid-flow-col gap-5 overflow-x-auto py-1 sm:auto-cols-[minmax(300px,1fr)]">
             @for (var i = 0; i < items.Count; i++)
             {
                 var it = items[i];
@@ -31,7 +31,7 @@
                 var link = it.Value<Link>("link");
                 var icon = it.Value<string>("icon");
                 <a class="flex min-h-[340px] snap-start flex-col gap-3 rounded-[22px] p-7 transition hover:-translate-y-1 @(hi ? "bg-linear-to-br from-brand-500 to-support-500" : "border border-white/10 bg-white/[.06] hover:bg-white/10")" href="@(link?.Url ?? "#")" target="@link?.Target">
-                    <span class="text-[4rem] font-bold leading-none @(hi ? "text-white/30" : "text-brand-300/25")" aria-hidden="true">@((i + 1).ToString("00"))</span>
+                    <span class="text-[4rem] font-bold leading-none @(hi ? "text-white/60" : "text-brand-300/70")" aria-hidden="true">@((i + 1).ToString("00"))</span>
                     @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-14 w-14 place-items-center rounded-2xl @(hi ? "bg-white/20" : "bg-brand-300/15 text-brand-300")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
                     <h3 class="mt-auto text-[1.35rem] font-bold">@(it.Value<string>("title"))</h3>
                     @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <p class="text-[.92rem] @(hi ? "text-brand-50" : "text-on-deep")">@(it.Value<string>("text"))</p> }

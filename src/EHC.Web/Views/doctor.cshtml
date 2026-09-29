@@ -21,9 +21,9 @@
 }
 <div class="bg-soft dark:bg-night-900/60">
     <div class="wrap py-10 lg:py-14">
-        <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-8 text-sm">
+        <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-7 text-sm">
             <ol class="flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                @foreach (var a in crumbs) { <li class="flex items-center gap-1.5"><a href="@a.Url()" class="hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li> }
+                @foreach (var a in crumbs) { <li class="flex items-center gap-1.5"><a href="@a.Url()" class="inline-block py-1 hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li> }
                 <li aria-current="page" class="font-semibold text-deep-900 dark:text-white">@name</li>
             </ol>
         </nav>
@@ -34,7 +34,7 @@
             </div>
             <div>
                 @if (specialty is not null) { <a href="@specialty.Url()" class="eyebrow hover:underline">@specialty.Name</a> }
-                <h1 class="text-[clamp(2rem,4.5vw,3.2rem)] font-bold leading-tight text-deep-900 dark:text-white">@name</h1>
+                <h1 class="h1">@name</h1>
                 @if (!string.IsNullOrWhiteSpace(Model.Value<string>("title"))) { <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">@(Model.Value<string>("title"))</p> }
                 <dl class="mt-6 grid gap-3 text-sm sm:grid-cols-2">
                     @if (facilities.Count > 0)

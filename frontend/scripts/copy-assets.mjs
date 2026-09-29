@@ -13,6 +13,16 @@ for (const f of ['leaflet.js', 'leaflet.css', 'images']) {
   cpSync(`node_modules/leaflet/dist/${f}`, `${out}/vendor/leaflet/${f}`, { recursive: true });
 }
 cpSync('node_modules/leaflet/LICENSE', `${out}/vendor/leaflet/LICENSE`);
+// marker clustering (cluster look comes from ehc.css, not the plugin's default theme)
+mkdirSync(`${out}/vendor/leaflet.markercluster`, { recursive: true });
+for (const f of ['leaflet.markercluster.js', 'MarkerCluster.css']) {
+  cpSync(`node_modules/leaflet.markercluster/dist/${f}`, `${out}/vendor/leaflet.markercluster/${f}`);
+}
+cpSync('node_modules/leaflet.markercluster/MIT-LICENCE.txt', `${out}/vendor/leaflet.markercluster/LICENSE.txt`);
+// vector basemap renderer for the self-hosted PMTiles file (npm run tiles)
+mkdirSync(`${out}/vendor/protomaps-leaflet`, { recursive: true });
+cpSync('node_modules/protomaps-leaflet/dist/protomaps-leaflet.js', `${out}/vendor/protomaps-leaflet/protomaps-leaflet.js`);
+cpSync('node_modules/protomaps-leaflet/LICENSE', `${out}/vendor/protomaps-leaflet/LICENSE`);
 const target = process.env.EHC_WWWROOT;
 if (target) {
   mkdirSync(target, { recursive: true });

@@ -1,0 +1,13 @@
+@* Submit (label = model) / start again buttons and the validation message shared by every tool form. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<string>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var submit = string.IsNullOrEmpty(Model) ? D("Calculate") : Model;
+}
+<div class="grid gap-3">
+    <p class="hidden rounded-xl bg-emerg-50 px-4 py-3 text-sm font-semibold text-emerg-600 dark:bg-emerg-500/15 dark:text-red-200" data-tool-error role="alert">@D("Invalid")</p>
+    <div class="flex flex-wrap gap-3">
+        <button type="submit" class="btn btn-primary">@submit</button>
+        <button type="reset" class="btn btn-ghost">@D("Reset")</button>
+    </div>
+</div>

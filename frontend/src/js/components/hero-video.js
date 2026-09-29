@@ -2,7 +2,7 @@
    button pauses/plays (WCAG 2.2.2). The button's accessible name comes from data-label-pause / data-label-play. */
 (function () {
   'use strict';
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = document.documentElement.classList.contains('a11y-still') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function init(v) {
     if (v.hasAttribute('data-video-ready')) return;
     v.setAttribute('data-video-ready', '');

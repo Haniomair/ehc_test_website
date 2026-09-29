@@ -1,16 +1,14 @@
 /* =====================================================================
-   THEME PRESETS — designed occasions
+   OCCASION THEMES — design reference for the static preview only
    ---------------------------------------------------------------------
-   Activated by <html data-theme="…"> (set server-side by the Umbraco
-   ThemeResolver when a scheduled theme is live) or on a single section.
-   A preset only overrides role variables from _tokens.css, plus an
-   optional decorative motif (--pattern-image) used by .mark-bg.
+   The website does NOT use this file. On the site, themes are content:
+   Theme nodes in the backoffice (Settings › Themes) hold a few colours,
+   and the server builds every shade from them (Themes/Palette.cs), with
+   the contrast rules enforced on save. The six themes below were migrated
+   to Theme nodes with the same colours.
 
-   Contrast (WCAG 2.2 AA) checked with scripts/check-contrast.mjs:
-     white on brand-600 (buttons) ≥ 4.5 · deep-900 on soft ≥ 7 ·
-     brand-300 on deep-900 (hero highlight) ≥ 4.5
-   Colours are proposals: align with the official identity of each
-   occasion (e.g. the yearly Saudi National Day identity) before launch.
+   This file lets frontend/preview/*.html switch themes without Umbraco
+   (<html data-theme="…">), and `npm run check:contrast` still checks it.
    ===================================================================== */
 
 /* ---------- Saudi National Day — green & gold ---------- */
@@ -33,7 +31,7 @@
   --accent-400: #E0B04F; --accent-500: #C9962F;
   --soft: #FBF7EE;       --on-deep: #D8CCEB;
   --hero-0-glow: #E0B04F; --hero-0-from: #0B0820; --hero-0-via: #221A45; --hero-0-to: #6B3FA0;
-  --pattern-image: url('../img/motifs/ramadan.svg');
+  --pattern-image: url('../dist/img/motifs/ramadan.svg');
 }
 
 /* ---------- Eid al-Fitr — celebration: turquoise, festive magenta & gold ---------- */
@@ -46,7 +44,7 @@
   --highlight-500: #C2569B; --highlight-800: #6E2358;
   --soft: #F3FAF9;       --on-deep: #BFE6E3;
   --hero-0-glow: #EFBF45; --hero-0-from: #062629; --hero-0-via: #0E464C; --hero-0-to: #0B7A77;
-  --pattern-image: url('../img/motifs/eid.svg');
+  --pattern-image: url('../dist/img/motifs/eid.svg');
 }
 
 /* ---------- Eid al-Adha — warmth & generosity: deep crimson, cream & gold ---------- */
@@ -58,7 +56,7 @@
   --accent-400: #D9A843; --accent-500: #C29030;
   --soft: #FBF5F1;       --on-deep: #EBC9CF;
   --hero-0-glow: #D9A843; --hero-0-from: #220A10; --hero-0-via: #46141E; --hero-0-to: #8E2A3B;
-  --pattern-image: url('../img/motifs/eid.svg');
+  --pattern-image: url('../dist/img/motifs/eid.svg');
 }
 
 /* ---------- Hajj season — ihram white, kiswa black, earth & gold, geometric rosette ---------- */
@@ -70,7 +68,7 @@
   --accent-400: #C9A227; --accent-500: #B38B1D;
   --soft: #F8F5EE;       --on-deep: #DCCFB5;
   --hero-0-glow: #C9A227; --hero-0-from: #0F0D0A; --hero-0-via: #2A251C; --hero-0-to: #7A5A24;
-  --pattern-image: url('../img/motifs/hajj.svg');
+  --pattern-image: url('../dist/img/motifs/hajj.svg');
 }
 
 /* ---------- Pink October — breast-cancer awareness ---------- */

@@ -4,8 +4,8 @@
 @if (Model.Pages > 1)
 {
     <nav class="mt-10 flex items-center justify-center gap-3" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Pagination")">
-        @if (Model.Page > 1) { <a class="btn btn-ghost !py-2.5" rel="prev" href="@ListingQuery.Page(Context.Request, Model.Page - 1)">@Umbraco.GetDictionaryValue("EHC.Common.Previous")</a> }
+        @if (Model.Page > 1) { <a class="btn btn-ghost btn-sm" rel="prev" href="@ListingQuery.Page(Context.Request, Model.Page - 1)">@Umbraco.GetDictionaryValue("EHC.Common.Previous")</a> }
         <span class="text-sm text-slate-500 dark:text-slate-400">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.PageOf") ?? "{0} / {1}", Model.Page, Model.Pages)</span>
-        @if (Model.Page < Model.Pages) { <a class="btn btn-ghost !py-2.5" rel="next" href="@ListingQuery.Page(Context.Request, Model.Page + 1)">@Umbraco.GetDictionaryValue("EHC.Common.Next")</a> }
+        @if (Model.Page < Model.Pages) { <a class="btn btn-ghost btn-sm" rel="next" href="@ListingQuery.Page(Context.Request, Model.Page + 1)">@Umbraco.GetDictionaryValue("EHC.Common.Next")</a> }
     </nav>
 }

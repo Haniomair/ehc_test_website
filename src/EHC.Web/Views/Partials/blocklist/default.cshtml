@@ -1,5 +1,5 @@
 @* Renders every block through ONE wrapper that applies the shared blockSettings:
-   hide, showFrom/showUntil, variant, spacing, anchorId, themeOverride. Components never repeat this logic. *@
+   hide, showFrom/showUntil, variant, spacing, anchorId, themeOverride (a Theme node: its colours as inline CSS variables). Components never repeat this logic. *@
 @using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
@@ -26,7 +26,7 @@
     var html = writer.ToString();
     if (string.IsNullOrWhiteSpace(html)) { continue; }
 
-    <section id="@wrap.AnchorId" data-block="@alias" class="@wrap.CssClass"@HtmlAttributes.Data("theme", wrap.ThemeOverride)>
+    <section id="@wrap.AnchorId" data-block="@alias" class="@wrap.CssClass" style="@wrap.ThemeStyle">
         @Html.Raw(html)
     </section>
 }

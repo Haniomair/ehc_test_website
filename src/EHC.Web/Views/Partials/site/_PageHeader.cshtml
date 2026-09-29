@@ -18,19 +18,19 @@
     <div class="wrap relative py-10 lg:py-14">
         @if (crumbs.Count > 0)
         {
-            <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-6 text-sm">
+            <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-5 text-sm">
                 <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-600 dark:text-slate-400")">
                     @foreach (var a in crumbs)
                     {
-                        <li class="flex items-center gap-1.5"><a href="@a.Url()" class="hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>
+                        <li class="flex items-center gap-1.5"><a href="@a.Url()" class="inline-block py-1 hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>
                     }
                     <li aria-current="page" class="font-semibold @(hasImage ? "text-white" : "text-deep-900 dark:text-white")">@node.Name</li>
                 </ol>
             </nav>
         }
         @if (!string.IsNullOrWhiteSpace(eyebrow)) { <div class="eyebrow @(hasImage ? "!text-white" : "")">@eyebrow</div> }
-        <h1 class="max-w-4xl text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-tight rtl:leading-[1.35] @(hasImage ? "" : "text-deep-900 dark:text-white")">@title</h1>
-        @if (!string.IsNullOrWhiteSpace(intro)) { <p class="mt-4 max-w-[680px] text-[1.15rem] @(hasImage ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@intro</p> }
+        <h1 class="h1 max-w-4xl @(hasImage ? "!text-white" : "")">@title</h1>
+        @if (!string.IsNullOrWhiteSpace(intro)) { <p class="lead mt-4 max-w-[680px] text-[1.15rem] @(hasImage ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@intro</p> }
         @if (ViewData["extra"] is Microsoft.AspNetCore.Html.IHtmlContent extra) { <div class="mt-5">@extra</div> }
     </div>
 </div>

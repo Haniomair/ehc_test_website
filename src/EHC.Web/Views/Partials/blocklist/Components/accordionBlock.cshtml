@@ -1,0 +1,61 @@
+@* FAQ / accordion: native <details> (keyboard and screen-reader friendly, works without JS). "One open at a time" is a
+   small enhancement (components/accordion.js). Optional FAQPage structured data for search engines (JSON-LD is data,
+   not script: it is not executed and is allowed by the CSP). Optional image under the heading (FAQ with image). *@
+@using System.Text.Json
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("question"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var single = !c.Value<bool>("allowMultiple");
+    var id = "acc-" + Model.ContentKey.ToString("N")[..8];
+    var image = c.Value<Umbraco.Cms.Core.Models.MediaWithCrops>("image");
+    string? faq = null;
+    if (c.Value<bool>("faqSchema"))
+    {
+        faq = JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "FAQPage",
+            ["mainEntity"] = items.Select(i => new Dictionary<string, object>
+            {
+                ["@type"] = "Question",
+                ["name"] = i.Value<string>("question") ?? "",
+                ["acceptedAnswer"] = new Dictionary<string, object> { ["@type"] = "Answer", ["text"] = System.Text.RegularExpressions.Regex.Replace(i.Value<IHtmlEncodedString>("answer")?.ToHtmlString() ?? "", "<[^>]+>", " ").Trim() },
+            }).ToArray(),
+        }).Replace("</", "<\\/");
+    }
+}
+<div class="wrap grid gap-10 lg:grid-cols-[.8fr_1.2fr]">
+    <div class="rv">
+        <div class="lg:sticky lg:top-28">
+            @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+            @if (image is not null)
+            {
+                <div class="relative mt-8 hidden sm:block">
+                    <div class="absolute -bottom-4 -start-4 h-full w-full rounded-[28px] bg-brand-100 dark:bg-brand-500/15" aria-hidden="true"></div>
+                    <img src="@image.GetCropUrl(720, 820, furtherOptions: "format=webp&quality=80")" alt="@(c.Value<string>("imageAlt"))" class="relative aspect-[36/41] w-full rounded-[28px] object-cover" loading="lazy">
+                </div>
+            }
+        </div>
+    </div>
+    <div class="grid content-start gap-3" id="@id"@HtmlAttributes.Data("accordion", single ? "single" : null)>
+        @for (var i = 0; i < items.Count; i++)
+        {
+            var it = items[i];
+            var answer = it.Value<IHtmlEncodedString>("answer")?.ToHtmlString();
+            <details class="rv group card overflow-hidden open:shadow-soft" open="@(i == 0)">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-start font-semibold text-deep-900 dark:text-white [&::-webkit-details-marker]:hidden">
+                    <span>@(it.Value<string>("question"))</span>
+                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600 transition group-open:rotate-45 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg></span>
+                </summary>
+                @if (!string.IsNullOrWhiteSpace(answer)) { <div class="rte border-t border-slate-100 px-5 pb-5 pt-4 dark:border-white/10">@Html.Raw(answer)</div> }
+            </details>
+        }
+    </div>
+</div>
+@if (faq is not null) { <script type="application/ld+json">@Html.Raw(faq)</script> }
+<script src="~/assets/js/components/accordion.js" asp-append-version="true" defer></script>

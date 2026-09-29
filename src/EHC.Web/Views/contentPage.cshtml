@@ -1,22 +1,29 @@
-@* Content page: header + rich text body + optional sidebar links. *@
+@* Content page: header + rich text body + optional sidebar links, then the page's own sections (columns layout,
+   FAQ, downloads…). Body and sidebar are both optional, so a content page can also be built from sections only. *@
 @using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
 @using Umbraco.Cms.Core.Strings
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "master.cshtml";
     var body = Model.Value<IHtmlEncodedString>("body")?.ToHtmlString();
     var links = Model.Value<IEnumerable<Link>>("sidebarLinks")?.ToList() ?? [];
+    var hasBody = !string.IsNullOrWhiteSpace(body);
 }
 @await Html.PartialAsync("site/_PageHeader", Model)
-<div class="wrap grid gap-10 py-12 lg:py-16 @(links.Count > 0 ? "lg:grid-cols-[1fr_300px]" : "")">
-    @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
-    @if (links.Count > 0)
-    {
-        <aside class="card h-fit p-6" aria-labelledby="related-links">
-            <h2 id="related-links" class="mb-3 text-base font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Common.RelatedLinks")</h2>
-            <ul class="grid gap-2">
-                @foreach (var l in links) { <li><a href="@l.Url" target="@l.Target" class="link text-sm">@l.Name</a></li> }
-            </ul>
-        </aside>
-    }
-</div>
+@if (hasBody || links.Count > 0)
+{
+    <div class="wrap grid gap-10 py-12 lg:py-16 @(links.Count > 0 ? "lg:grid-cols-[1fr_300px]" : "")">
+        @if (hasBody) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+        @if (links.Count > 0)
+        {
+            <aside class="card h-fit p-6 @(hasBody ? "" : "lg:col-start-2")" aria-labelledby="related-links">
+                <h2 id="related-links" class="mb-3 text-base font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Common.RelatedLinks")</h2>
+                <ul class="grid gap-2">
+                    @foreach (var l in links) { <li><a href="@l.Url" target="@l.Target" class="link text-sm">@l.Name</a></li> }
+                </ul>
+            </aside>
+        }
+    </div>
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

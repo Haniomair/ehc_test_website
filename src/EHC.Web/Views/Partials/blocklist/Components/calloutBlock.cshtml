@@ -1,0 +1,33 @@
+@* Callout / notice: tone info · success · warning · emergency · brand (allow-list), icon, title, text, link.
+   Emergency uses the fixed emergency red and is announced as an alert region only when tone = emergency. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    var text = c.Value<string>("text");
+    if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(text)) { return; }
+    var tone = c.Value<string>("tone") ?? "info";
+    var (box, ic, defaultIcon) = tone switch
+    {
+        "success" => ("border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100", "bg-emerald-600 text-white", "shield"),
+        "warning" => ("border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100", "bg-amber-500 text-amber-950", "note"),
+        "emergency" => ("border-emerg-500/30 bg-emerg-50 text-deep-950 dark:border-emerg-500/30 dark:bg-emerg-500/10 dark:text-red-100", "bg-emerg-600 text-white", "er"),
+        "brand" => ("border-transparent bg-linear-to-br from-brand-600 to-deep-900 text-white", "bg-white/20 text-white", "star"),
+        _ => ("border-brand-100 bg-brand-50 text-deep-900 dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-slate-100", "bg-brand-600 text-white", "bulb"),
+    };
+    var icon = c.Value<string>("icon");
+    if (string.IsNullOrWhiteSpace(icon)) { icon = defaultIcon; }
+    var link = c.Value<Link>("link");
+}
+<div class="wrap">
+    <div class="rv flex flex-col gap-4 rounded-[22px] border p-6 sm:flex-row sm:items-center @box" role="@(tone == "emergency" ? "alert" : null)">
+        <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl @ic" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span>
+        <div class="flex-1">
+            @if (!string.IsNullOrWhiteSpace(title)) { <b class="block text-lg">@title</b> }
+            @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-1 opacity-90">@text</p> }
+        </div>
+        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn shrink-0 @(tone == "emergency" ? "bg-emerg-600 text-white hover:bg-emerg-600/90" : tone == "brand" ? "btn-sand" : "btn-primary")">@link.Name</a> }
+    </div>
+</div>

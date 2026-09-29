@@ -26,7 +26,12 @@
 
   // ---------- text size + contrast (remembered) ----------
   var size = parseInt(store.get('ehc-fs') || '16', 10);
-  function applySize() { if (size === 16) html.style.removeProperty('--fs'); else html.style.setProperty('--fs', size + 'px'); }
+  if (!(size >= 14 && size <= 20)) size = 16;
+  function applySize() {
+    if (size === 16) html.style.removeProperty('--fs'); else html.style.setProperty('--fs', size + 'px');
+    $$('[data-a11y-size]').forEach(function (el) { el.textContent = Math.round(size / 16 * 100) + '%'; });
+    $$('[data-action="font"]').forEach(function (b) { var s = parseInt(b.getAttribute('data-step') || '0', 10); b.disabled = s < 0 ? size <= 14 : size >= 20; });
+  }
   applySize();
   on('font', function (el) { size = Math.max(14, Math.min(20, size + parseInt(el.getAttribute('data-step') || '0', 10))); store.set('ehc-fs', String(size)); applySize(); });
   function syncContrast() { $$('[data-action="contrast"]').forEach(function (b) { b.setAttribute('aria-pressed', html.classList.contains('contrast')); }); }
@@ -68,6 +73,50 @@
   var drawer = $('#drawer');
   on('drawer-open', function () { showModal(drawer); });
   on('drawer-close', hideModal);
+
+  // ---------- accessibility panel: each option is an "a11y-<key>" class on <html>, remembered as "ehc-a11y" ----------
+  var a11y = $('#a11y');
+  var a11yKeys = ['links', 'spacing', 'still', 'cursor', 'guide'];
+  var guide = null;
+  function a11yOn(k) { return html.classList.contains('a11y-' + k); }
+  function pauseMotion() {
+    $$('[data-hero-pause][aria-pressed="false"]').forEach(function (b) { b.click(); });
+    $$('video').forEach(function (v) { if (!v.paused) v.pause(); });
+  }
+  function moveGuide(y) { if (guide) guide.style.transform = 'translateY(' + Math.round(y) + 'px)'; }
+  function syncGuide() {
+    if (a11yOn('guide') && !guide) {
+      guide = document.createElement('div'); guide.className = 'a11y-guide-bar'; guide.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(guide); moveGuide(window.innerHeight / 2);
+    } else if (!a11yOn('guide') && guide) { guide.remove(); guide = null; }
+  }
+  document.addEventListener('pointermove', function (e) { if (guide) moveGuide(e.clientY); }, { passive: true });
+  document.addEventListener('focusin', function (e) { if (guide && e.target.getBoundingClientRect) { var r = e.target.getBoundingClientRect(); moveGuide(r.top + r.height / 2); } });
+  function syncA11y() {
+    $$('[data-a11y]').forEach(function (b) { b.setAttribute('aria-pressed', a11yOn(b.getAttribute('data-a11y'))); });
+    store.set('ehc-a11y', a11yKeys.filter(a11yOn).join(','));
+    syncGuide();
+  }
+  $$('[data-a11y]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-a11y');
+      html.classList.toggle('a11y-' + k);
+      if (k === 'still' && a11yOn('still')) pauseMotion();
+      syncA11y();
+    });
+  });
+  if (a11yOn('still')) pauseMotion();
+  syncA11y();
+  on('a11y-open', function () { showModal(a11y); });
+  on('a11y-close', hideModal);
+  on('a11y-reset', function () {
+    a11yKeys.forEach(function (k) { html.classList.remove('a11y-' + k); });
+    html.classList.remove('contrast'); store.set('ehc-contrast', '0'); syncContrast();
+    size = 16; store.set('ehc-fs', '16'); applySize();
+    try { localStorage.removeItem('ehc-dark'); } catch (e) { /* private mode */ }
+    html.classList.toggle('dark', !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)); syncDarkButtons();
+    syncA11y();
+  });
 
   // ---------- search palette ----------
   var search = $('#search'), sIn = $('#sIn');

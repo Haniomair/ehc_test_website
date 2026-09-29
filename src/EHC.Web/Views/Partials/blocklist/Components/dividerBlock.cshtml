@@ -1,0 +1,22 @@
+@* Divider: visual separation between sections. Style: space · line · motif (theme motif) · wave. Size: sm · md · lg.
+   Decorative only. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var style = c.Value<string>("style") ?? "line";
+    var size = c.Value<string>("size") switch { "sm" => "py-4", "lg" => "py-16", _ => "py-8" };
+}
+<div class="wrap @size" aria-hidden="true">
+    @switch (style)
+    {
+        case "space": <div class="h-4"></div> break;
+        case "motif":
+            <div class="flex items-center gap-4"><span class="h-px flex-1 bg-slate-200 dark:bg-white/10"></span><span class="mark-bg h-10 w-10 opacity-40"></span><span class="h-px flex-1 bg-slate-200 dark:bg-white/10"></span></div>
+            break;
+        case "wave":
+            <svg class="h-6 w-full text-brand-200 dark:text-white/10" viewBox="0 0 1200 24" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 12 Q 50 0 100 12 T 200 12 T 300 12 T 400 12 T 500 12 T 600 12 T 700 12 T 800 12 T 900 12 T 1000 12 T 1100 12 T 1200 12" /></svg>
+            break;
+        default: <hr class="border-slate-200 dark:border-white/10"> break;
+    }
+</div>

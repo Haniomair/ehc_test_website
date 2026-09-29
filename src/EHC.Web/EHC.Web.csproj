@@ -47,6 +47,7 @@
   <ItemGroup>
     <!-- Keep the local appsettings.json override out of publish output -->
     <Content Update="appsettings.Local.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.*.local.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <!-- Front-end assets (wwwroot/assets) are built from /frontend and are not in source control.
@@ -54,6 +55,8 @@
   <Target Name="EnsureFrontendAssets" BeforeTargets="ComputeFilesToPublish">
     <Error Condition="!Exists('$(MSBuildProjectDirectory)\wwwroot\assets\css\ehc.css')"
            Text="Front-end assets are missing. Run 'npm ci &amp;&amp; npm run publish:umbraco' in the frontend folder before publishing." />
+    <Warning Condition="!Exists('$(MSBuildProjectDirectory)\wwwroot\tiles\ehc-region.pmtiles')"
+             Text="Map tiles are missing (maps will show pins without a basemap). Run 'npm run tiles' in the frontend folder before publishing." />
   </Target>
 
   <PropertyGroup>

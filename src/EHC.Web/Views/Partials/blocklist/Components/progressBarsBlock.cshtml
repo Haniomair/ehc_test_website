@@ -1,0 +1,55 @@
+@* Progress / indicators: labelled percentages as bars or rings (e.g. programme targets). Values are clamped to 0–100
+   and exposed as real progressbar semantics. The fill animates in when scrolled into view (static under reduced motion).
+   Only publish approved figures. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("label"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var rings = c.Value<string>("style") == "rings";
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    @if (rings)
+    {
+        <ul class="grid grid-cols-2 gap-6 md:grid-cols-4">
+            @foreach (var it in items)
+            {
+                var v = Math.Clamp(it.Value<int>("value"), 0, 100);
+                <li class="rv flex flex-col items-center gap-3 text-center">
+                    <div class="progress-ring relative grid h-36 w-36 place-items-center" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@v" aria-label="@(it.Value<string>("label"))" style="--p:@v">
+                        <svg viewBox="0 0 120 120" class="absolute inset-0 -rotate-90" aria-hidden="true">
+                            <circle cx="60" cy="60" r="52" class="fill-none stroke-brand-100 dark:stroke-white/10" stroke-width="10" />
+                            <circle cx="60" cy="60" r="52" class="progress-ring-fill fill-none stroke-brand-600 dark:stroke-brand-400" stroke-width="10" stroke-linecap="round" pathLength="100" />
+                        </svg>
+                        <b class="relative text-3xl font-extrabold text-deep-900 dark:text-white" dir="ltr">@v.ToString(culture)%</b>
+                    </div>
+                    <b class="text-deep-900 dark:text-white">@(it.Value<string>("label"))</b>
+                    @if (!string.IsNullOrWhiteSpace(it.Value<string>("note"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(it.Value<string>("note"))</span> }
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <ul class="grid gap-6 md:grid-cols-2 md:gap-x-12">
+            @foreach (var it in items)
+            {
+                var v = Math.Clamp(it.Value<int>("value"), 0, 100);
+                <li class="rv grid gap-2">
+                    <div class="flex items-baseline justify-between gap-4">
+                        <b class="text-deep-900 dark:text-white">@(it.Value<string>("label"))</b>
+                        <span class="font-bold text-brand-700 dark:text-brand-300" dir="ltr">@v.ToString(culture)%</span>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-brand-100 dark:bg-white/10" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@v" aria-label="@(it.Value<string>("label"))">
+                        <div class="progress-bar-fill h-full rounded-full bg-linear-to-r from-brand-500 to-brand-700 rtl:bg-linear-to-l" style="--p:@v"></div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(it.Value<string>("note"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(it.Value<string>("note"))</span> }
+                </li>
+            }
+        </ul>
+    }
+</div>

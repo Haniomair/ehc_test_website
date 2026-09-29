@@ -1,0 +1,33 @@
+﻿@* Health tool page: header (category as eyebrow), the tool, the page's own sections (e.g. how it works, FAQ),
+   then other tools from the same folder. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var tool = HealthTools.Find(Model.Value<string>("tool"));
+    if (tool is not null) { ViewData["eyebrow"] = Umbraco.GetDictionaryValue("EHC.Tools.Category." + tool.Category); }
+    var others = Model.Ancestors().FirstOrDefault()?.Children()
+        .Where(c => c.ContentType.Alias == "healthTool" && c.Key != Model.Key && HealthTools.Find(c.Value<string>("tool")) is not null)
+        .OrderByDescending(c => HealthTools.Find(c.Value<string>("tool"))!.Category == tool?.Category)
+        .Take(4).ToList() ?? [];
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@if (tool is not null)
+{
+    <div class="wrap py-10 lg:py-14">
+        <div class="mx-auto max-w-[1040px]">@await Html.PartialAsync("tools/_Tool", tool)</div>
+    </div>
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))
+@if (others.Count > 0)
+{
+    <section class="bg-soft py-14 dark:bg-night-900/60" aria-labelledby="more-tools">
+        <div class="wrap">
+            <h2 id="more-tools" class="mb-8 text-2xl font-bold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Tools.More")</h2>
+            <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach (var t in others) { <li>@await Html.PartialAsync("cards/_ToolCard", t)</li> }
+            </ul>
+        </div>
+    </section>
+}

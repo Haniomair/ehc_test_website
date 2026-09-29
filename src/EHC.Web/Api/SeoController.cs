@@ -4,6 +4,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Configuration;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
@@ -12,7 +13,7 @@ namespace EHC.Web.Api;
 
 /// <summary>/sitemap.xml (every published, indexable page in each language, with hreflang alternates) and /robots.txt.</summary>
 [ApiController]
-public sealed class SeoController(IPublishedContentQuery content) : ControllerBase
+public sealed class SeoController(IPublishedContentQuery content, IConfiguration config) : ControllerBase
 {
     private static readonly string[] Cultures = ["ar-SA", "en-US"];
     private static readonly XNamespace Sm = "http://www.sitemaps.org/schemas/sitemap/0.9";
@@ -28,7 +29,7 @@ public sealed class SeoController(IPublishedContentQuery content) : ControllerBa
         var pages = content.ContentAtRoot()
             .Where(r => r.ContentType.Alias == "home")
             .SelectMany(h => new[] { h }.Concat(h.Descendants()))
-            .Where(p => p.TemplateId > 0 && !p.Value<bool>("noIndex"))
+            .Where(p => p.TemplateId > 0 && p.ContentType.Alias != "theme" && !p.Value<bool>("noIndex"))
             .ToList();
 
         var urlset = new XElement(Sm + "urlset", new XAttribute(XNamespace.Xmlns + "xhtml", Xhtml));
@@ -65,6 +66,11 @@ public sealed class SeoController(IPublishedContentQuery content) : ControllerBa
     [OutputCache(Duration = 3600)]
     public IActionResult Robots()
     {
+        // test and staging servers (Ehc:Seo:NoIndex) keep every crawler out
+        if (config.GetValue<bool>("Ehc:Seo:NoIndex"))
+        {
+            return Content("User-agent: *\nDisallow: /\n", "text/plain", Encoding.UTF8);
+        }
         var origin = $"{Request.Scheme}://{Request.Host}";
         var text = string.Join('\n',
             "User-agent: *",

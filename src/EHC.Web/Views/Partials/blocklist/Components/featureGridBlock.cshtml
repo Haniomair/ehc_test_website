@@ -1,0 +1,74 @@
+@* Feature / icon grid: 2–4 columns of items (icon, title, text, link). Styles: cards · minimal · numbered · boxed · list
+   (icon beside text, two columns). With a background photo (media fields) the section becomes a full-width band with the
+   theme overlay and white text — use section spacing "none" so the photo meets the neighbouring sections. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var style = c.Value<string>("style") ?? "cards";
+    var bg = MediaBackground.From(c) with { Lazy = true };
+    var onImage = bg.HasMedia;
+    var cols = style == "list" ? "lg:grid-cols-2 gap-x-14 gap-y-10"
+        : c.Value<string>("columns") switch { "2" => "sm:grid-cols-2", "4" => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    var box = style switch
+    {
+        "list" => "flex-row items-start gap-5",
+        "minimal" => "p-2",
+        "boxed" => onImage ? "rounded-[22px] bg-white/10 p-7 ring-1 ring-white/15 backdrop-blur" : "rounded-[22px] bg-soft p-7 dark:bg-night-900",
+        "numbered" => onImage ? "rounded-[22px] bg-white/10 p-7 ring-1 ring-white/15" : "card p-7",
+        _ => onImage ? "rounded-[22px] bg-white/10 p-7 ring-1 ring-white/15 backdrop-blur transition hover:-translate-y-1 hover:bg-white/15" : "card p-7 transition hover:-translate-y-1 hover:shadow-soft",
+    };
+    var titleCss = onImage ? "text-white [&_em]:not-italic [&_em]:text-brand-300" : "text-deep-900 dark:text-white [&_em]:not-italic [&_em]:text-brand-600 dark:[&_em]:text-brand-300";
+    var textCss = onImage ? "text-white/85" : "text-slate-600 dark:text-slate-400";
+    var center = onImage && style != "list";
+}
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    void Inner(IPublishedElement it, int i, Link? link)
+    {
+        var icon = it.Value<string>("icon");
+        if (style == "numbered")
+        {
+            <span class="text-[2.6rem] font-extrabold leading-none @(onImage ? "text-white/80" : "text-brand-600 dark:text-brand-300")" aria-hidden="true">@((i + 1).ToString("00"))</span>
+        }
+        else if (!string.IsNullOrWhiteSpace(icon))
+        {
+            var iconBox = style == "list" || onImage
+                ? (onImage ? "h-16 w-16 text-white" : "h-16 w-16 text-brand-600 dark:text-brand-300")
+                : style == "boxed" ? "h-14 w-14 rounded-2xl bg-white text-brand-600 dark:bg-white/5 dark:text-brand-300"
+                : "h-14 w-14 rounded-2xl bg-brand-50 text-brand-600 group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300";
+            <span class="grid shrink-0 place-items-center transition @iconBox @(center ? "mx-auto" : "")"><svg class="ico @(style == "list" || onImage ? "!h-12 !w-12 [stroke-width:1.3]" : "")" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+        }
+        <div class="grid gap-2">
+            <h3 class="text-lg font-bold @titleCss">@Text.Emphasis(it.Value<string>("title"), Encoder)</h3>
+            @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <p class="leading-relaxed @textCss">@(it.Value<string>("text"))</p> }
+            @if (!string.IsNullOrWhiteSpace(link?.Name)) { <span class="link mt-1 text-sm @(onImage ? "!text-brand-200" : "")">@link.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
+        </div>
+    }
+}
+<div class="@(onImage ? "media-hero py-16 lg:py-24 text-white" : "")" style="@(onImage ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", onImage ? bg.Overlay : null)@HtmlAttributes.Data("strength", onImage ? bg.Strength : null)>
+    @if (onImage) { @await Html.PartialAsync("site/_MediaBackground", bg) }
+    <div class="wrap relative">
+        <div class="rv sec-head @(center ? "sec-head-center" : "")">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), OnDark: onImage))</div>
+        <div class="grid gap-5 @cols">
+            @for (var i = 0; i < items.Count; i++)
+            {
+                var link = items[i].Value<Link>("link");
+                var cls = $"rv group flex h-full {(style == "list" ? "" : "flex-col")} gap-3 {box} {(center ? "items-center text-center" : "")}";
+                if (link is not null)
+                {
+                    <a href="@link.Url" target="@link.Target" class="@cls">@{ Inner(items[i], i, link); }</a>
+                }
+                else
+                {
+                    <div class="@cls">@{ Inner(items[i], i, null); }</div>
+                }
+            }
+        </div>
+    </div>
+</div>

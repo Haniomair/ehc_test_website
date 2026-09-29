@@ -1,0 +1,55 @@
+@* Video: a YouTube link (privacy-enhanced player, loaded only after the visitor presses play — components/video-embed.js)
+   or a self-hosted file with native controls. Optional poster, caption and transcript (recommended for accessibility). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var youtube = Video.YouTubeId(c.Value<string>("youtubeUrl"));
+    var file = c.Value<MediaWithCrops>("videoFile");
+    var fileUrl = file?.Url();
+    var fileType = System.IO.Path.GetExtension(fileUrl ?? "").ToLowerInvariant() switch { ".mp4" or ".m4v" => "video/mp4", ".webm" => "video/webm", _ => null };
+    if (youtube is null && fileType is null) { return; }
+    var poster = c.Value<MediaWithCrops>("poster");
+    var posterUrl = poster?.GetCropUrl(1280, 720, furtherOptions: "format=webp&quality=80") ?? (youtube is not null ? $"https://i.ytimg.com/vi/{youtube}/hqdefault.jpg" : null);
+    var title = c.Value<string>("videoTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = Text.Plain(c.Value<string>("heading")); }
+    var caption = c.Value<string>("caption");
+    var transcript = c.Value<Umbraco.Cms.Core.Strings.IHtmlEncodedString>("transcript")?.ToHtmlString();
+    var narrow = c.Value<string>("width") == "narrow";
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <figure class="rv mx-auto @(narrow ? "max-w-[860px]" : "")">
+        <div class="relative aspect-video overflow-hidden rounded-[26px] bg-deep-950 shadow-soft">
+            @if (youtube is not null)
+            {
+                <div class="absolute inset-0" data-video-embed="@youtube" data-video-title="@title">
+                    @if (posterUrl is not null) { <img src="@posterUrl" alt="" class="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async"> }
+                    <span class="absolute inset-0 bg-deep-950/35" aria-hidden="true"></span>
+                    <button type="button" class="group absolute inset-0 grid place-items-center text-white" data-video-play>
+                        <span class="grid h-20 w-20 place-items-center rounded-full bg-brand-600 shadow-lg ring-8 ring-white/20 transition group-hover:scale-110 group-focus-visible:scale-110"><svg class="ico flip !h-8 !w-8" aria-hidden="true"><use href="#i-play" /></svg></span>
+                        <span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Video.Play"): @title</span>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <video class="absolute inset-0 h-full w-full" controls preload="none" playsinline poster="@posterUrl" title="@title">
+                    <source src="@fileUrl" type="@fileType">
+                </video>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(caption)) { <figcaption class="mt-3 text-center text-sm text-slate-600 dark:text-slate-400">@caption</figcaption> }
+        @if (youtube is not null) { <p class="mt-2 text-center text-xs text-slate-600 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Video.Privacy")</p> }
+        @if (!string.IsNullOrWhiteSpace(transcript))
+        {
+            <details class="group mt-5 rounded-2xl border border-slate-200 p-4 dark:border-white/10">
+                <summary class="flex cursor-pointer items-center justify-between font-semibold text-deep-900 dark:text-white">@Umbraco.GetDictionaryValue("EHC.Video.Transcript")<svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
+                <div class="rte mt-3">@Html.Raw(transcript)</div>
+            </details>
+        }
+    </figure>
+</div>
+@if (youtube is not null) { <script src="~/assets/js/components/video-embed.js" asp-append-version="true" defer></script> }

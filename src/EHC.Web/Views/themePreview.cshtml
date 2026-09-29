@@ -1,0 +1,23 @@
+@* Template of Theme nodes, used only by "Save and preview": shows the homepage in this theme. Signed-in backoffice users
+   only (Themes/ThemePreview.cs checks the same on the homepage); anyone else gets a 404. *@
+@using EHC.Web.Themes
+@using Microsoft.AspNetCore.WebUtilities
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = null;
+    IPublishedContent? home = null;
+    if ((await Context.AuthenticateBackOfficeAsync()).Succeeded)
+    {
+        home = Umbraco.ContentAtRoot().FirstOrDefault(x => x.ContentType.Alias == "home");
+    }
+    if (home is null)
+    {
+        Context.Response.StatusCode = 404;
+        return;
+    }
+    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    var url = home.Url(culture);
+    if (string.IsNullOrEmpty(url) || url == "#") { url = home.Url(); }
+    Context.Response.Headers.CacheControl = "no-store, private";
+    Context.Response.Redirect(QueryHelpers.AddQueryString(url, ThemePreview.QueryKey, Model.Key.ToString()));
+}

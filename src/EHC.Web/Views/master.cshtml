@@ -25,8 +25,8 @@
     var arabic = site.Alternates.FirstOrDefault(a => a.Language == "ar");
 }
 <!DOCTYPE html>
-@* Razor drops a null style attribute; data-theme goes through HtmlAttributes.Data (Razor keeps empty data-* attributes). Keep it last: attributes after a C# expression are no longer dropped. *@
-<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" style="@theme.InlineStyle"@HtmlAttributes.Data("theme", theme.PresetKey)>
+@* The active theme's colours arrive as CSS variables in the style attribute (Razor drops it when there is no theme). *@
+<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" style="@theme.InlineStyle">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -70,11 +70,14 @@
 
     <main id="main" tabindex="-1">
         @RenderBody()
+        @await Html.PartialAsync("site/_Feedback", Model)
     </main>
 
     @await Html.PartialAsync("site/_Footer", site)
     @await Html.PartialAsync("site/_MobileBar", site)
     @await Html.PartialAsync("site/_Search")
+    @await Html.PartialAsync("site/_A11yPanel", site)
+    @await Html.PartialAsync("site/_Assistant", site)
     <script src="~/assets/js/site.js" asp-append-version="true" defer></script>
 </body>
 </html>

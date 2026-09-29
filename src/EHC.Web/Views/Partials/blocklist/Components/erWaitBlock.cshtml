@@ -19,7 +19,7 @@
     var labels = System.Text.Json.JsonSerializer.Serialize(new { quiet = D("Quiet"), moderate = D("Moderate"), busy = D("Busy") });
 }
 <div class="wrap" data-er data-api="/api/er-wait" data-labels="@labels">
-    <div class="rv mb-7 flex flex-wrap items-end justify-between gap-4">
+    <div class="rv sec-head-row">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("Eyebrow"), c.Value<string>("heading"), null))
         <p class="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[.8rem] text-slate-600 dark:border-white/10 dark:bg-night-900 dark:text-slate-300" data-er-status>
             <span class="relative flex h-2.5 w-2.5" aria-hidden="true"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span></span>
@@ -33,7 +33,7 @@
             <a href="@f.Url()" class="rv card group p-5 transition hover:-translate-y-1 hover:shadow-soft" data-er-feed="@(f.Value<string>("erFeedId"))">
                 <div class="flex items-start justify-between gap-3">
                     <div><b class="block leading-snug">@f.Name</b>@if (!string.IsNullOrWhiteSpace(f.Value<string>("city"))) {<span class="text-[.8rem] text-slate-500 dark:text-slate-400">@(f.Value<string>("city"))</span>}</div>
-                    <span class="hidden whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold" data-er-badge></span>
+                    <span class="hidden whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold" data-er-badge></span>
                 </div>
                 <div class="mt-4 hidden items-baseline gap-1" data-er-value><b class="text-[2.4rem] font-extrabold leading-none text-deep-900 dark:text-white" data-er-min></b><span class="text-sm text-slate-500 dark:text-slate-400">@D("Minutes")</span></div>
                 <div class="mt-3 hidden h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10" data-er-track aria-hidden="true"><i class="block h-full w-0 rounded-full transition-all duration-700" data-er-bar></i></div>
@@ -43,11 +43,11 @@
         @if (showCall)
         {
             <div class="rv flex flex-col justify-between rounded-[22px] bg-emerg-600 p-5 text-white">
-                <div><b class="block text-lg leading-snug">@D("CallTitle")</b><span class="mt-1 block text-sm text-white/85">@D("CallText")</span></div>
+                <div><b class="block text-lg leading-snug">@D("CallTitle")</b><span class="mt-1 block text-sm text-white">@D("CallText")</span></div>
                 @if (emergency.Count > 0)
                 {
                     <div class="mt-4 grid grid-cols-2 gap-2">
-                        @for (var i = 0; i < emergency.Count; i++) { <a href="tel:@emergency[i].Dial" class="rounded-xl py-2 text-center font-extrabold @(i == 0 ? "bg-white text-emerg-600" : "bg-white/15")">@emergency[i].Number</a> }
+                        @for (var i = 0; i < emergency.Count; i++) { <a href="tel:@emergency[i].Dial" class="rounded-xl py-2 text-center font-extrabold @(i == 0 ? "bg-white text-emerg-600" : "bg-black/20")">@emergency[i].Number</a> }
                     </div>
                 }
             </div>

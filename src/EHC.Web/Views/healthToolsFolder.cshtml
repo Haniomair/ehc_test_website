@@ -1,0 +1,35 @@
+﻿@* Health tools: cards of the tool pages below, filtered by category (weight, pregnancy, screening — from the tool),
+   then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    var tools = Model.Children().Where(c => c.ContentType.Alias == "healthTool" && HealthTools.Find(c.Value<string>("tool")) is not null).ToList();
+    var used = HealthTools.Categories.Where(k => tools.Any(t => HealthTools.Find(t.Value<string>("tool"))!.Category == k)).ToList();
+    string? category = req.Query["category"];
+    if (category is not null && !used.Contains(category)) { category = null; }
+    var list = tools.Where(t => category is null || HealthTools.Find(t.Value<string>("tool"))!.Category == category).ToList();
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    @if (used.Count > 1)
+    {
+        <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Tools.Categories")">
+            <a class="chip" href="@ListingQuery.With(req, "category", null)" aria-current="@(category is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+            @foreach (var k in used) { <a class="chip" href="@ListingQuery.With(req, "category", k)" aria-current="@(category == k ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Tools.Category." + k)</a> }
+        </nav>
+    }
+    @if (list.Count == 0)
+    {
+        <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+    }
+    else
+    {
+        <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach (var t in list) { <li>@await Html.PartialAsync("cards/_ToolCard", t)</li> }
+        </ul>
+    }
+</div>
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

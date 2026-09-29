@@ -3,7 +3,6 @@
 @import "tailwindcss";
 @import "./_fonts.css";
 @import "./_tokens.css";
-@import "./_themes.css";
 @import "./_safelist.css";
 
 /* Where Tailwind looks for class names.
@@ -23,7 +22,10 @@
 
   html { font-size: var(--fs, 16px); scroll-behavior: smooth; }
   body { @apply bg-white text-deep-950 antialiased dark:bg-night-950 dark:text-slate-100; overflow-x: clip; }
-  :focus-visible { outline: 3px solid var(--accent-400); outline-offset: 2px; border-radius: 6px; }
+  /* sand ring + dark inner halo: at least 3:1 against light and dark surfaces (WCAG 1.4.11) */
+  :focus-visible { outline: 3px solid var(--accent-400); outline-offset: 2px; border-radius: 6px; box-shadow: 0 0 0 2px var(--deep-950); }
+  /* sliders: the track is thin, the control keeps a 24px target */
+  input[type="range"] { min-height: 1.5rem; }
   html.contrast { filter: contrast(1.25); }
 }
 
@@ -38,11 +40,22 @@
   .btn-outline { @apply border-white/50 text-white hover:bg-white/10; }
   .btn-ghost { @apply border-slate-200 bg-white text-deep-950 hover:border-brand-500 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:hover:border-brand-400 dark:hover:text-brand-300; }
   .btn-lg { @apply px-7 py-4 text-[1.02rem]; }
+  .btn-sm { @apply min-h-10 px-[18px] py-2.5 text-sm; }
 
+  /* type scale: .h1 page titles, .h2 section headings, .lead intros; hero headlines are larger and set per block */
   .eyebrow { @apply mb-3 inline-flex items-center gap-2 text-[.8rem] font-bold uppercase tracking-[.1em] text-brand-700 dark:text-brand-300 rtl:tracking-normal; }
   .eyebrow::before { content: ""; @apply h-[2px] w-[22px] bg-current; }
-  .h2 { @apply m-0 text-[clamp(2rem,4vw,3.2rem)] font-bold leading-[1.12] tracking-[-.01em] text-deep-900 dark:text-white rtl:leading-[1.3] rtl:tracking-normal; }
+  .h1 { @apply m-0 text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-[1.15] tracking-[-.01em] text-deep-900 text-balance dark:text-white rtl:leading-[1.35] rtl:tracking-normal; }
+  .h2 { @apply m-0 text-[clamp(1.75rem,4vw,3.2rem)] font-bold leading-[1.12] tracking-[-.01em] text-deep-900 text-balance dark:text-white rtl:leading-[1.3] rtl:tracking-normal; }
   .h2 em { @apply not-italic text-brand-500 dark:text-brand-300; }
+  .lead { @apply text-[1.05rem] leading-relaxed text-pretty; }
+  /* section header (eyebrow + h2 + intro) and the gap to the section content: one value for every block */
+  .sec-head { @apply mb-10; }
+  .sec-head-row { @apply mb-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-4; }
+  .sec-head-center { @apply text-center; }
+  .sec-head-center .lead { margin-inline: auto; }
+  /* utility bar controls (accessibility, language): one shape, one height */
+  .util-btn { @apply inline-flex h-7 items-center justify-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 text-[.8rem] font-medium leading-none text-white transition hover:bg-white/20; }
   .link { @apply inline-flex items-center gap-1.5 font-semibold text-brand-700 transition-all hover:gap-2.5 dark:text-brand-300; }
   .card { @apply rounded-[22px] border border-slate-200 bg-white dark:border-white/10 dark:bg-night-900; }
 
@@ -74,8 +87,16 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 .mark-white { filter: brightness(0) invert(1); }
 .text-stroke { color: transparent; -webkit-text-stroke: 1.5px var(--brand-100); }
 .dark .text-stroke { -webkit-text-stroke-color: color-mix(in srgb, var(--brand-300) 22%, transparent); }
+/* connected Arabic script shows every glyph join as an overlapping outline: use a pale solid fill instead */
+:lang(ar) .text-stroke { color: var(--brand-100); -webkit-text-stroke: 0; }
+:lang(ar).dark .text-stroke, :lang(ar) .dark .text-stroke { color: color-mix(in srgb, var(--brand-300) 22%, transparent); }
+/* two padded sections on the page background in a row: the gap is one section's spacing, not both added together */
+.sec-plain + .sec-plain { padding-top: 0; }
 .mask-x { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
 .scrollbar-thin { scrollbar-width: thin; }
+/* rails with their own prev/next buttons: still scrollable by swipe, trackpad and keyboard */
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
 /* hero campaign backgrounds — every stop is a token, so themes recolour them */
 .hero-bg-0 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-0-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-0-from) 0%, var(--hero-0-via) 45%, var(--hero-0-to) 100%); }
@@ -92,6 +113,52 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .prog-on .bar i { animation: ehc-prog var(--hero-interval, 7s) linear forwards; }
 .rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
 .rv.in { opacity: 1; transform: none; }
+
+/* Leaflet maps ([data-map]): its panes and controls use z-index 400–1000; keep them inside the map so the sticky header stays on top */
+[data-map] { isolation: isolate; }
+/* Map look (components/map.js). Leaflet's own CSS loads later, so rules are scoped under [data-map] (higher specificity).
+   Tiles are greyscale and partly transparent over a theme colour: a calm, tinted map that follows the active theme
+   and lets the brand pins stand out. (Blend modes don't work here: Leaflet's transformed panes isolate the tiles.) */
+[data-map].leaflet-container { background: var(--brand-200); font: inherit; }
+[data-map] .leaflet-tile-pane { filter: grayscale(1) contrast(1.05) brightness(1.06); opacity: .82; }
+.dark [data-map].leaflet-container { background: var(--deep-700); }
+.dark [data-map] .leaflet-tile-pane { filter: grayscale(1) invert(1) contrast(.9) brightness(.85); opacity: .6; }
+[data-map].leaflet-container .leaflet-control-attribution { @apply rounded-ss-lg bg-white/80 px-2 text-xs text-slate-600 backdrop-blur dark:bg-night-900/80 dark:text-slate-400; }
+[data-map].leaflet-container .leaflet-control-attribution a { @apply text-slate-700 dark:text-slate-300; }
+/* controls */
+[data-map] .leaflet-bar { @apply overflow-hidden rounded-xl border-0 shadow-soft; }
+[data-map] .leaflet-bar a { @apply grid h-9 w-9 place-items-center border-b border-slate-200 bg-white text-lg leading-none text-deep-900 hover:bg-brand-50 hover:text-brand-700 dark:border-white/10 dark:bg-night-900 dark:text-white dark:hover:bg-white/10; }
+[data-map] .leaflet-bar a:last-child { border-bottom: 0; }
+[data-map] .leaflet-bar a.leaflet-disabled { @apply bg-white text-slate-300 dark:bg-night-900 dark:text-white/25; }
+[data-map] .leaflet-control-zoom-in, [data-map] .leaflet-control-zoom-out { font-weight: 500 !important; text-indent: 0 !important; }
+/* pins: teardrop with the facility-type icon, tip on the coordinate */
+.ehc-pin { background: none; border: 0; }
+.ehc-pin-body { @apply grid h-8 w-8 place-items-center border-2 border-white bg-brand-600 text-white shadow-soft transition; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); transform-origin: 50% 50%; }
+.ehc-pin-body .ico { width: 16px; height: 16px; transform: rotate(45deg); stroke-width: 2; }
+.ehc-pin.is-er .ehc-pin-body { @apply bg-emerg-600; }
+.ehc-pin:hover .ehc-pin-body, .ehc-pin:focus-visible .ehc-pin-body, .ehc-pin.is-active .ehc-pin-body { @apply bg-deep-900 dark:bg-brand-400 dark:text-deep-950; transform: rotate(-45deg) scale(1.18); }
+.ehc-pin.is-er:hover .ehc-pin-body, .ehc-pin.is-er.is-active .ehc-pin-body { @apply bg-emerg-600; box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-emerg-600) 30%, transparent); }
+.ehc-pin.is-active { z-index: 1000 !important; }
+/* clusters: count in a brand disc with a soft halo; a red dot when an emergency department is inside */
+.ehc-cluster { background: none; border: 0; }
+.ehc-cluster > span { @apply grid h-full w-full place-items-center rounded-full border-[3px] border-white bg-brand-600 text-sm font-bold text-white transition; box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand-500) 28%, transparent), 0 6px 14px rgb(10 42 79 / .25); }
+.ehc-cluster:hover > span, .ehc-cluster:focus-visible > span, .ehc-cluster.is-active > span { @apply bg-deep-900 dark:bg-brand-400 dark:text-deep-950; transform: scale(1.08); }
+.ehc-cluster.has-er::after { content: ""; position: absolute; top: 0; inset-inline-end: 0; width: 12px; height: 12px; border-radius: 9999px; border: 2px solid #fff; background: var(--color-emerg-600); }
+/* popups: a small card */
+[data-map] .leaflet-popup-content-wrapper { @apply rounded-2xl bg-white p-0 text-deep-900 shadow-soft dark:bg-night-900 dark:text-white; }
+[data-map] .leaflet-popup-content { margin: 0; line-height: 1.5; font-size: .9rem; }
+[data-map] .leaflet-popup-tip { @apply bg-white dark:bg-night-900; }
+[data-map] a.leaflet-popup-close-button { @apply top-2 grid h-7 w-7 place-items-center rounded-full text-lg text-slate-500 hover:bg-soft hover:text-deep-900 dark:hover:bg-white/10 dark:hover:text-white; inset-inline-end: .5rem; right: auto; }
+html:not([dir="rtl"]) [data-map] a.leaflet-popup-close-button { right: .5rem; }
+[data-map] .ehc-popup { @apply grid min-w-[220px] gap-0.5 p-4 pe-10; }
+[data-map] .ehc-popup-title { @apply text-[.95rem] font-bold leading-snug text-deep-900 dark:text-white; }
+[data-map] a.ehc-popup-title:hover { @apply text-brand-700 underline dark:text-brand-300; }
+[data-map] .ehc-popup-meta { @apply m-0 text-[.8rem] text-slate-500 dark:text-slate-400; }
+[data-map] .ehc-popup-actions { @apply mt-3 flex gap-2; }
+[data-map] .ehc-popup-btn { @apply inline-flex min-h-8 items-center gap-1 rounded-full border border-slate-200 px-3 text-[.8rem] font-semibold text-deep-900 hover:border-brand-500 hover:text-brand-700 dark:border-white/15 dark:text-white dark:hover:text-brand-300; }
+[data-map] .ehc-popup-btn.is-primary { @apply border-brand-600 bg-brand-600 text-white hover:bg-brand-700 hover:text-white dark:hover:text-white; }
+/* list card whose pin was just clicked */
+[data-facility].is-map-active { @apply ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-night-950; }
 
 /* map pins, mega menu */
 .pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; transition: opacity .25s, transform .25s; }
@@ -161,3 +228,216 @@ html[dir="rtl"] .media-hero[data-overlay="shade"]::after { background: radial-gr
 .media-frame { position: relative; isolation: isolate; overflow: hidden; background: var(--brand-600); }
 .media-frame > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); mix-blend-mode: luminosity; opacity: .92; }
 .media-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, transparent 35%, color-mix(in srgb, var(--deep-900) 70%, transparent)); }
+
+/* ---------------------------------------------------------------------
+   COMPONENT LIBRARY (batch B)
+   --------------------------------------------------------------------- */
+/* progress bars / rings: fill when revealed (.rv.in); reduced motion shows the final value */
+.progress-bar-fill { width: 0; transition: width 1.2s cubic-bezier(.2,.7,.2,1) .15s; }
+.rv.in .progress-bar-fill { width: calc(var(--p) * 1%); }
+.progress-ring-fill { stroke-dasharray: 0 100; transition: stroke-dasharray 1.4s cubic-bezier(.2,.7,.2,1) .15s; }
+.rv.in .progress-ring-fill { stroke-dasharray: var(--p) 100; }
+
+/* logo strip: slow scroll, paused on hover / keyboard focus; wraps into a static grid under reduced motion */
+.logo-track { animation: ehc-mq 50s linear infinite; }
+html[dir="rtl"] .logo-track { animation-name: ehc-mqr; }
+.logo-strip:hover .logo-track, .logo-strip:focus-within .logo-track { animation-play-state: paused; }
+
+/* before / after: stacked panes with a clip once components/before-after.js is ready */
+.compare-tag { @apply absolute top-3 rounded-full bg-deep-950/75 px-3 py-1 text-xs font-bold text-white; }
+.compare-handle, .compare-range { display: none; }
+.compare.is-ready { display: block; position: relative; overflow: hidden; border-radius: 22px; --pos: 50%; }
+.compare.is-ready .compare-pane { border-radius: 0; }
+.compare.is-ready .compare-after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--pos)); }
+html[dir="rtl"] .compare.is-ready .compare-after { clip-path: inset(0 var(--pos) 0 0); }
+.compare.is-ready .compare-handle { display: block; position: absolute; top: 0; bottom: 0; inset-inline-start: var(--pos); width: 3px; margin-inline-start: -1.5px; background: #fff; pointer-events: none; }
+.compare-handle > span { @apply absolute top-1/2 left-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-deep-900 shadow-lg; }
+.compare.is-ready .compare-range { display: block; position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.compare.is-ready:has(.compare-range:focus-visible) .compare-handle > span { @apply ring-4 ring-brand-400; }
+
+/* lightbox (native <dialog>) */
+.lightbox { @apply m-auto h-full max-h-none w-full max-w-none bg-transparent p-0; }
+.lightbox::backdrop { background: color-mix(in srgb, var(--deep-950) 94%, transparent); }
+.lightbox[open] { display: grid; place-items: center; }
+.lightbox-figure { @apply grid max-h-[88vh] max-w-[92vw] justify-items-center gap-3; }
+.lightbox-figure img { @apply max-h-[80vh] w-auto max-w-full rounded-xl object-contain; }
+.lightbox-figure figcaption { @apply text-center text-sm text-white/85; }
+.lightbox-btn { @apply absolute grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20; }
+.lightbox-count { @apply absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-white/80; }
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar-fill { width: calc(var(--p) * 1%); }
+  .progress-ring-fill { stroke-dasharray: var(--p) 100; }
+  .logo-strip { mask-image: none !important; }
+  .logo-track { width: auto; flex-wrap: wrap; justify-content: center; }
+  .logo-track > [aria-hidden="true"] { display: none; }
+}
+
+/* ---------------------------------------------------------------------
+   COMPONENT LIBRARY PAGE (componentLibrary template)
+   No JS: every section full size, name above it. With JS ([data-library].lib-js): a grid of live, scaled-down previews.
+   --------------------------------------------------------------------- */
+.lib-tile { display: flex; flex-direction: column; }
+.lib-meta { order: -1; padding: 2.5rem 0 .5rem; }
+.lib-js .lib-meta { order: 0; padding: 1.1rem 1.25rem 1.3rem; }
+.lib-js .lib-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.lib-js .lib-tile { @apply relative overflow-hidden rounded-[22px] bg-white ring-1 ring-slate-200 transition dark:bg-night-900 dark:ring-white/10; }
+.lib-js .lib-tile:hover, .lib-js .lib-tile:focus-within { @apply -translate-y-1 shadow-soft ring-brand-300; }
+.lib-js .lib-tile[hidden] { display: none; }
+.lib-js .lib-frame { display: flex; flex-direction: column; justify-content: safe center; }
+.lib-js .lib-frame { @apply relative h-[230px] overflow-hidden border-b border-slate-100 bg-white dark:border-white/10 dark:bg-night-950; }
+.lib-js .lib-frame::after { content: ""; position: absolute; inset: auto 0 0; height: 56px; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--lib-fade, #fff)); }
+.dark .lib-js .lib-frame { --lib-fade: var(--night-950); }
+.lib-js .lib-stage { zoom: .32; flex-shrink: 0; pointer-events: none; user-select: none; }
+.lib-js .lib-open { position: absolute; inset: 0; z-index: 2; border-radius: 22px; cursor: zoom-in; }
+.lib-js .lib-open:focus-visible { @apply outline-none ring-4 ring-brand-400 ring-inset; }
+.lib-js .lib-tile-ref .lib-frame::after { display: none; }
+.lib-dialog { @apply m-0 h-full max-h-none w-full max-w-none bg-white p-0 dark:bg-night-950; }
+.lib-dialog::backdrop { background: rgb(0 0 0 / .6); }
+.lib-dialog[open] { display: flex; flex-direction: column; }
+.lib-dialog-bar { @apply sticky top-0 z-10 flex items-center justify-between gap-4 bg-deep-900 px-5 py-3 dark:bg-deep-950; }
+.lib-dialog-btn { @apply grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20; }
+.lib-dialog-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.lib-js .lib-tile-ref .lib-frame { align-items: center; }
+
+/* milestone cards (timelineBlock style "cards"): text revealed on hover / focus where hover exists */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .milestone .milestone-text { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .45s ease, opacity .35s ease; }
+  .milestone .milestone-text > * { min-height: 0; overflow: hidden; }
+  .milestone:hover .milestone-text, .milestone:focus-visible .milestone-text { grid-template-rows: 1fr; opacity: 1; }
+}
+.milestone:focus-visible { outline: 3px solid var(--brand-400); outline-offset: 3px; }
+
+/* carousel page dots (components/rail.js) */
+.rail-dot { @apply relative h-2.5 w-2.5 rounded-full bg-slate-300 transition-all hover:bg-brand-400 dark:bg-white/25; }
+/* the dot stays small; the hit area is 24px (WCAG 2.5.8) */
+.rail-dot::after { content: ""; position: absolute; inset: -7px; }
+.rail-dot[aria-current="true"] { @apply w-7 bg-brand-600 dark:bg-brand-400; }
+
+/* flip cards (flipCardsBlock + components/flip-cards.js). No JS: both faces stacked. */
+.flip-face { @apply relative flex flex-col gap-3 rounded-[22px] p-7; }
+.flip-front { @apply min-h-[240px] items-center justify-center text-center; }
+.flip-inner { display: grid; gap: .75rem; }
+.flip-js .flipcard { perspective: 1400px; }
+.flip-js .flip-inner { gap: 0; aspect-ratio: 1 / 1; transition: transform .7s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+.flip-js .flip-face { grid-area: 1 / 1; min-height: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.flip-js .flip-back { transform: rotateY(180deg); overflow-y: auto; }
+.flip-js .is-flipped .flip-inner { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .flip-js .flip-inner, .flip-js .is-flipped .flip-inner, .flip-js .flip-back { transform: none; }
+  .flip-js .flip-back { visibility: hidden; }
+  .flip-js .is-flipped .flip-back { visibility: visible; }
+  .flip-js .is-flipped .flip-front { visibility: hidden; }
+}
+
+/* rich text on deep / brand panels */
+.rte.rte-on-dark { color: rgb(255 255 255 / .9); }
+.rte.rte-on-dark :is(h2, h3, strong, a) { color: #fff; }
+
+/* page contents bar (pageNavBlock + components/page-nav.js) */
+.page-nav-host { position: sticky; top: var(--header-h, 76px); z-index: 30; padding-block: 0 !important; }
+.page-nav-link { @apply block whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-soft hover:text-deep-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white; }
+.page-nav-link[aria-current="true"] { @apply bg-deep-900 text-white hover:bg-deep-900 hover:text-white dark:bg-brand-600; }
+
+/* image hotspots (hotspotsBlock): positions are image coordinates, set inline as left/top percentages */
+.hotspot { @apply absolute grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-sm font-bold text-brand-700 shadow-lg ring-4 ring-white/50 transition hover:scale-110 focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-brand-400; }
+.hotspot::before { content: ""; position: absolute; inset: -6px; border-radius: 9999px; border: 2px solid var(--brand-400); animation: ehc-ping 2.4s ease-out infinite; }
+.hotspot[aria-current="true"] { @apply scale-110 bg-brand-600 text-white ring-brand-200; }
+@keyframes ehc-ping { 0% { transform: scale(.8); opacity: .9; } 80%, 100% { transform: scale(1.5); opacity: 0; } }
+
+/* print: content only */
+@media print {
+  #hdr, footer, #megaDim, [data-share], [data-page-nav], .page-nav-host, [data-mobile-bar], .lib-toolbar { display: none !important; }
+  .rv { opacity: 1 !important; transform: none !important; }
+  body { background: #fff !important; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; }
+}
+
+/* ------------------------------------------------ accessibility panel (site/_A11yPanel, site.js)
+   Options are classes on <html>: a11y-links | a11y-spacing | a11y-still | a11y-cursor | a11y-guide */
+.a11y-tile { @apply flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 text-center text-sm font-semibold leading-snug text-deep-900 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:text-white; }
+.a11y-tile[aria-pressed="true"] { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
+.a11y-tile .ico { @apply h-6 w-6; }
+
+.a11y-links a { text-decoration-line: underline !important; text-decoration-thickness: 2px !important; text-underline-offset: .2em; outline: 2px solid color-mix(in srgb, var(--accent-400) 80%, transparent); outline-offset: 2px; }
+/* WCAG 1.4.12 text spacing; letter spacing is left out for Arabic, where it breaks the joins between letters */
+.a11y-spacing :is(p, li, dd, dt, blockquote, td, th, label, figcaption, .rte) { line-height: 1.8 !important; word-spacing: .16em !important; }
+html.a11y-spacing:not(:lang(ar)) :is(p, li, dd, dt, blockquote, td, th, label, figcaption, .rte) { letter-spacing: .08em !important; }
+.a11y-spacing .rte > * + * { margin-top: 1.6em; }
+.a11y-still *, .a11y-still ::before, .a11y-still ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html.a11y-still { scroll-behavior: auto; }
+.a11y-still .rv { opacity: 1; transform: none; }
+.a11y-still .progress-bar-fill { width: calc(var(--p) * 1%); }
+.a11y-still .progress-ring-fill { stroke-dasharray: var(--p) 100; }
+.a11y-still .logo-track { width: auto; flex-wrap: wrap; justify-content: center; }
+.a11y-still .logo-track > [aria-hidden="true"] { display: none; }
+.a11y-cursor, .a11y-cursor * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'%3E%3Cpath d='M4 2l15 8.5-6.5 1.8L9.5 19z' fill='%23000' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, auto !important; }
+.a11y-cursor :is(a, button, [role="button"], label, select, summary), .a11y-cursor :is(a, button, [role="button"], label, select, summary) * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'%3E%3Cpath d='M9 11V4.5a1.5 1.5 0 013 0V10l1-.2a1.5 1.5 0 012.9.4l.1.1a1.5 1.5 0 012.9.6v5.6A5.5 5.5 0 0113.4 22h-1.1a5.5 5.5 0 01-4.6-2.5L4.4 14.4a1.5 1.5 0 012.3-1.9z' fill='%23000' stroke='%23fff' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 12 3, pointer !important; }
+/* reading guide: a clear band that follows the pointer (or keyboard focus), the rest of the page dimmed */
+.a11y-guide-bar { position: fixed; inset-inline: 0; top: -1.75rem; height: 3.5rem; z-index: 75; pointer-events: none; border-block: 3px solid var(--accent-400); box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--deep-950) 40%, transparent); }
+
+/* ------------------------------------------------ assistant demo (site/_Assistant, components/assistant.js) */
+.assistant-badge { @apply rounded-full bg-accent-400 px-2 py-0.5 text-xs font-bold; color: #2B1D00; }
+.assistant-msg { display: flex; flex-direction: column; align-items: flex-start; max-width: 86%; }
+.assistant-msg > p { @apply rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed; }
+.assistant-msg.is-them > p { @apply rounded-ss-md bg-soft text-deep-900 dark:bg-white/5 dark:text-slate-100; }
+.assistant-msg.is-me { margin-inline-start: auto; align-items: flex-end; }
+.assistant-msg.is-me > p { @apply rounded-se-md bg-brand-600 text-white; }
+.assistant-msg.is-urgent > p { @apply bg-emerg-50 font-semibold text-emerg-600 ring-1 ring-emerg-600/30 dark:bg-emerg-500/15 dark:text-red-200; }
+.assistant-link { @apply mt-1.5 inline-flex min-h-9 items-center rounded-full border border-brand-600 px-3.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-brand-400 dark:text-brand-300 dark:hover:bg-white/5; }
+.is-urgent .assistant-link { @apply border-emerg-600 bg-emerg-600 text-white hover:bg-emerg-600 dark:text-white; }
+.assistant-chip { @apply min-h-9 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-deep-900 transition hover:border-brand-500 hover:text-brand-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:hover:text-brand-300; }
+.assistant-chip.is-agent { @apply border-dashed border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300; }
+.assistant-typing { flex-direction: row; gap: .3rem; width: fit-content; @apply rounded-2xl rounded-ss-md bg-soft px-3.5 py-3.5 dark:bg-white/5; }
+.assistant-typing i { @apply block h-2 w-2 rounded-full bg-slate-400; animation: ehc-typing 1s ease-in-out infinite; }
+.assistant-typing i:nth-child(2) { animation-delay: .15s; }
+.assistant-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes ehc-typing { 0%, 60%, 100% { opacity: .35; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+/* ------------------------------------------------ forms (health tools) */
+.field { @apply h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-deep-900 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-white/20 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500; }
+select.field { @apply pe-10; }
+.field:user-invalid { @apply border-emerg-600; }
+/* radio / choice chips: the input stays in the accessibility tree, visually hidden */
+.opt { @apply relative inline-flex cursor-pointer; }
+.opt > input { @apply absolute inset-0 m-0 cursor-pointer opacity-0; }
+.opt > span { @apply inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition dark:border-white/20 dark:bg-white/5 dark:text-slate-200; }
+.opt:hover > span { @apply border-brand-500; }
+.opt > input:checked + span { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
+.opt > input:focus-visible + span { @apply ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-night-900; }
+.opt-row { @apply flex; }
+.opt-row > span { @apply w-full rounded-xl px-4 py-3; }
+
+/* health tools (Views/Partials/tools, components/health-tools.js): the card is a size container so the form and the
+   result sit side by side only when the card itself is wide — also inside a narrow column */
+.tool { container-type: inline-size; }
+.tool-grid { display: grid; gap: 1.75rem; }
+@container (min-width: 44rem) { .tool-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+/* question numbers skip questions that don't apply (e.g. women only) */
+.q-list { counter-reset: q; }
+.q-list > li:not([hidden]) { counter-increment: q; }
+.q-num::before { content: counter(q); }
+.tool-result { @apply rounded-2xl bg-soft p-6 dark:bg-white/5; }
+.tool-value { @apply block text-[clamp(2.4rem,6vw,3.2rem)] font-extrabold leading-none text-deep-900 dark:text-white; }
+.tool-badge { @apply mt-3 inline-block rounded-full px-3 py-1 text-sm font-bold; }
+.tool-badge[data-tone="info"] { @apply bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200; }
+.tool-badge[data-tone="good"] { @apply bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200; }
+.tool-badge[data-tone="warn"] { @apply bg-amber-50 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200; }
+.tool-badge[data-tone="bad"] { @apply bg-rose-50 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200; }
+.tool-badge:empty { display: none; }
+/* vision test: a bank-card outline to calibrate, then the letter on a plain white stage (high contrast in dark mode too) */
+.vt-card { @apply relative aspect-[85.6/53.98] max-w-full rounded-[10px] border-2 border-deep-900 bg-brand-50 dark:border-white dark:bg-white/10; }
+.vt-card > span { @apply absolute start-[8%] top-[28%] h-[18%] w-[14%] rounded bg-accent-400; }
+.vt-stage { @apply grid min-h-[220px] place-items-center rounded-2xl border border-slate-200 bg-white dark:border-white/10; }
+.vt-stage svg { fill: #000; transition: none; }
+
+/* columns layout (columnsLayoutBlock): sections placed inside a column lose their own page container and stack */
+.cols-cell { min-width: 0; }
+.cols-cell .wrap { max-width: none; margin-inline: 0; padding-inline: 0; }
+.cols-cell .wrap > .mx-auto { margin-inline: 0; }
+.cols-cell .wrap.grid { grid-template-columns: minmax(0, 1fr); }
+.cols-cell .h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); }
+/* A–Z index (azIndexBlock) */
+.az-letter { @apply grid h-9 min-w-9 place-items-center rounded-lg px-1.5 text-sm font-bold text-deep-900 transition hover:bg-brand-600 hover:text-white dark:text-white; }
+.az-letter.az-off { @apply pointer-events-none text-slate-400 dark:text-white/30; }
+.cols-card > .cols-cell { @apply rounded-[22px] border border-slate-200 bg-white p-6 sm:p-8 dark:border-white/10 dark:bg-night-900; }

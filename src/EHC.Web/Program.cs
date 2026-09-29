@@ -5,6 +5,8 @@ builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
 #if DEBUG
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 #endif
+// Server-only settings (connection string, secrets): placed on the server by hand, never published or committed
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.local.json", optional: true, reloadOnChange: true);
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()

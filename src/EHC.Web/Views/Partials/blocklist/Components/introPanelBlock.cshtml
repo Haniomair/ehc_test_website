@@ -1,0 +1,99 @@
+@* Intro panel ("about" opener): a large photo or muted looping video with a white card overlapping it — eyebrow, heading,
+   lead line, text, icon points (e.g. mission / vision) and buttons — plus an optional numbers strip joined underneath
+   (icons, count-up). Video pauses with the button and never plays under reduced motion (components/hero-video.js). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var heading = c.Value<string>("heading");
+    if (string.IsNullOrWhiteSpace(heading)) { return; }
+    var image = c.Value<MediaWithCrops>("image");
+    var video = c.Value<MediaWithCrops>("videoFile");
+    var videoUrl = video?.Url();
+    var videoType = System.IO.Path.GetExtension(videoUrl ?? "").ToLowerInvariant() switch { ".mp4" or ".m4v" => "video/mp4", ".webm" => "video/webm", _ => null };
+    var hasMedia = image is not null || videoType is not null;
+    var mediaEnd = c.Value<string>("imageSide") == "end";
+    var lead = c.Value<string>("lead");
+    var body = c.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+    var points = c.Value<BlockListModel>("points")?.Select(p => p.Content).Where(p => !string.IsNullOrWhiteSpace(p.Value<string>("title"))).ToList() ?? [];
+    var ctas = c.Value<IEnumerable<Link>>("ctas")?.ToList() ?? [];
+    var stats = c.Value<BlockListModel>("stats")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("value"))).ToList() ?? [];
+    var statCols = stats.Count switch { 2 => "grid-cols-2", 3 => "grid-cols-3", 4 => "grid-cols-2 md:grid-cols-4", _ => "grid-cols-2 md:grid-cols-3 lg:grid-cols-5" };
+}
+<div class="wrap">
+    <div class="relative grid items-center @(hasMedia ? "lg:grid-cols-12" : "")">
+        @if (hasMedia)
+        {
+            <div class="relative overflow-hidden rounded-[28px] lg:col-span-7 lg:row-start-1 @(mediaEnd ? "lg:col-start-6" : "lg:col-start-1")">
+                @if (videoType is not null)
+                {
+                    <video class="aspect-[4/3] w-full object-cover" muted loop playsinline preload="metadata" poster="@image?.GetCropUrl(1200, 900, furtherOptions: "format=webp&quality=80")" aria-hidden="true" data-hero-video>
+                        <source src="@videoUrl" type="@videoType">
+                    </video>
+                    <button type="button" class="absolute bottom-4 start-4 grid h-11 w-11 place-items-center rounded-full bg-deep-950/60 text-white backdrop-blur hover:bg-deep-950/80" data-video-toggle aria-pressed="false"
+                            aria-label="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPause")" data-label-pause="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPause")" data-label-play="@Umbraco.GetDictionaryValue("EHC.Hero.VideoPlay")">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon-pause><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                        <svg class="hidden h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon-play><path d="M8 5v14l11-7z" /></svg>
+                    </button>
+                }
+                else
+                {
+                    <img src="@image!.GetCropUrl(1200, 900, furtherOptions: "format=webp&quality=80")" alt="@(c.Value<string>("imageAlt"))" class="aspect-[4/3] w-full object-cover" loading="lazy">
+                }
+            </div>
+        }
+        <div class="rv relative z-10 -mt-16 mx-4 rounded-[26px] bg-white p-7 shadow-soft ring-1 ring-slate-100 sm:p-10 lg:row-start-1 lg:mx-0 lg:mt-0 dark:bg-night-900 dark:ring-white/10 @(hasMedia ? (mediaEnd ? "lg:col-span-6 lg:col-start-1" : "lg:col-span-6 lg:col-start-7") : "")">
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("eyebrow"))) { <div class="eyebrow">@(c.Value<string>("eyebrow"))</div> }
+            <h2 class="h2">@Text.Emphasis(heading, Encoder)</h2>
+            @if (!string.IsNullOrWhiteSpace(lead)) { <p class="mt-4 text-lg font-semibold leading-relaxed text-brand-700 dark:text-brand-300">@lead</p> }
+            @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte mt-4 text-[.95rem]">@Html.Raw(body)</div> }
+            @if (points.Count > 0)
+            {
+                <ul class="mt-7 grid gap-5 border-t border-slate-100 pt-6 dark:border-white/10">
+                    @foreach (var p in points)
+                    {
+                        var icon = p.Value<string>("icon");
+                        <li class="flex gap-4">
+                            @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span> }
+                            <div>
+                                <h3 class="font-bold text-deep-900 dark:text-white">@(p.Value<string>("title"))</h3>
+                                @if (!string.IsNullOrWhiteSpace(p.Value<string>("text"))) { <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">@(p.Value<string>("text"))</p> }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            @if (ctas.Count > 0)
+            {
+                <div class="mt-7 flex flex-wrap gap-3">
+                    @for (var i = 0; i < ctas.Count; i++) { <a class="btn @(i == 0 ? "btn-primary" : "btn-ghost")" href="@ctas[i].Url" target="@ctas[i].Target">@ctas[i].Name</a> }
+                </div>
+            }
+        </div>
+    </div>
+    @if (stats.Count > 0)
+    {
+        <div class="rv relative mt-8 overflow-hidden rounded-[26px] bg-linear-to-br from-brand-600 to-deep-900 px-6 py-10 text-center text-white sm:px-10">
+        <span class="mark-bg mark-white absolute -end-16 -top-16 h-64 w-64 opacity-[.08]" aria-hidden="true"></span>
+        <dl class="relative grid gap-8 @statCols">
+            @foreach (var s in stats)
+            {
+                var icon = s.Value<string>("icon");
+                <div class="relative flex flex-col items-center">
+                    <dt class="order-2 mt-2 text-sm text-white/85">@(s.Value<string>("label"))</dt>
+                    <dd class="text-[clamp(1.8rem,3.4vw,2.6rem)] font-extrabold leading-none">
+                        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="mx-auto mb-3 grid h-12 w-12 place-items-center" aria-hidden="true"><svg class="ico !h-10 !w-10 [stroke-width:1.4]"><use href="#i-@icon" /></svg></span> }
+                        <span dir="ltr"><span data-count="@(s.Value<string>("value"))">@(s.Value<string>("value"))</span>@(s.Value<string>("suffix"))</span>
+                    </dd>
+                </div>
+            }
+        </dl>
+        </div>
+        <script src="~/assets/js/components/count-up.js" asp-append-version="true" defer></script>
+    }
+</div>
+@if (videoType is not null) { <script src="~/assets/js/components/hero-video.js" asp-append-version="true" defer></script> }

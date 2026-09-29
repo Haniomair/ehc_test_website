@@ -21,7 +21,7 @@
     string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
 }
 <div class="wrap" data-finder="@id" data-filter="@initial" data-max="@max">
-    <div class="rv mb-8 flex flex-wrap items-end justify-between gap-6">
+    <div class="rv sec-head-row">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.Finder.Eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
         @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.Finder.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
     </div>

@@ -1,0 +1,59 @@
+@* Contact: address, phone numbers, email, hours text and social/other links beside an optional map
+   (latitude/longitude; Leaflet is loaded lazily by components/map.js). Without coordinates the details span the width. *@
+@using System.Globalization
+@using System.Text.Json
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var address = c.Value<string>("address");
+    var phones = c.Value<IEnumerable<string>>("phones")?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList() ?? [];
+    var email = c.Value<string>("email")?.Trim();
+    if (email is not null && !System.Net.Mail.MailAddress.TryCreate(email, out _)) { email = null; }
+    var hours = c.Value<string>("hoursText");
+    var links = c.Value<IEnumerable<Link>>("links")?.ToList() ?? [];
+    var lat = c.Value<decimal?>("latitude");
+    var lng = c.Value<decimal?>("longitude");
+    var hasMap = lat is >= -90 and <= 90 and not 0 && lng is >= -180 and <= 180 and not 0;
+    if (string.IsNullOrWhiteSpace(address) && phones.Count == 0 && email is null && !hasMap) { return; }
+    var mapName = Text.Plain(c.Value<string>("heading"));
+    var point = hasMap ? JsonSerializer.Serialize(new[] { new { id = Model.ContentKey, name = mapName, lat, lng, er = false, url = "" } }) : null;
+    var inv = CultureInfo.InvariantCulture;
+}
+@{
+    void Row(string icon, string label, Func<object?, Microsoft.AspNetCore.Html.IHtmlContent> body)
+    {
+        <div class="relative min-h-12 ps-16">
+            <dt class="text-sm text-slate-600 dark:text-slate-400"><span class="absolute start-0 top-0 grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span>@label</dt>
+            <dd class="font-semibold text-deep-900 dark:text-white">@body(null)</dd>
+        </div>
+    }
+}
+<div class="wrap grid gap-8 @(hasMap ? "lg:grid-cols-[1fr_1.2fr]" : "")">
+    <div class="rv flex flex-col gap-7">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        <dl class="grid gap-5 @(hasMap ? "" : "sm:grid-cols-2")">
+            @if (!string.IsNullOrWhiteSpace(address)) { Row("pin", Umbraco.GetDictionaryValue("EHC.Facility.Address") ?? "", @<span class="whitespace-pre-line">@address</span>); }
+            @if (phones.Count > 0)
+            {
+                Row("phone", Umbraco.GetDictionaryValue("EHC.Facility.Phone") ?? "", @<span class="flex flex-wrap gap-x-4">@foreach (var p in phones) { <a href="tel:@(new string(p.Where(ch => char.IsDigit(ch) || ch == '+').ToArray()))" class="link" dir="ltr">@p</a> }</span>);
+            }
+            @if (email is not null) { Row("mail", Umbraco.GetDictionaryValue("EHC.Contact.Email") ?? "", @<a href="mailto:@email" class="link break-all">@email</a>); }
+            @if (!string.IsNullOrWhiteSpace(hours)) { Row("clock", Umbraco.GetDictionaryValue("EHC.Facility.Hours") ?? "", @<span class="whitespace-pre-line">@hours</span>); }
+        </dl>
+        @if (links.Count > 0 || hasMap)
+        {
+            <div class="flex flex-wrap gap-3">
+                @if (hasMap) { <a class="btn btn-primary" href="https://www.openstreetmap.org/directions?to=@(lat!.Value.ToString(inv))%2C@(lng!.Value.ToString(inv))" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-compass" /></svg><span>@Umbraco.GetDictionaryValue("EHC.Facility.Directions")</span></a> }
+                @foreach (var l in links) { <a class="btn btn-ghost" href="@l.Url" target="@l.Target" rel="@(l.Target == "_blank" ? "noopener" : null)">@l.Name</a> }
+            </div>
+        }
+    </div>
+    @if (hasMap)
+    {
+        <div class="rv min-h-[380px] overflow-hidden rounded-[22px] border border-slate-200 dark:border-white/10" data-map data-points="@point" data-zoom="15" role="region" aria-label="@Umbraco.GetDictionaryValue("EHC.Facility.Map")"></div>
+    }
+</div>
+@if (hasMap) { @await Html.PartialAsync("site/_MapAssets") }

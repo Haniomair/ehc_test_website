@@ -21,7 +21,8 @@ public sealed record MediaBackground(
     string Overlay,
     string Strength,
     string Focal,
-    bool ShowPattern)
+    bool ShowPattern,
+    bool Lazy = false)
 {
     public bool HasImage => ImageDesktop is not null;
     public bool HasVideo => VideoUrl is not null;

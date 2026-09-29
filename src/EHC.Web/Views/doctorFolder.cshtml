@@ -30,27 +30,27 @@
 @await Html.PartialAsync("site/_PageHeader", Model)
 <div class="wrap py-10 lg:py-14">
     <form method="get" class="card mb-8 grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end" aria-label="@Umbraco.GetDictionaryValue("EHC.Doctors.Filter")">
-        <label class="grid gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Specialty")
-            <select name="specialty" class="h-11 rounded-xl border border-slate-200 bg-white px-3 font-normal dark:border-white/15 dark:bg-night-900">
+        <label class="grid min-w-0 gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Specialty")
+            <select name="specialty" class="field min-w-0 font-normal dark:bg-night-900">
                 <option value="">@Umbraco.GetDictionaryValue("EHC.Common.All")</option>
                 @foreach (var s in specialties) { <option value="@s.Key" selected="@(s.Key == fSpec)">@s.Name</option> }
             </select>
         </label>
-        <label class="grid gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Facility")
-            <select name="facility" class="h-11 rounded-xl border border-slate-200 bg-white px-3 font-normal dark:border-white/15 dark:bg-night-900">
+        <label class="grid min-w-0 gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Facility")
+            <select name="facility" class="field min-w-0 font-normal dark:bg-night-900">
                 <option value="">@Umbraco.GetDictionaryValue("EHC.Common.All")</option>
                 @foreach (var f in facilities) { <option value="@f.Key" selected="@(f.Key == fFac)">@f.Name</option> }
             </select>
         </label>
-        <label class="grid gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Language")
-            <select name="language" class="h-11 rounded-xl border border-slate-200 bg-white px-3 font-normal dark:border-white/15 dark:bg-night-900">
+        <label class="grid min-w-0 gap-1.5 text-sm font-semibold">@Umbraco.GetDictionaryValue("EHC.Doctors.Language")
+            <select name="language" class="field min-w-0 font-normal dark:bg-night-900">
                 <option value="">@Umbraco.GetDictionaryValue("EHC.Common.All")</option>
                 @foreach (var l in languages) { <option value="@l" selected="@(l == fLang)">@Lang(l)</option> }
             </select>
         </label>
         <div class="flex gap-2">
-            <button type="submit" class="btn btn-primary !py-2.5">@Umbraco.GetDictionaryValue("EHC.Common.Apply")</button>
-            @if (fSpec is not null || fFac is not null || fLang is not null) { <a href="@req.Path" class="btn btn-ghost !py-2.5">@Umbraco.GetDictionaryValue("EHC.Common.Clear")</a> }
+            <button type="submit" class="btn btn-primary h-12 !py-0">@Umbraco.GetDictionaryValue("EHC.Common.Apply")</button>
+            @if (fSpec is not null || fFac is not null || fLang is not null) { <a href="@req.Path" class="btn btn-ghost h-12 !py-0">@Umbraco.GetDictionaryValue("EHC.Common.Clear")</a> }
         </div>
     </form>
     <p class="mb-5 text-sm text-slate-500 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>

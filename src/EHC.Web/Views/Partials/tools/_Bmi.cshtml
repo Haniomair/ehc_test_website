@@ -1,0 +1,8 @@
+@* BMI tool page / "Health tool" section: the slider calculator shared with "Know your numbers" (tools/_BmiSlider). *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    var id = (string)ViewData["toolId"]!;
+}
+<p class="mb-6 text-sm text-slate-600 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Tools.Bmi.Intro")</p>
+@await Html.PartialAsync("tools/_BmiSlider", new BmiSlider(id, ShowTitle: false))

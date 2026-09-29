@@ -1,0 +1,17 @@
+@* Health tool card: icon from the tool, page name, summary (or intro). *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var tool = HealthTools.Find(Model.Value<string>("tool"));
+    var summary = Model.Value<string>("summary");
+    if (string.IsNullOrWhiteSpace(summary)) { summary = Model.Value<string>("intro"); }
+}
+<a href="@Model.Url()" class="card group flex h-full flex-col gap-4 p-6 transition hover:-translate-y-1 hover:border-brand-300 hover:shadow-soft">
+    <span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico !h-7 !w-7" aria-hidden="true"><use href="#i-@(tool?.Icon ?? "target")" /></svg></span>
+    <span class="grid gap-1.5">
+        <b class="text-lg leading-snug text-deep-900 dark:text-white">@Model.Name</b>
+        @if (!string.IsNullOrWhiteSpace(summary)) { <span class="text-sm text-slate-600 dark:text-slate-400">@summary</span> }
+    </span>
+    <span class="link mt-auto text-sm">@Umbraco.GetDictionaryValue("EHC.Tools.Open")<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span>
+</a>

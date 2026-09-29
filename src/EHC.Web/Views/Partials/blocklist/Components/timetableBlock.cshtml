@@ -1,0 +1,51 @@
+@* Timetable (clinic schedule, classes, visiting times): rows of day · time · title · location · note, grouped by day
+   in the order editors entered them. With more than one day, filter chips show one day at a time (components/timetable.js);
+   without JS every day stays visible. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var rows = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (rows.Count == 0) { return; }
+    var days = rows.Select(r => r.Value<string>("day")?.Trim() ?? "").Distinct().ToList();
+    var id = "tt-" + Model.ContentKey.ToString("N")[..8];
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    @if (days.Count > 1)
+    {
+        <div class="rv mb-6 flex flex-wrap gap-2" data-timetable-filter="@id" hidden>
+            <button type="button" class="chip" aria-pressed="true" data-day="">@Umbraco.GetDictionaryValue("EHC.Common.All")</button>
+            @for (var d = 0; d < days.Count; d++)
+            {
+                if (days[d] == "") { continue; }
+                <button type="button" class="chip" aria-pressed="false" data-day="@d">@days[d]</button>
+            }
+        </div>
+    }
+    <div id="@id" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-live="polite">
+        @for (var d = 0; d < days.Count; d++)
+        {
+            var day = days[d];
+            <section class="rv card overflow-hidden" data-day="@d" aria-labelledby="@id-d@(d)">
+                <h3 id="@id-d@(d)" class="flex items-center gap-2 bg-brand-50 px-5 py-3 font-bold text-deep-900 dark:bg-brand-500/10 dark:text-white"><svg class="ico !h-5 !w-5 text-brand-600 dark:text-brand-300" aria-hidden="true"><use href="#i-cal" /></svg>@(day == "" ? "—" : day)</h3>
+                <ul class="divide-y divide-slate-100 dark:divide-white/10">
+                    @foreach (var r in rows.Where(r => (r.Value<string>("day")?.Trim() ?? "") == day))
+                    {
+                        <li class="flex gap-4 px-5 py-4">
+                            <span class="w-24 shrink-0 text-sm font-bold text-brand-700 dark:text-brand-300" dir="auto">@(r.Value<string>("time"))</span>
+                            <span class="grid gap-0.5">
+                                <b class="text-deep-900 dark:text-white">@(r.Value<string>("title"))</b>
+                                @if (!string.IsNullOrWhiteSpace(r.Value<string>("location"))) { <span class="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-pin" /></svg>@(r.Value<string>("location"))</span> }
+                                @if (!string.IsNullOrWhiteSpace(r.Value<string>("note"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(r.Value<string>("note"))</span> }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(c.Value<string>("footnote"))) { <p class="mt-6 text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("footnote"))</p> }
+</div>
+@if (days.Count > 1) { <script src="~/assets/js/components/timetable.js" asp-append-version="true" defer></script> }

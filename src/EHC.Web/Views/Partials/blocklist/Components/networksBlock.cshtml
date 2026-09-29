@@ -1,0 +1,41 @@
+@* Health networks: one card per network page (under the facilities page) with its intro and counts of hospitals and
+   primary care centres, counted from the facility pages — nothing to type twice. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    var networks = home?.DescendantsOfType("healthNetwork").Where(n => n.IsVisible()).ToList() ?? [];
+    if (networks.Count == 0) { return; }
+    var folder = home?.DescendantsOfType("facilityFolder").FirstOrDefault();
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+    var cols = networks.Count switch { 2 => "md:grid-cols-2", 4 => "md:grid-cols-2 xl:grid-cols-4", _ => "md:grid-cols-2 lg:grid-cols-3" };
+}
+<div class="wrap">
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.Finder.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    <ul class="grid gap-5 @cols">
+        @foreach (var n in networks)
+        {
+            var list = n.DescendantsOfType("facility").Where(f => f.IsVisible()).ToList();
+            var centers = list.Count(f => f.Value<string>("facilityType") == "primaryCare");
+            var hospitals = list.Count - centers;
+            <li class="rv">
+                <a href="@n.Url()" class="card group flex h-full flex-col gap-4 p-6 transition hover:-translate-y-1 hover:border-brand-300 hover:shadow-soft">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white" aria-hidden="true"><svg class="ico"><use href="#i-hosp" /></svg></span>
+                        <b class="text-lg leading-snug text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@n.Name</b>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(n.Value<string>("intro"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(n.Value<string>("intro"))</span> }
+                    <span class="mt-auto flex flex-wrap gap-2 text-sm">
+                        @if (hospitals > 0) { <span class="rounded-full bg-soft px-3 py-1 font-semibold text-deep-900 dark:bg-white/5 dark:text-white">@string.Format(D("EHC.Network.HospitalCount"), hospitals)</span> }
+                        @if (centers > 0) { <span class="rounded-full bg-soft px-3 py-1 font-semibold text-deep-900 dark:bg-white/5 dark:text-white">@string.Format(D("EHC.Network.CenterCount"), centers)</span> }
+                    </span>
+                </a>
+            </li>
+        }
+    </ul>
+</div>

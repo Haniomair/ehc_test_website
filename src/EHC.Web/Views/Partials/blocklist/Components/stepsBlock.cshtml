@@ -1,0 +1,32 @@
+@* Process steps: numbered steps (icon optional), horizontal (connected row) or vertical (list). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var steps = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (steps.Count == 0) { return; }
+    var vertical = c.Value<string>("layout") == "vertical";
+    var cols = steps.Count switch { 2 => "md:grid-cols-2", 3 => "md:grid-cols-3", _ => "md:grid-cols-2 lg:grid-cols-4" };
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ol class="@(vertical ? "mx-auto grid max-w-[760px] gap-4" : $"grid gap-6 {cols}")">
+        @for (var i = 0; i < steps.Count; i++)
+        {
+            var s = steps[i];
+            var icon = s.Value<string>("icon");
+            <li class="rv relative @(vertical ? "flex gap-5" : "flex flex-col gap-4")">
+                <span class="relative z-[1] grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-600 text-lg font-extrabold text-white shadow-glow">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg><span class="sr-only">@(i + 1)</span> } else { @(i + 1) }
+                </span>
+                @if (!vertical && i < steps.Count - 1) { <span class="absolute start-16 end-0 top-7 hidden border-t-2 border-dashed border-brand-200 md:block dark:border-white/15" aria-hidden="true"></span> }
+                @if (vertical && i < steps.Count - 1) { <span class="absolute bottom-[-1rem] start-7 top-14 border-s-2 border-dashed border-brand-200 dark:border-white/15" aria-hidden="true"></span> }
+                <div class="@(vertical ? "pb-4 pt-2" : "")">
+                    <h3 class="text-lg font-bold text-deep-900 dark:text-white">@(s.Value<string>("title"))</h3>
+                    @if (!string.IsNullOrWhiteSpace(s.Value<string>("text"))) { <p class="mt-1.5 text-slate-600 dark:text-slate-400">@(s.Value<string>("text"))</p> }
+                </div>
+            </li>
+        }
+    </ol>
+</div>

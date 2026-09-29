@@ -1,0 +1,57 @@
+@* Image hotspots (floor plan, wayfinding, "inside the clinic"): numbered points on a photo, each linked to an entry in
+   the list beside it (title, text, link). Selecting a point opens its entry and highlights both; without JS the points
+   jump to the list. Point positions are percentages of the image (0–100 from the left / top) — physical coordinates,
+   because the photo itself is never mirrored in Arabic. JS: components/hotspots.js. *@
+@using System.Globalization
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var image = c.Value<MediaWithCrops>("image");
+    var points = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (image is null || points.Count == 0) { return; }
+    var id = "hs-" + Model.ContentKey.ToString("N")[..8];
+    var inv = CultureInfo.InvariantCulture;
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <div class="grid items-start gap-8 lg:grid-cols-[1.6fr_1fr]" data-hotspots>
+        <div class="rv relative overflow-hidden rounded-[26px] bg-soft dark:bg-night-900">
+            <img src="@image.GetCropUrl(width: 1400, furtherOptions: "format=webp&quality=80")" alt="@(c.Value<string>("imageAlt"))" class="block w-full" loading="lazy">
+            @for (var i = 0; i < points.Count; i++)
+            {
+                var x = Math.Clamp(points[i].Value<int>("x"), 0, 100);
+                var y = Math.Clamp(points[i].Value<int>("y"), 0, 100);
+                <a href="#@id-@(i + 1)" class="hotspot" style="left:@x.ToString(inv)%;top:@y.ToString(inv)%" data-hotspot="@(i + 1)">
+                    <span aria-hidden="true">@(i + 1)</span><span class="sr-only">@(points[i].Value<string>("title"))</span>
+                </a>
+            }
+        </div>
+        <ol class="grid gap-3" id="@id">
+            @for (var i = 0; i < points.Count; i++)
+            {
+                var p = points[i];
+                var link = p.Value<Link>("link");
+                <li id="@id-@(i + 1)" class="scroll-mt-32">
+                    <details class="group card overflow-hidden open:ring-2 open:ring-brand-500" data-hotspot-entry="@(i + 1)" open="@(i == 0)">
+                        <summary class="flex cursor-pointer list-none items-center gap-3 p-4 font-semibold text-deep-900 dark:text-white [&::-webkit-details-marker]:hidden">
+                            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white" aria-hidden="true">@(i + 1)</span>
+                            <span class="flex-1">@(p.Value<string>("title"))</span>
+                            <svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg>
+                        </summary>
+                        @if (!string.IsNullOrWhiteSpace(p.Value<string>("text")) || link is not null)
+                        {
+                            <div class="grid gap-2 border-t border-slate-100 px-4 pb-4 pt-3 text-sm text-slate-600 dark:border-white/10 dark:text-slate-400">
+                                @if (!string.IsNullOrWhiteSpace(p.Value<string>("text"))) { <p>@(p.Value<string>("text"))</p> }
+                                @if (link is not null) { <a class="link" href="@link.Url" target="@link.Target">@link.Name</a> }
+                            </div>
+                        }
+                    </details>
+                </li>
+            }
+        </ol>
+    </div>
+</div>
+<script src="~/assets/js/components/hotspots.js" asp-append-version="true" defer></script>

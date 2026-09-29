@@ -1,0 +1,65 @@
+@* Flip cards (strategy, values, promises): square cards showing icon + title; the button turns the card to show text,
+   bullets and a link. Works by click, tap and keyboard (not hover-only); the hidden side is inert; under reduced motion
+   the sides cross-fade. Without JS both sides are shown one after another. Optional photo background for the section.
+   JS: components/flip-cards.js. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var bg = MediaBackground.From(c) with { Lazy = true };
+    var onImage = bg.HasMedia;
+    var id = "fc-" + Model.ContentKey.ToString("N")[..8];
+    var cols = items.Count switch { 1 => "sm:grid-cols-1", 2 => "sm:grid-cols-2", 4 => "sm:grid-cols-2 xl:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    // one or two cards: heading beside the cards (as on the strategy section); more: heading above
+    var side = items.Count <= 2;
+    var more = Umbraco.GetDictionaryValue("EHC.FlipCards.More");
+    var back = Umbraco.GetDictionaryValue("EHC.FlipCards.Back");
+}
+<div class="@(onImage ? "media-hero py-16 lg:py-24 text-white" : "")" style="@(onImage ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", onImage ? bg.Overlay : null)@HtmlAttributes.Data("strength", onImage ? bg.Strength : null)>
+    @if (onImage) { @await Html.PartialAsync("site/_MediaBackground", bg) }
+    <div class="wrap relative">
+        <div class="@(side ? "grid items-center gap-10 lg:grid-cols-[1fr_2fr]" : "")">
+        <div class="rv @(side ? "" : "sec-head")">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), OnDark: onImage))@if (side) {<span class="mt-6 block h-1 w-20 rounded-full bg-brand-600" aria-hidden="true"></span>}</div>
+        <ul class="grid gap-6 @cols" data-flip-cards>
+            @for (var i = 0; i < items.Count; i++)
+            {
+                var it = items[i];
+                var icon = it.Value<string>("icon");
+                var title = it.Value<string>("title");
+                var bullets = it.Value<IEnumerable<string>>("bullets")?.Where(b => !string.IsNullOrWhiteSpace(b)).ToList() ?? [];
+                var link = it.Value<Link>("link");
+                var backId = $"{id}-b{i}";
+                <li class="rv flipcard">
+                    <div class="flip-inner">
+                        <div class="flip-face flip-front @(onImage ? "bg-white/10 ring-1 ring-white/30 backdrop-blur" : "bg-linear-to-br from-brand-600 to-deep-900 text-white")">
+                            <span class="pointer-events-none absolute inset-3 rounded-[16px] border border-white/25" aria-hidden="true"></span>
+                            @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico !h-14 !w-14 [stroke-width:1.2]" aria-hidden="true"><use href="#i-@icon" /></svg> }
+                            <h3 class="text-xl font-bold">@title</h3>
+                            <button type="button" class="flip-toggle btn btn-sand btn-sm" aria-expanded="false" aria-controls="@backId" data-flip-open hidden>@more<span class="sr-only">: @title</span></button>
+                        </div>
+                        <div class="flip-face flip-back bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-night-900 dark:text-slate-300 dark:ring-white/10" id="@backId">
+                            <h3 class="text-lg font-bold text-deep-900 dark:text-white">@title</h3>
+                            @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <p class="text-sm leading-relaxed">@(it.Value<string>("text"))</p> }
+                            @if (bullets.Count > 0)
+                            {
+                                <ul class="grid gap-1.5 text-sm">
+                                    @foreach (var b in bullets) { <li class="flex gap-2"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" aria-hidden="true"></span>@b</li> }
+                                </ul>
+                            }
+                            <div class="mt-auto flex flex-wrap items-center gap-3 pt-2">
+                                @if (link is not null) { <a class="link text-sm" href="@link.Url" target="@link.Target">@link.Name</a> }
+                                <button type="button" class="btn btn-ghost btn-sm ms-auto" data-flip-close hidden>@back<span class="sr-only">: @title</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+        </div>
+    </div>
+</div>
+<script src="~/assets/js/components/flip-cards.js" asp-append-version="true" defer></script>

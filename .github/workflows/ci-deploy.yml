@@ -1,0 +1,95 @@
+name: Build and deploy
+
+on:
+  pull_request:
+    branches: [test, main]
+  push:
+    branches: [test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Frontend (contrast check + CSS)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run publish:umbraco
+
+      - name: Test
+        run: dotnet test EHC.slnx -c Release
+
+  deploy:
+    name: Deploy to staging
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/test'
+    runs-on: windows-latest
+    environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # map tiles (~60 MB) are rebuilt once a month, otherwise restored from the cache
+      - name: Tiles cache key
+        id: tiles
+        shell: pwsh
+        run: '"month=$(Get-Date -Format yyyy-MM)" >> $env:GITHUB_OUTPUT'
+
+      - name: Restore map tiles
+        id: tiles-cache
+        uses: actions/cache@v4
+        with:
+          path: src/EHC.Web/wwwroot/tiles
+          key: map-tiles-${{ steps.tiles.outputs.month }}
+
+      - name: Build map tiles
+        if: steps.tiles-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: npm run tiles
+
+      - name: Web Deploy
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:ProgramFiles\IIS\Microsoft Web Deploy V3\msdeploy.exe")) {
+            choco install webdeploy -y --no-progress
+          }
+
+      - name: Deploy
+        shell: pwsh
+        env:
+          EHC_DEPLOY_SERVER: ${{ vars.EHC_DEPLOY_SERVER }}
+          EHC_DEPLOY_SITE: ${{ vars.EHC_DEPLOY_SITE }}
+          EHC_DEPLOY_USER: ${{ vars.EHC_DEPLOY_USER }}
+          EHC_DEPLOY_PASSWORD: ${{ secrets.EHC_DEPLOY_PASSWORD }}
+          EHC_DEPLOY_SELF_CONTAINED: ${{ vars.EHC_DEPLOY_SELF_CONTAINED }}
+          EHC_DEPLOY_ALLOW_UNTRUSTED: ${{ vars.EHC_DEPLOY_ALLOW_UNTRUSTED }}
+        run: ./deploy/deploy-staging.ps1

@@ -2,3 +2,5 @@
    Tailwind can't see them, so list them here. Keep in sync with reference/EHC.Web/Blocks/BlockSection.cs. */
 @source inline("bg-soft dark:bg-night-900/60 bg-deep-900 dark:bg-deep-950 bg-brand-500 text-white");
 @source inline("py-0 py-10 py-16 lg:py-24 py-24 lg:py-32");
+/* logo wall: column count follows the number of logos (3–6) */
+@source inline("lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 lg:grid-cols-6");

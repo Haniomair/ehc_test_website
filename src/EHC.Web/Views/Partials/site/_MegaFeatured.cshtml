@@ -1,4 +1,4 @@
-@* Featured card in a mega panel. One of: megaFeaturedCampaign, megaFeaturedApp, megaFeaturedMap, megaFeaturedStats. *@
+@* Featured card in a mega panel. One of: megaFeaturedCampaign, megaFeaturedApp, megaFeaturedMap, megaFeaturedStats, megaFeaturedPromo (icon, title, text, button). *@
 @using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
@@ -55,6 +55,22 @@
         </a>
         break;
 
+    case "megaFeaturedPromo":
+        var promoLink = c.Value<Link>("link");
+        var promoIcon = c.Value<string>("icon");
+        if (string.IsNullOrWhiteSpace(title)) { break; }
+        <div class="relative flex h-full flex-col overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 to-deep-900 p-6 text-white">
+            <span class="mark-bg mark-white absolute -end-12 -bottom-12 h-56 w-56 opacity-15" aria-hidden="true"></span>
+            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-600"><svg class="ico" aria-hidden="true"><use href="#i-@(string.IsNullOrWhiteSpace(promoIcon) ? "star" : promoIcon)" /></svg></span>
+            <b class="mt-5 text-xl leading-snug">@title</b>
+            @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-2 text-sm text-white/85">@text</p> }
+            @if (promoLink is not null && !string.IsNullOrWhiteSpace(promoLink.Url))
+            {
+                <a href="@promoLink.Url" target="@promoLink.Target" class="btn btn-sand relative mt-auto w-fit btn-sm">@promoLink.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+            }
+        </div>
+        break;
+
     case "megaFeaturedStats":
         var stats = c.Value<BlockListModel>("stats")?.ToList() ?? [];
         <div class="grid grid-cols-2 gap-3">
@@ -66,7 +82,7 @@
                     <span class="text-sm @(i == 0 ? "text-brand-100" : "text-slate-500 dark:text-slate-400")">@(s.Value<string>("label"))</span>
                 </div>
             }
-            @if (!string.IsNullOrWhiteSpace(title)) { <p class="col-span-2 text-[.7rem] text-slate-400">@title</p> }
+            @if (!string.IsNullOrWhiteSpace(title)) { <p class="col-span-2 text-xs text-slate-400">@title</p> }
         </div>
         break;
 }

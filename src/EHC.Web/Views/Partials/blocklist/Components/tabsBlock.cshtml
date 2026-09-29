@@ -1,0 +1,56 @@
+@* Tabs: each tab = label (+ icon) → panel with title, rich text, optional image and button.
+   Styles: pills · underline · vertical (list on the side, wide screens). WAI-ARIA tabs via components/tabs.js;
+   without JS all panels are shown in order. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var tabs = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("label"))).ToList() ?? [];
+    if (tabs.Count == 0) { return; }
+    var style = c.Value<string>("style") ?? "pills";
+    var vertical = style == "vertical";
+    var id = "tb-" + Model.ContentKey.ToString("N")[..8];
+    var tabCss = style switch
+    {
+        "underline" => "border-b-2 border-transparent px-4 py-3 font-semibold text-slate-600 aria-selected:border-brand-600 aria-selected:text-deep-900 dark:text-slate-400 dark:aria-selected:border-brand-300 dark:aria-selected:text-white",
+        "vertical" => "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start font-semibold text-slate-600 aria-selected:bg-brand-600 aria-selected:text-white dark:text-slate-400",
+        _ => "flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold text-slate-600 aria-selected:bg-deep-900 aria-selected:text-white dark:text-slate-400 dark:aria-selected:bg-brand-600",
+    };
+}
+<div class="wrap" data-tabs>
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null, Id: id + "-h"))</div>
+    <div class="@(vertical ? "grid gap-6 lg:grid-cols-[280px_1fr]" : "")">
+        <div role="tablist" aria-labelledby="@id-h" aria-orientation="@(vertical ? "vertical" : "horizontal")"
+             class="@(style == "underline" ? "mb-8 flex gap-2 overflow-x-auto border-b border-slate-200 dark:border-white/10" : vertical ? "grid h-fit gap-1.5 rounded-2xl bg-soft p-2 dark:bg-night-900" : "mb-8 flex w-fit max-w-full gap-1.5 overflow-x-auto rounded-full bg-soft p-1.5 dark:bg-night-900")">
+            @for (var i = 0; i < tabs.Count; i++)
+            {
+                var icon = tabs[i].Value<string>("icon");
+                <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")" class="@tabCss transition">
+                    @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-@icon" /></svg> }
+                    <span>@(tabs[i].Value<string>("label"))</span>
+                </button>
+            }
+        </div>
+        <div>
+            @for (var i = 0; i < tabs.Count; i++)
+            {
+                var t = tabs[i];
+                var body = t.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+                var image = t.Value<MediaWithCrops>("image");
+                var link = t.Value<Link>("link");
+                <div id="@id-p@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" tabindex="0" class="@(i == 0 ? "" : "hidden") grid items-center gap-8 @(image is not null ? "md:grid-cols-2" : "")">
+                    <div>
+                        @if (!string.IsNullOrWhiteSpace(t.Value<string>("title"))) { <h3 class="text-2xl font-bold text-deep-900 dark:text-white">@(t.Value<string>("title"))</h3> }
+                        @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte mt-3">@Html.Raw(body)</div> }
+                        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn btn-primary mt-6">@link.Name</a> }
+                    </div>
+                    @if (image is not null) { <img src="@image.GetCropUrl(800, 600, furtherOptions: "format=webp&quality=80")" alt="" class="aspect-[4/3] w-full rounded-[26px] object-cover" loading="lazy"> }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<script src="~/assets/js/components/tabs.js" asp-append-version="true" defer></script>

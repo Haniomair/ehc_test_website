@@ -1,0 +1,22 @@
+@* "Health tool" section: one calculator or self-assessment (Site/HealthTools.cs) anywhere on a page, also inside a
+   column. The heading defaults to the tool's name; an optional link leads to more (e.g. all health tools). *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var tool = HealthTools.Find(c.Value<string>("tool"));
+    if (tool is null) { return; }
+    var heading = c.Value<string>("heading");
+    if (string.IsNullOrWhiteSpace(heading)) { heading = Umbraco.GetDictionaryValue("EHC.Tools.Name." + tool.Key); }
+    var link = c.Value<Link>("link");
+}
+<div class="wrap">
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), heading, c.Value<string>("intro")))
+        @if (link is not null) { <a class="link" href="@link.Url" target="@link.Target"><span>@link.Name</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    <div class="rv">@await Html.PartialAsync("tools/_Tool", tool)</div>
+</div>

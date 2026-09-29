@@ -7,10 +7,11 @@
 
    Resolution order (last wins):
      1. :root defaults below              (EHC brand)
-     2. [data-theme="…"] presets          (_themes.css — designed occasions)
-     3. inline style="--brand-500:…"      (written by Umbraco from the
-                                            active Theme node, if the editor
-                                            overrides colours)
+     2. inline style="--brand-500:…"      on <html> (the active Theme node) or
+                                          on a section (its section theme):
+                                          built by Umbraco from the Theme
+                                          node's colours (Themes/Palette.cs).
+   Keep the defaults below in sync with Palette.Defaults (a test checks).
 
    Palette roles
      brand      primary actions, links, highlights      (EHC sky blue)
@@ -98,6 +99,7 @@
   --color-accent-500: var(--accent-500);
   --color-highlight-500: var(--highlight-500);
   --color-highlight-800: var(--highlight-800);
+  --color-highlight-300: color-mix(in srgb, var(--highlight-500) 65%, white);
   --color-support-50:  var(--support-50);
   --color-support-300: var(--support-300);
   --color-support-400: var(--support-400);

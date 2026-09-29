@@ -1,0 +1,53 @@
+@* Downloads: forms, guides, reports. Each item is a media file with title, description and language; the file type
+   and size are read from the media item so they are always correct. List or card grid. *@
+@using System.Globalization
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content)
+        .Select(i => (Item: i, File: i.Value<MediaWithCrops>("file")))
+        .Where(x => x.File is not null && !string.IsNullOrWhiteSpace(x.File.Url()))
+        .ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cards = c.Value<string>("layout") == "grid";
+    string Size(long bytes) => bytes switch
+    {
+        <= 0 => "",
+        < 1024 * 1024 => Math.Max(1, bytes / 1024).ToString(CultureInfo.CurrentCulture) + " KB",
+        _ => (bytes / 1024d / 1024d).ToString("0.#", CultureInfo.CurrentCulture) + " MB",
+    };
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="@(cards ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3")">
+        @foreach (var (it, maybeFile) in items)
+        {
+            var file = maybeFile!;
+            var url = file.Url()!;
+            var ext = System.IO.Path.GetExtension(url).TrimStart('.').ToUpperInvariant();
+            var size = Size(file.Value<long>("umbracoBytes"));
+            var title = it.Value<string>("title");
+            if (string.IsNullOrWhiteSpace(title)) { title = file.Name; }
+            var lang = it.Value<string>("language");
+            <li class="rv">
+                <a href="@url" download class="card group flex h-full items-center gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-soft @(cards ? "flex-col items-start" : "")">
+                    <span class="grid h-14 w-12 shrink-0 place-items-center rounded-xl bg-brand-50 text-xs font-extrabold tracking-wide text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20" aria-hidden="true">@(ext.Length > 4 ? ext[..4] : ext)</span>
+                    <span class="grid flex-1 gap-1">
+                        <b class="text-deep-900 dark:text-white">@title</b>
+                        @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(it.Value<string>("text"))</span> }
+                        <span class="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
+                            <span>@ext</span>
+                            @if (size != "") { <span aria-hidden="true">·</span><span dir="ltr">@size</span> }
+                            @if (!string.IsNullOrWhiteSpace(lang)) { <span aria-hidden="true">·</span><span>@lang</span> }
+                        </span>
+                    </span>
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-soft text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-white/5 dark:text-brand-300 @(cards ? "self-end" : "")" aria-hidden="true"><svg class="ico !h-5 !w-5 rotate-90"><use href="#i-arrow" /></svg></span>
+                    <span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Downloads.Download")</span>
+                </a>
+            </li>
+        }
+    </ul>
+</div>

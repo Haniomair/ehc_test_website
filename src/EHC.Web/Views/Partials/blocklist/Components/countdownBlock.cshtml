@@ -1,0 +1,51 @@
+@* Countdown to a date and time (Riyadh): days · hours · minutes · seconds, updated by components/countdown.js.
+   The numbers are hidden from screen readers; the target date is stated in text instead. After the time has passed the
+   "finished" text shows, or the section disappears when no finished text is set. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using EHC.Web.Themes
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject TimeProvider Clock
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var target = ThemeResolver.ToUtc(c.Value("targetDate"));
+    var title = c.Value<string>("title");
+    if (target is null || string.IsNullOrWhiteSpace(title)) { return; }
+    var now = Clock.GetUtcNow().UtcDateTime;
+    var finished = c.Value<string>("finishedText");
+    var done = target <= now;
+    if (done && string.IsNullOrWhiteSpace(finished)) { return; }
+    var left = done ? TimeSpan.Zero : target.Value - now;
+    var local = new DateTimeOffset(target.Value).ToOffset(Dates.SaudiOffset);
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
+    var when = Dates.Gregorian(DateOnly.FromDateTime(local.DateTime), culture) + " · " + local.ToString("HH:mm", culture);
+    var link = c.Value<Link>("link");
+    var units = new[] { ("d", (int)left.TotalDays, "EHC.Countdown.Days"), ("h", left.Hours, "EHC.Countdown.Hours"), ("m", left.Minutes, "EHC.Countdown.Minutes"), ("s", left.Seconds, "EHC.Countdown.Seconds") };
+}
+<div class="wrap">
+    <div class="rv relative overflow-hidden rounded-[30px] bg-linear-to-br from-deep-900 to-brand-700 px-6 py-12 text-center text-white sm:px-12"
+         data-countdown="@target.Value.ToString("o")">
+        <div class="mark-bg mark-white pointer-events-none absolute -end-24 -top-24 h-[420px] w-[420px] opacity-[.08]" aria-hidden="true"></div>
+        <div class="relative mx-auto flex max-w-[760px] flex-col items-center gap-4">
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("eyebrow"))) { <div class="eyebrow !text-brand-300">@(c.Value<string>("eyebrow"))</div> }
+            <h2 class="text-[clamp(1.7rem,3.4vw,2.6rem)] font-bold leading-tight [&_em]:not-italic [&_em]:text-brand-300">@Text.Emphasis(title, Encoder)</h2>
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("text"))) { <p class="text-lg text-on-deep">@(c.Value<string>("text"))</p> }
+            <p class="text-sm text-on-deep"><svg class="ico me-1 inline !h-4 !w-4 align-[-3px]" aria-hidden="true"><use href="#i-cal" /></svg><time datetime="@target.Value.ToString("o")">@when</time></p>
+            <div class="mt-2 grid w-full max-w-[560px] grid-cols-4 gap-3 @(done ? "hidden" : "")" data-countdown-units aria-hidden="true">
+                @foreach (var (key, value, label) in units)
+                {
+                    <div class="rounded-2xl bg-white/10 px-2 py-4 ring-1 ring-white/15 backdrop-blur">
+                        <span class="block text-[clamp(1.8rem,5vw,3rem)] font-extrabold leading-none tabular-nums" dir="ltr" data-unit="@key">@value.ToString("00")</span>
+                        <span class="mt-1 block text-xs text-on-deep">@Umbraco.GetDictionaryValue(label)</span>
+                    </div>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(finished)) { <p class="text-xl font-bold @(done ? "" : "hidden")" data-countdown-done>@finished</p> }
+            @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn btn-sand btn-lg mt-2">@link.Name</a> }
+        </div>
+    </div>
+</div>
+<script src="~/assets/js/components/countdown.js" asp-append-version="true" defer></script>

@@ -1,0 +1,32 @@
+@* Image call-to-action banner: rounded banner over a photo (media background with theme overlay) or the brand gradient
+   when no photo is set; title with highlight, text, up to two buttons. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    if (string.IsNullOrWhiteSpace(title)) { return; }
+    var bg = MediaBackground.From(c) with { Lazy = !Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey) };
+    var highlight = c.Value<string>("titleHighlight");
+    var primary = c.Value<Link>("primaryCta");
+    var secondary = c.Value<Link>("secondaryCta");
+    var center = c.Value<string>("align") == "center";
+}
+<div class="wrap">
+    <div class="rv overflow-hidden rounded-[30px] text-white @(bg.HasMedia ? "media-hero" : "hero-bg-1 relative")" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+        @await Html.PartialAsync("site/_MediaBackground", bg)
+        <div class="relative flex min-h-[320px] flex-col justify-center gap-4 p-8 sm:p-14 @(center ? "items-center text-center" : "max-w-[720px]")">
+            <h2 class="text-[clamp(1.8rem,3.6vw,2.8rem)] font-bold leading-tight">@title@if (!string.IsNullOrWhiteSpace(highlight)) {<text> </text><em class="not-italic text-brand-300">@highlight</em>}</h2>
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("text"))) { <p class="text-lg text-white/90">@(c.Value<string>("text"))</p> }
+            @if (primary is not null || secondary is not null)
+            {
+                <div class="mt-2 flex flex-wrap gap-3 @(center ? "justify-center" : "")">
+                    @if (primary is not null) { <a class="btn btn-sand btn-lg" href="@primary.Url" target="@primary.Target">@primary.Name</a> }
+                    @if (secondary is not null) { <a class="btn btn-outline btn-lg" href="@secondary.Url" target="@secondary.Target">@secondary.Name</a> }
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -36,7 +36,7 @@
             <div class="relative h-[540px] w-[270px] -rotate-6 rounded-[44px] bg-night-950 p-3 shadow-[0_40px_80px_rgba(0,0,0,.35)] rtl:rotate-6">
                 <div class="flex h-full flex-col overflow-hidden rounded-[34px] bg-soft text-deep-950 dark:bg-night-900 dark:text-white">
                     <div class="bg-brand-500 px-[18px] pb-[22px] pt-[34px] text-white"><b class="block text-[1.05rem]">@D("Name")</b></div>
-                    <div class="grid grid-cols-2 gap-2 p-3.5 text-[.72rem] font-semibold">
+                    <div class="grid grid-cols-2 gap-2 p-3.5 text-xs font-semibold">
                         @foreach (var (icon, key) in new[] { ("cal", "Appointments"), ("lab", "Results"), ("note", "Prescriptions"), ("chat", "Consult") })
                         {
                             <div class="flex flex-col gap-1.5 rounded-xl bg-white p-3 dark:bg-deep-900"><svg class="ico !h-5 !w-5 text-brand-500"><use href="#i-@icon" /></svg><span>@D(key)</span></div>

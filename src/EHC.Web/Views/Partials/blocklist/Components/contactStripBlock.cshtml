@@ -1,0 +1,52 @@
+@* Contact strip: 2–4 compact contact items (icon, label, value, optional link — tel:, mailto: or a page) in a coloured
+   band, e.g. "Find our facilities · Email us · Urgent care 937". Tone: deep · brand · soft. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("label"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var tone = c.Value<string>("tone") ?? "deep";
+    var dark = tone != "soft";
+    var box = tone switch
+    {
+        "brand" => "bg-linear-to-l from-brand-600 to-brand-800 text-white rtl:bg-linear-to-r",
+        "soft" => "bg-soft text-deep-900 ring-1 ring-slate-200 dark:bg-night-900 dark:text-white dark:ring-white/10",
+        _ => "bg-linear-to-l from-deep-800 to-deep-950 text-white rtl:bg-linear-to-r",
+    };
+    var cols = items.Count switch { 2 => "md:grid-cols-2", 3 => "md:grid-cols-3", _ => "sm:grid-cols-2 lg:grid-cols-4" };
+}
+<div class="wrap">
+    <ul class="rv grid overflow-hidden rounded-[22px] @box @cols">
+        @foreach (var it in items)
+        {
+            var link = it.Value<Link>("link");
+            var icon = it.Value<string>("icon");
+            var value = it.Value<string>("value");
+            var inner = $"flex h-full items-center gap-4 px-6 py-6 border-b last:border-b-0 md:border-b-0 md:border-e md:last:border-e-0 {(dark ? "border-white/10" : "border-slate-200 dark:border-white/10")}";
+            <li>
+                @if (link is not null)
+                {
+                    <a href="@link.Url" target="@link.Target" class="group @inner transition @(dark ? "hover:bg-white/10" : "hover:bg-white dark:hover:bg-white/5")">
+                        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full @(dark ? "bg-white/10 ring-1 ring-white/20" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span> }
+                        <span class="grid">
+                            <span class="text-sm @(dark ? "text-white/75" : "text-slate-600 dark:text-slate-400")">@(it.Value<string>("label"))</span>
+                            @if (!string.IsNullOrWhiteSpace(value)) { <b class="text-[1.05rem]" dir="auto">@value</b> }
+                        </span>
+                    </a>
+                }
+                else
+                {
+                    <div class="@inner">
+                        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full @(dark ? "bg-white/10 ring-1 ring-white/20" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span> }
+                        <span class="grid">
+                            <span class="text-sm @(dark ? "text-white/75" : "text-slate-600 dark:text-slate-400")">@(it.Value<string>("label"))</span>
+                            @if (!string.IsNullOrWhiteSpace(value)) { <b class="text-[1.05rem]" dir="auto">@value</b> }
+                        </span>
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+</div>

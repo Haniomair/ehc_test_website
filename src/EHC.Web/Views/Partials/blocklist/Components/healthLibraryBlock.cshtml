@@ -1,0 +1,27 @@
+@* Health library section: newest articles from the health library (optionally one topic), with a link to the library. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    var library = home?.DescendantsOfType("healthLibrary").FirstOrDefault();
+    if (library is null) { return; }
+    var topic = c.Value<string>("topic");
+    var max = c.Value<int>("maxItems");
+    if (max <= 0) { max = 3; }
+    var articles = library.Children().Where(a => a.ContentType.Alias == "healthArticle" && (string.IsNullOrEmpty(topic) || a.Value<string>("topic") == topic))
+        .OrderByDescending(a => a.Value<DateOnly?>("reviewedDate") ?? DateOnly.FromDateTime(a.UpdateDate)).Take(max).ToList();
+    if (articles.Count == 0) { return; }
+    var cols = articles.Count switch { 1 => "", 2 => "sm:grid-cols-2", 4 => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    var allUrl = string.IsNullOrEmpty(topic) ? library.Url() : library.Url() + "?topic=" + Uri.EscapeDataString(topic);
+}
+<div class="wrap">
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        <a class="link" href="@allUrl"><span>@Umbraco.GetDictionaryValue("EHC.Health.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+    </div>
+    <ul class="grid gap-6 @cols">
+        @foreach (var a in articles) { <li class="rv">@await Html.PartialAsync("cards/_ArticleCard", a)</li> }
+    </ul>
+</div>

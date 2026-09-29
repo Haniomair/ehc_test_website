@@ -1,0 +1,51 @@
+﻿@* Health library: articles below this page, newest review first; search box and topic chips (query string, works
+   without JS), 12 per page; then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    var all = Model.Children().Where(c => c.ContentType.Alias == "healthArticle")
+        .OrderByDescending(a => a.Value<DateOnly?>("reviewedDate") ?? DateOnly.FromDateTime(a.UpdateDate)).ToList();
+    var topics = HealthArticles.Topics.Where(t => all.Any(a => a.Value<string>("topic") == t)).ToList();
+    string? topic = req.Query["topic"];
+    if (topic is not null && !topics.Contains(topic)) { topic = null; }
+    var q = ((string?)req.Query["q"])?.Trim();
+    if (q?.Length > 80) { q = q[..80]; }
+    var list = all.Where(a => topic is null || a.Value<string>("topic") == topic)
+        .Where(a => string.IsNullOrEmpty(q) || a.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase) || (a.Value<string>("intro") ?? "").Contains(q, StringComparison.CurrentCultureIgnoreCase))
+        .ToList();
+    const int size = 12;
+    var pages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)size));
+    var page = Math.Min(ListingQuery.CurrentPage(req), pages);
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    <form method="get" action="@req.Path" class="mb-6 flex max-w-xl gap-2" role="search">
+        @if (topic is not null) { <input type="hidden" name="topic" value="@topic"> }
+        <label for="lib-q" class="sr-only">@Umbraco.GetDictionaryValue("EHC.Health.Search")</label>
+        <input id="lib-q" name="q" type="search" value="@q" maxlength="80" class="field" placeholder="@Umbraco.GetDictionaryValue("EHC.Health.Search")">
+        <button type="submit" class="btn btn-primary shrink-0 !px-5"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="sr-only sm:not-sr-only">@Umbraco.GetDictionaryValue("EHC.Health.SearchButton")</span></button>
+    </form>
+    @if (topics.Count > 1)
+    {
+        <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Health.Topics")">
+            <a class="chip" href="@ListingQuery.With(req, "topic", null)" aria-current="@(topic is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+            @foreach (var t in topics) { <a class="chip" href="@ListingQuery.With(req, "topic", t)" aria-current="@(topic == t ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Health.Topic." + t)</a> }
+        </nav>
+    }
+    <p class="mb-4 text-sm text-slate-600 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
+    @if (list.Count == 0)
+    {
+        <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+    }
+    else
+    {
+        <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var a in list.Skip((page - 1) * size).Take(size)) { <li>@await Html.PartialAsync("cards/_ArticleCard", a)</li> }
+        </ul>
+        @await Html.PartialAsync("site/_Pager", (page, pages))
+    }
+</div>
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

@@ -1,0 +1,46 @@
+@* Action tiles: 2–4 large icon tiles (e.g. join our network · continuing education · careers) over a photo with the
+   theme overlay, or over the brand gradient without one. Each tile is one link; hover / focus lifts it. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var bg = MediaBackground.From(c) with { Lazy = true };
+    var cols = items.Count switch { 1 => "", 2 => "sm:grid-cols-2", 3 => "sm:grid-cols-3", _ => "sm:grid-cols-2 lg:grid-cols-4" };
+    var heading = c.Value<string>("heading");
+}
+<div class="relative overflow-hidden text-white @(bg.HasMedia ? "media-hero" : "bg-linear-to-br from-brand-700 to-deep-950")" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+    @if (bg.HasMedia) { @await Html.PartialAsync("site/_MediaBackground", bg) }
+    <div class="wrap relative py-14 lg:py-16">
+        @if (!string.IsNullOrWhiteSpace(heading)) { <div class="rv sec-head sec-head-center">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), heading, null, OnDark: true))</div> }
+        <ul class="grid gap-5 @cols">
+            @foreach (var it in items)
+            {
+                var link = it.Value<Link>("link");
+                var icon = it.Value<string>("icon");
+                var inner = "flex h-full flex-col items-center gap-4 rounded-[22px] px-6 py-9 text-center ring-1 ring-white/15 bg-white/5 backdrop-blur transition";
+                <li class="rv">
+                    @if (link is not null)
+                    {
+                        <a href="@link.Url" target="@link.Target" class="group @inner hover:-translate-y-1 hover:bg-white/15 focus-visible:-translate-y-1 focus-visible:bg-white/15">
+                            @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-20 w-20 place-items-center rounded-full bg-white/10 ring-1 ring-white/30 transition group-hover:bg-white group-hover:text-brand-700" aria-hidden="true"><svg class="ico !h-9 !w-9 [stroke-width:1.4]"><use href="#i-@icon" /></svg></span> }
+                            <b class="text-lg">@(it.Value<string>("title"))</b>
+                            @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <span class="text-sm text-white/80">@(it.Value<string>("text"))</span> }
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="@inner">
+                            @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-20 w-20 place-items-center rounded-full bg-white/10 ring-1 ring-white/30" aria-hidden="true"><svg class="ico !h-9 !w-9 [stroke-width:1.4]"><use href="#i-@icon" /></svg></span> }
+                            <b class="text-lg">@(it.Value<string>("title"))</b>
+                            @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <span class="text-sm text-white/80">@(it.Value<string>("text"))</span> }
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+</div>

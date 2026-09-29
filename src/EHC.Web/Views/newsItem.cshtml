@@ -12,7 +12,7 @@
 @await Html.PartialAsync("site/_PageHeader", Model)
 <article class="wrap py-12 lg:py-16">
     <div class="mb-8 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-        @if (date is { } d) { <time datetime="@d.ToString("yyyy-MM-dd", inv)" class="font-semibold">@d.ToString("d MMMM yyyy")</time> }
+        @if (date is { } d) { <span class="font-semibold">@EHC.Web.Site.Dates.Html(d)</span> }
         @foreach (var c in categories)
         {
             if (newsroom is not null) { <a href="@newsroom.Url()?category=@Uri.EscapeDataString(c)" class="chip">@c</a> } else { <span class="chip">@c</span> }

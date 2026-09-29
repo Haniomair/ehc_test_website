@@ -1,15 +1,12 @@
-@* Top bar: advice / unified numbers, email, text-size + contrast controls, language switcher. *@
+@* Top bar: advice / unified numbers, email, accessibility settings, language switcher. *@
 @using EHC.Web.Site
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
-@{
-    const string tool = "h-[26px] min-w-[30px] rounded-md border border-white/25 text-[.78rem] text-white hover:bg-white/10";
-}
 <div class="bg-deep-900 text-[.84rem] text-on-deep dark:border-b dark:border-white/10 dark:bg-night-950">
-    <div class="wrap flex min-h-[38px] flex-wrap items-center justify-between gap-4">
+    <div class="wrap flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 py-1.5">
         <div class="flex items-center gap-[18px]">
             @if (Model.Advice is { } advice)
             {
-                <a href="tel:@advice.Dial" class="inline-flex items-center gap-1.5 hover:text-white"><svg class="ico !h-[15px] !w-[15px]" aria-hidden="true"><use href="#i-phone" /></svg><span>@advice.Label</span> <b class="text-white">@advice.Number</b></a>
+                <a href="tel:@advice.Dial" class="inline-flex min-h-7 items-center gap-1.5 hover:text-white"><svg class="ico !h-[15px] !w-[15px]" aria-hidden="true"><use href="#i-phone" /></svg><span>@advice.Label</span> <b class="text-white">@advice.Number</b></a>
             }
             @if (Model.UnifiedNumber is { } unified)
             {
@@ -20,15 +17,11 @@
                 <span class="hidden items-center gap-1.5 md:inline-flex"><svg class="ico !h-[15px] !w-[15px]" aria-hidden="true"><use href="#i-mail" /></svg>@email</span>
             }
         </div>
-        <div class="flex items-center gap-3">
-            <div class="hidden gap-1 sm:flex" role="group" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.Accessibility")">
-                <button type="button" data-action="font" data-step="-1" class="@tool" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.SmallerText")">A−</button>
-                <button type="button" data-action="font" data-step="1" class="@tool" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.LargerText")">A+</button>
-                <button type="button" data-action="contrast" class="@tool" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.HighContrast")" aria-pressed="false">◐</button>
-            </div>
+        <div class="flex items-center gap-2">
+            <button type="button" data-action="a11y-open" class="util-btn max-sm:w-7 max-sm:px-0" aria-haspopup="dialog" aria-controls="a11y" aria-expanded="false"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-a11y" /></svg><span class="max-sm:sr-only">@Umbraco.GetDictionaryValue("EHC.Utility.Accessibility")</span></button>
             @if (Model.OtherLanguage is { } other)
             {
-                <a href="@other.Url" hreflang="@other.Language" lang="@other.Language" class="rounded-full border border-white/25 bg-white/10 px-3 py-0.5 text-[.8rem] text-white hover:bg-white/20" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.OtherLanguageLabel")">@Umbraco.GetDictionaryValue("EHC.Utility.OtherLanguage")</a>
+                <a href="@other.Url" hreflang="@other.Language" lang="@other.Language" class="util-btn" aria-label="@Umbraco.GetDictionaryValue("EHC.Utility.OtherLanguageLabel")">@Umbraco.GetDictionaryValue("EHC.Utility.OtherLanguage")</a>
             }
         </div>
     </div>

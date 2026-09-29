@@ -1,0 +1,60 @@
+@* Events: dated items (awareness days, lectures, blood drives) with Gregorian + Umm al-Qura Hijri dates, time,
+   location, text and link. Sorted by date; past events are hidden unless "show past" is on (they are then dimmed).
+   Layout: list (date badges) or cards. Renders nothing when no event is left to show. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject TimeProvider Clock
+@{
+    var c = Model.Content;
+    var today = Dates.Today(Clock);
+    var showPast = c.Value<bool>("showPast");
+    var max = c.Value<int>("maxItems");
+    var events = (c.Value<BlockListModel>("items")?.Select(i => i.Content) ?? [])
+        .Select(e => (Item: e, Date: e.Value<DateOnly?>("date")))
+        .Where(e => e.Date is not null && !string.IsNullOrWhiteSpace(e.Item.Value<string>("title")))
+        .Where(e => showPast || e.Date >= today)
+        .OrderBy(e => e.Date)
+        .Take(max > 0 ? max : 50)
+        .ToList();
+    if (events.Count == 0) { return; }
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
+    var cards = c.Value<string>("layout") == "cards";
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="@(cards ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-4")">
+        @foreach (var (e, date) in events)
+        {
+            var d = date!.Value;
+            var past = d < today;
+            var link = e.Value<Link>("link");
+            var time = e.Value<string>("time");
+            var location = e.Value<string>("location");
+            var greg = Dates.Gregorian(d, culture, withYear: false);
+            <li class="rv @(past ? "opacity-60" : "")">
+                <article class="card flex h-full gap-5 p-5 @(cards ? "flex-col" : "flex-col sm:flex-row sm:items-center")">
+                    <div class="grid w-24 shrink-0 place-items-center rounded-2xl bg-brand-600 px-3 py-3 text-center text-white" aria-hidden="true">
+                        <span class="text-3xl font-extrabold leading-none">@d.Day.ToString(culture)</span>
+                        <span class="mt-1 text-xs font-semibold">@greg.Split(' ', 2).ElementAtOrDefault(1)</span>
+                    </div>
+                    <div class="grid flex-1 gap-1.5">
+                        <p class="text-sm text-brand-700 dark:text-brand-300">@Dates.Html(d, hijriClass: "text-slate-600 dark:text-slate-400")</p>
+                        <h3 class="text-lg font-bold text-deep-900 dark:text-white">@(e.Value<string>("title"))</h3>
+                        @if (!string.IsNullOrWhiteSpace(e.Value<string>("text"))) { <p class="text-slate-600 dark:text-slate-400">@(e.Value<string>("text"))</p> }
+                        @if (!string.IsNullOrWhiteSpace(time) || !string.IsNullOrWhiteSpace(location))
+                        {
+                            <p class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+                                @if (!string.IsNullOrWhiteSpace(time)) { <span class="flex items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-clock" /></svg><span dir="auto">@time</span></span> }
+                                @if (!string.IsNullOrWhiteSpace(location)) { <span class="flex items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-pin" /></svg>@location</span> }
+                            </p>
+                        }
+                    </div>
+                    @if (link is not null && !past) { <a href="@link.Url" target="@link.Target" class="btn btn-primary shrink-0 @(cards ? "w-fit" : "")">@(string.IsNullOrWhiteSpace(link.Name) ? Umbraco.GetDictionaryValue("EHC.Events.Details") : link.Name)</a> }
+                </article>
+            </li>
+        }
+    </ul>
+</div>

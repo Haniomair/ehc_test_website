@@ -1,0 +1,19 @@
+@* First day of the last period + average cycle length, shared by the ovulation and due date tools. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<string>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = Model;
+}
+<div class="grid gap-2">
+    <label for="@(id)-lmp" class="text-sm font-semibold text-deep-900 dark:text-white">@D("Lmp")</label>
+    <input id="@(id)-lmp" name="lmp" type="date" required class="field" dir="ltr" data-max-today>
+</div>
+<div class="grid gap-2">
+    <label for="@(id)-cycle" class="text-sm font-semibold text-deep-900 dark:text-white">@D("Cycle")</label>
+    <div class="relative" dir="ltr">
+        <input id="@(id)-cycle" name="cycle" type="number" inputmode="numeric" dir="ltr" min="21" max="45" step="1" value="28" required class="field pe-16" aria-describedby="@(id)-cycle-h">
+        <span class="pointer-events-none absolute inset-y-0 end-4 grid place-items-center text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">@D("Days")</span>
+    </div>
+    <p id="@(id)-cycle-h" class="text-xs text-slate-600 dark:text-slate-400">@D("CycleHint")</p>
+</div>

@@ -1,0 +1,27 @@
+@* Text columns: 2–3 columns, each with optional icon, heading and rich text. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var cols = c.Value<BlockListModel>("items")?.Select(i => i.Content)
+        .Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("heading")) || !string.IsNullOrWhiteSpace(i.Value<IHtmlEncodedString>("body")?.ToHtmlString())).ToList() ?? [];
+    if (cols.Count == 0) { return; }
+    var grid = cols.Count switch { 1 => "", 2 => "md:grid-cols-2", _ => "md:grid-cols-3" };
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null))</div>
+    <div class="grid gap-10 @grid @(c.Value<bool>("dividers") ? "md:divide-x md:divide-slate-200 md:rtl:divide-x-reverse dark:md:divide-white/10 [&>*]:md:px-6 [&>*:first-child]:md:ps-0" : "")">
+        @foreach (var col in cols)
+        {
+            var icon = col.Value<string>("icon");
+            var body = col.Value<IHtmlEncodedString>("body")?.ToHtmlString();
+            <div class="rv">
+                @if (!string.IsNullOrWhiteSpace(icon)) { <span class="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
+                @if (!string.IsNullOrWhiteSpace(col.Value<string>("heading"))) { <h3 class="mb-3 text-xl font-bold text-deep-900 dark:text-white">@(col.Value<string>("heading"))</h3> }
+                @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte">@Html.Raw(body)</div> }
+            </div>
+        }
+    </div>
+</div>

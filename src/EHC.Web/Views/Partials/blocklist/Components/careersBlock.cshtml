@@ -16,7 +16,7 @@
             @if (!string.IsNullOrWhiteSpace(card.Value<string>("eyebrow"))) { <span class="text-xs font-bold uppercase tracking-widest rtl:tracking-normal @(deep ? "text-brand-300" : "text-support-50")">@(card.Value<string>("eyebrow"))</span> }
             <b class="mt-2 block max-w-sm text-[1.8rem] leading-tight">@(card.Value<string>("title"))</b>
             @if (!string.IsNullOrWhiteSpace(card.Value<string>("text"))) { <p class="mt-2 max-w-sm @(deep ? "text-brand-100" : "text-white/90")">@(card.Value<string>("text"))</p> }
-            @if (!string.IsNullOrWhiteSpace(cta?.Name)) { <span class="btn mt-6 !py-2.5 text-sm @(deep ? "btn-sand" : "bg-white text-support-800")"><span>@cta.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
+            @if (!string.IsNullOrWhiteSpace(cta?.Name)) { <span class="btn mt-6 btn-sm @(deep ? "btn-sand" : "bg-white text-support-800")"><span>@cta.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></span> }
         </a>
     }
 </div>

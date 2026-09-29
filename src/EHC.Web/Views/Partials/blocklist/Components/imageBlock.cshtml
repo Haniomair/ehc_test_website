@@ -1,0 +1,32 @@
+@* Single image with optional caption and link: natural proportions (no crop), wide or narrow, rounded or framed.
+   Mostly used inside a column next to text. Alt text is required unless the image is marked decorative. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var image = c.Value<MediaWithCrops>("image");
+    if (image is null) { return; }
+    var alt = c.Value<string>("alt") ?? "";
+    var caption = c.Value<string>("caption");
+    var link = c.Value<Link>("link");
+    var framed = c.Value<string>("imageStyle") == "framed";
+    var narrow = c.Value<string>("width") == "narrow";
+    var src = image.GetCropUrl(width: 1400, furtherOptions: "format=webp&quality=80");
+    var srcset = string.Join(", ", new[] { 600, 1000, 1400 }.Select(w => $"{image.GetCropUrl(width: w, furtherOptions: "format=webp&quality=80")} {w}w"));
+}
+<div class="wrap">
+    <figure class="rv mx-auto @(narrow ? "max-w-[760px]" : "")">
+        <div class="@(framed ? "rounded-[30px] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-night-900" : "")">
+            @if (link is not null)
+            {
+                <a href="@link.Url" target="@link.Target" class="block overflow-hidden rounded-[22px] focus-visible:outline-offset-4"><img src="@src" srcset="@srcset" sizes="(min-width: 1240px) 1240px, 100vw" alt="@alt" class="w-full transition duration-500 hover:scale-[1.02]" loading="lazy" decoding="async"></a>
+            }
+            else
+            {
+                <img src="@src" srcset="@srcset" sizes="(min-width: 1240px) 1240px, 100vw" alt="@alt" class="w-full rounded-[22px]" loading="lazy" decoding="async">
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(caption)) { <figcaption class="mt-3 text-sm text-slate-600 dark:text-slate-400">@caption</figcaption> }
+    </figure>
+</div>

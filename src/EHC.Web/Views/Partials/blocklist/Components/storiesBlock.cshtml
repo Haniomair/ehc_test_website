@@ -15,7 +15,7 @@
     string[] avatar = ["bg-brand-500", "bg-support-500", "bg-highlight-500"];
 }
 <div class="wrap">
-    <div class="rv mb-11">
+    <div class="rv sec-head">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null))
     </div>
     <div class="grid gap-7 @(hasVideoCard && quotes.Count > 0 ? "lg:grid-cols-2" : "")">
@@ -52,7 +52,7 @@
                         <blockquote class="relative mb-4 text-[1.1rem] font-medium text-deep-900 dark:text-white">@(q.Value<string>("text"))</blockquote>
                         @if (!string.IsNullOrWhiteSpace(who))
                         {
-                            <figcaption class="flex items-center gap-3 text-[.85rem] text-slate-500 dark:text-slate-400"><i class="grid h-10 w-10 place-items-center rounded-full @avatar[i % avatar.Length] font-bold not-italic text-white" aria-hidden="true">@who[..1]</i><span>@who</span></figcaption>
+                            <figcaption class="flex items-center gap-3 text-[.85rem] text-slate-600 dark:text-slate-400"><i class="grid h-10 w-10 place-items-center rounded-full @avatar[i % avatar.Length] font-bold not-italic text-white" aria-hidden="true">@who[..1]</i><span>@who</span></figcaption>
                         }
                     </figure>
                 }

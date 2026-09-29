@@ -1,0 +1,54 @@
+@* Leader message (CEO / chair): portrait (a cut-out PNG works best), quote, name, role, optional signature image and
+   link, with a large faded background word (decorative, hidden from screen readers). Only approved, attributed quotes. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var quote = c.Value<string>("quote");
+    if (string.IsNullOrWhiteSpace(quote)) { return; }
+    var portrait = c.Value<MediaWithCrops>("portrait");
+    var signature = c.Value<MediaWithCrops>("signature");
+    var name = c.Value<string>("personName");
+    var watermark = c.Value<string>("watermark");
+    var link = c.Value<Link>("link");
+    string Src(MediaWithCrops m, int w) => m.Url()!.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || m.Url()!.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+        ? m.GetCropUrl(width: w, furtherOptions: "format=webp&quality=85") ?? m.Url()!
+        : m.GetCropUrl(w, (int)(w * 1.2), furtherOptions: "format=webp&quality=80") ?? m.Url()!;
+}
+<div class="relative overflow-hidden">
+    @if (!string.IsNullOrWhiteSpace(watermark))
+    {
+        <span class="pointer-events-none absolute end-0 top-0 hidden select-none whitespace-nowrap text-[clamp(3rem,8vw,7.5rem)] font-extrabold leading-none text-deep-900/[.035] lg:block dark:text-white/[.04]" aria-hidden="true">@watermark</span>
+    }
+    <div class="wrap relative">
+        <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null))</div>
+        <figure class="rv grid items-end gap-10 rounded-[30px] bg-soft px-6 pt-10 sm:px-12 md:grid-cols-[1fr_minmax(0,300px)] dark:bg-night-900">
+            <div class="pb-10 md:pb-14">
+                <svg class="h-10 w-10 text-brand-600 dark:text-brand-300 rtl:-scale-x-100" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.6 5C6 6.6 4 9.5 4 13.3V19h6v-6H7c0-2.6 1.3-4.4 3.6-5.4zM19.6 5C16 6.6 14 9.5 14 13.3V19h6v-6h-3c0-2.6 1.3-4.4 3.6-5.4z" /></svg>
+                <blockquote class="mt-5 text-[clamp(1.15rem,2vw,1.45rem)] font-semibold leading-relaxed text-deep-900 dark:text-white">@Text.Emphasis(quote, Encoder)</blockquote>
+                <figcaption class="mt-7 flex flex-wrap items-end gap-x-8 gap-y-4">
+                    <span>
+                        @if (!string.IsNullOrWhiteSpace(name)) { <b class="block text-lg text-deep-900 dark:text-white">@name</b> }
+                        @if (!string.IsNullOrWhiteSpace(c.Value<string>("role"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("role"))</span> }
+                    </span>
+                    @if (signature is not null) { <img src="@Src(signature, 320)" alt="" class="h-14 w-auto opacity-80 dark:invert" loading="lazy"> }
+                </figcaption>
+                @if (link is not null) { <a class="btn btn-primary mt-7" href="@link.Url" target="@link.Target">@link.Name</a> }
+            </div>
+            <div class="relative mx-auto w-full max-w-[300px] self-end">
+                <span class="absolute inset-x-6 bottom-0 top-16 rounded-t-full bg-linear-to-t from-brand-200 to-brand-50 dark:from-brand-500/25 dark:to-transparent" aria-hidden="true"></span>
+                @if (portrait is not null)
+                {
+                    <img src="@Src(portrait, 600)" alt="" class="relative w-full object-contain object-bottom" loading="lazy">
+                }
+                else
+                {
+                    <span class="relative mx-auto mb-10 grid h-48 w-48 place-items-center rounded-full bg-white text-6xl font-bold text-brand-300 dark:bg-white/5" aria-hidden="true">@((name ?? "?").Trim().FirstOrDefault())</span>
+                }
+            </div>
+        </figure>
+    </div>
+</div>

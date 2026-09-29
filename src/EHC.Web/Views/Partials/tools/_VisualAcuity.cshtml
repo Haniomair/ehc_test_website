@@ -1,0 +1,94 @@
+@* Visual acuity screening with the "tumbling E" (Snellen 6/60 → 6/6), one eye at a time. The screen is calibrated
+   with a bank card so letters have their true size at the chosen distance. A screening aid only, not an eye test.
+   Behaviour: components/vision-test.js. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools.Va." + k) ?? "";
+    string C(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = (string)ViewData["toolId"]!;
+    // answer pad: fixed left-to-right positions so "left" is on the left in Arabic too
+    (string Dir, string Label, string Arrow, string Area)[] buttons =
+    [
+        ("up", "DirUp", "M12 19V5M6 11l6-6 6 6", "col-start-2 row-start-1"),
+        ("left", "DirLeft", "M19 12H5M11 6l-6 6 6 6", "col-start-1 row-start-2"),
+        ("right", "DirRight", "M5 12h14M13 6l6 6-6 6", "col-start-3 row-start-2"),
+        ("down", "DirDown", "M12 5v14M6 13l6 6 6-6", "col-start-2 row-start-3"),
+    ];
+}
+<div data-vt data-eye-right="@D("Right")" data-eye-left="@D("Left")" data-cover-left="@D("CoverLeft")" data-cover-right="@D("CoverRight")"
+     data-line-format="@D("LineFormat")" data-below="@D("Below")" data-normal="@D("Normal")" data-check="@D("Check")" data-diff="@D("Diff")" data-too-small="@D("TooSmall")">
+    <section data-step="intro" class="grid gap-5">
+        <p class="max-w-prose text-slate-700 dark:text-slate-300">@D("Intro")</p>
+        <ol class="grid gap-3 text-sm">
+            @for (var i = 1; i <= 4; i++)
+            {
+                <li class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true">@i</span><span class="pt-0.5">@D("Step" + i)</span></li>
+            }
+        </ol>
+        <button type="button" class="btn btn-primary w-fit" data-go="calibrate">@D("Start")</button>
+    </section>
+
+    <section data-step="calibrate" class="grid gap-5" hidden>
+        <h3 class="text-lg font-bold text-deep-900 dark:text-white" tabindex="-1">@D("CalTitle")</h3>
+        <p class="text-sm text-slate-700 dark:text-slate-300">@D("CalText")</p>
+        <div class="overflow-hidden py-2" dir="ltr">
+            <div class="vt-card" data-card aria-hidden="true"><span></span></div>
+        </div>
+        <div class="grid gap-2">
+            <label for="@(id)-card" class="text-sm font-semibold text-deep-900 dark:text-white">@D("CalRange")</label>
+            <input id="@(id)-card" type="range" min="160" max="700" step="1" value="324" class="w-full accent-brand-600" data-card-range dir="ltr">
+        </div>
+        <button type="button" class="btn btn-primary w-fit" data-go="distance">@D("Next")</button>
+    </section>
+
+    <section data-step="distance" class="grid gap-5" hidden>
+        <h3 class="text-lg font-bold text-deep-900 dark:text-white" tabindex="-1">@D("DistTitle")</h3>
+        <p class="text-sm text-slate-700 dark:text-slate-300">@D("DistText")</p>
+        <fieldset>
+            <legend class="sr-only">@D("DistTitle")</legend>
+            <div class="flex flex-wrap gap-2">
+                @foreach (var m in new[] { 1, 2, 3 })
+                {
+                    <label class="opt"><input type="radio" name="distance" value="@m" checked="@(m == 2 ? "checked" : null)"><span>@string.Format(D("Metres"), m)</span></label>
+                }
+            </div>
+        </fieldset>
+        <p class="text-sm text-slate-600 dark:text-slate-400">@D("Glasses")</p>
+        <button type="button" class="btn btn-primary w-fit" data-go="test">@D("Begin")</button>
+    </section>
+
+    <section data-step="test" class="grid gap-5" hidden>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-bold text-deep-900 dark:text-white" tabindex="-1" data-eye-title></h3>
+            <span class="text-sm text-slate-600 dark:text-slate-400" data-line></span>
+        </div>
+        <p class="text-sm text-slate-700 dark:text-slate-300" data-cover></p>
+        <div class="vt-stage" dir="ltr"><svg data-e viewBox="0 0 5 5" aria-hidden="true"><path d="M0 0h5v1H1v1h4v1H1v1h4v1H0z" /></svg></div>
+        <p class="text-center text-sm font-semibold text-deep-900 dark:text-white" id="@(id)-q">@D("Question")</p>
+        <div class="mx-auto grid grid-cols-3 grid-rows-3 gap-2" dir="ltr" role="group" aria-labelledby="@(id)-q">
+            @foreach (var b in buttons)
+            {
+                <button type="button" class="btn btn-ghost h-14 w-14 !p-0 @b.Area" data-answer="@b.Dir" aria-label="@D(b.Label)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="@b.Arrow" /></svg></button>
+            }
+        </div>
+        <p class="text-center text-xs text-slate-600 dark:text-slate-400">@D("Keys")</p>
+    </section>
+
+    <section data-step="switch" class="grid gap-5" hidden>
+        <h3 class="text-lg font-bold text-deep-900 dark:text-white" tabindex="-1">@D("SwitchTitle")</h3>
+        <p class="max-w-prose text-slate-700 dark:text-slate-300">@D("CoverRight")</p>
+        <button type="button" class="btn btn-primary w-fit" data-go="test2">@D("Continue")</button>
+    </section>
+
+    <section data-step="result" class="grid gap-5" hidden>
+        <h3 class="text-lg font-bold text-deep-900 dark:text-white" tabindex="-1">@D("ResultTitle")</h3>
+        <dl class="grid gap-3 sm:grid-cols-2">
+            <div class="tool-result !p-5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Right")</dt><dd class="tool-value" dir="ltr" data-v="right"></dd></div>
+            <div class="tool-result !p-5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Left")</dt><dd class="tool-value" dir="ltr" data-v="left"></dd></div>
+        </dl>
+        <p class="tool-badge !mt-0 w-fit" data-v="verdict"></p>
+        <p class="text-sm text-slate-700 dark:text-slate-300" data-v="advice"></p>
+        <button type="button" class="btn btn-ghost w-fit" data-go="intro">@C("Reset")</button>
+    </section>
+</div>

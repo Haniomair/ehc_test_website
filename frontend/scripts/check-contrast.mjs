@@ -1,11 +1,12 @@
-// WCAG contrast check for every theme preset. Run: npm run check:contrast
+// WCAG contrast check for the default tokens and the reference occasion themes (preview/presets.css).
+// Backoffice themes are checked when saved (Themes/Palette.cs, same pairs). Run: npm run check:contrast
 // Fails (exit 1) if a required pair drops below its threshold.
 import { readFileSync } from 'node:fs';
-const read = f => readFileSync(new URL(`../src/css/${f}`, import.meta.url), 'utf8');
+const read = f => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const vars = block => Object.fromEntries([...block.matchAll(/--([a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})/g)].map(m => [m[1], m[2]]));
-const root = vars(read('_tokens.css').split('@theme')[0]);
+const root = vars(read('src/css/_tokens.css').split('@theme')[0]);
 const themes = { default: root };
-for (const m of read('_themes.css').matchAll(/\[data-theme="([^"]+)"\]\s*\{([^}]*)\}/g)) themes[m[1]] = { ...root, ...vars(m[2]) };
+for (const m of read('preview/presets.css').matchAll(/\[data-theme="([^"]+)"\]\s*\{([^}]*)\}/g)) themes[m[1]] = { ...root, ...vars(m[2]) };
 
 const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };

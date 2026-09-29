@@ -1,0 +1,30 @@
+@* Best time to get pregnant: ovulation ≈ 14 days before the next period; fertile window = the 5 days before
+   ovulation and the day after. Shows the next three cycles. Dates in Gregorian + Hijri. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = (string)ViewData["toolId"]!;
+}
+<form class="tool-grid" novalidate data-calc="ovulation" data-fmt-range="@D("Ovu.RangeFormat")">
+    <div class="grid content-start gap-5">
+        <p class="text-sm text-slate-600 dark:text-slate-400">@D("Ovu.Intro")</p>
+        @await Html.PartialAsync("tools/_Lmp", id)
+        @await Html.PartialAsync("tools/_Actions", D("Calculate"))
+    </div>
+    <div class="tool-result" data-tool-result aria-live="polite">
+        <p data-empty class="text-slate-600 dark:text-slate-400">@D("Empty")</p>
+        <div data-out hidden>
+            <span class="text-sm text-slate-600 dark:text-slate-400">@D("Ovu.Window")</span>
+            <b class="block text-2xl font-extrabold leading-snug text-deep-900 dark:text-white" data-v="window"></b>
+            <span class="text-sm text-slate-600 dark:text-slate-400" data-v="windowHijri"></span>
+            <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl bg-white p-4 dark:bg-white/5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Ovu.Ovulation")</dt><dd class="font-bold text-deep-900 dark:text-white" data-v="ovulation"></dd></div>
+                <div class="rounded-2xl bg-white p-4 dark:bg-white/5"><dt class="text-sm text-slate-600 dark:text-slate-400">@D("Ovu.NextPeriod")</dt><dd class="font-bold text-deep-900 dark:text-white" data-v="period"></dd></div>
+            </dl>
+            <h4 class="mb-2 mt-6 text-sm font-bold text-deep-900 dark:text-white">@D("Ovu.Upcoming")</h4>
+            <ol class="grid gap-2 text-sm" data-v="cycles"></ol>
+            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">@D("Ovu.Note")</p>
+        </div>
+    </div>
+</form>

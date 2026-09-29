@@ -1,0 +1,62 @@
+@* Self-assessment (prediabetes risk, asthma control): questions and scores from Site/HealthTools.cs, texts from the
+   dictionary (EHC.Tools.Pre.* / EHC.Tools.Act.*). The browser adds up the answers; nothing is sent. *@
+@using System.Text.Json
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = (string)ViewData["toolId"]!;
+    var q = HealthTools.QuestionnaireFor(Model.Key)!;
+    var p = q.Key == "asthma" ? "Act" : "Pre";
+    string Opt(string question, string option) => option switch
+    {
+        "yes" => D("Yes"), "no" => D("No"), "male" => D("Male"), "female" => D("Female"),
+        _ => D($"{p}.{question}.{option}"),
+    };
+    // bands from the top: [min, tone, title, text]
+    var bands = JsonSerializer.Serialize(q.Bands.OrderByDescending(b => b.Min).Select(b => new object[] { b.Min, b.Tone, D($"{p}.Band.{b.Key}"), D($"{p}.Band.{b.Key}Text") }));
+    var rows = q.Key == "asthma";   // long answers: one per row
+}
+<form class="grid gap-6" novalidate data-calc="questionnaire" data-max="@q.Max" data-bands="@bands" data-score-format="@D("ScoreFormat")">
+    <p class="text-sm text-slate-600 dark:text-slate-400">@D(p + ".Intro")</p>
+    <ol class="q-list grid gap-4">
+        @foreach (var question in q.Questions)
+        {
+            // condition keys come from Site/HealthTools.cs (fixed identifiers), never from editors
+            var only = question.OnlyIf is { } o ? $"{o.Question}:{o.Option}" : null;
+            <li class="rounded-2xl bg-soft p-5 dark:bg-white/5" data-question="@question.Key"@(only is null ? Html.Raw("") : Html.Raw($" data-only-if=\"{only}\" hidden"))>
+                <fieldset>
+                    <legend class="mb-3 flex gap-3 font-bold text-deep-900 dark:text-white"><span class="grid h-7 w-7 shrink-0 place-items-center q-num rounded-full bg-brand-600 text-sm text-white" aria-hidden="true"></span><span>@D($"{p}.{question.Key}")</span></legend>
+                    <div class="@(rows ? "grid gap-2" : "flex flex-wrap gap-2")">
+                        @foreach (var option in question.Options)
+                        {
+                            <label class="opt @(rows ? "opt-row" : "")"><input type="radio" name="@question.Key" value="@option.Score" data-option="@option.Key"><span>@Opt(question.Key, option.Key)</span></label>
+                        }
+                    </div>
+                </fieldset>
+            </li>
+        }
+        @if (q.WeightQuestion)
+        {
+            <li class="rounded-2xl bg-soft p-5 dark:bg-white/5" data-question="weight">
+                <fieldset>
+                    <legend class="mb-3 flex gap-3 font-bold text-deep-900 dark:text-white"><span class="grid h-7 w-7 shrink-0 place-items-center q-num rounded-full bg-brand-600 text-sm text-white" aria-hidden="true"></span><span>@D(p + ".weight")</span></legend>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        @await Html.PartialAsync("tools/_Field", new ToolField(id + "-h", "height", D("Height"), D("Cm"), 120, 230, 0.1, "170"))
+                        @await Html.PartialAsync("tools/_Field", new ToolField(id + "-w", "weight", D("Weight"), D("Kg"), 30, 300, 0.1, "70"))
+                    </div>
+                </fieldset>
+            </li>
+        }
+    </ol>
+    @await Html.PartialAsync("tools/_Actions", D("ShowResult"))
+    <div class="tool-result" data-tool-result aria-live="polite" hidden>
+        <div data-out>
+            <span class="text-sm text-slate-600 dark:text-slate-400">@D("YourScore")</span>
+            <b class="tool-value" data-v="score"></b>
+            <span class="tool-badge" data-v="band"></span>
+            <p class="mt-4 text-slate-700 dark:text-slate-300" data-v="text"></p>
+            <p class="mt-4 text-xs text-slate-600 dark:text-slate-400">@D(p + ".Source")</p>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,19 @@
+@* Number input for a health tool. Values are checked in the browser against min/max (data-min/data-max). *@
+@using System.Globalization
+@using EHC.Web.Site
+@model ToolField
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+<div class="grid gap-2">
+    <label for="@Model.Id" class="text-sm font-semibold text-deep-900 dark:text-white">@Model.Label</label>
+    <div class="relative" dir="ltr">
+        <input id="@Model.Id" name="@Model.Name" type="number" inputmode="decimal" dir="ltr" required
+               min="@Model.Min.ToString(inv)" max="@Model.Max.ToString(inv)" step="@Model.Step.ToString(inv)" placeholder="@Model.Placeholder"
+               class="field @(Model.Unit is null ? "" : "pe-16")" aria-describedby="@(Model.Unit is null ? null : Model.Id + "-u")">
+        @if (Model.Unit is not null)
+        {
+            <span id="@(Model.Id)-u" class="pointer-events-none absolute inset-y-0 end-4 grid place-items-center text-sm text-slate-500 dark:text-slate-400">@Model.Unit</span>
+        }
+    </div>
+</div>

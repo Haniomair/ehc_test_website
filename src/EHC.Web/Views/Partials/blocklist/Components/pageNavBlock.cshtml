@@ -1,0 +1,20 @@
+@* Page contents bar: an "On this page" menu built in the browser from the section headings (h2) that follow it; it sticks
+   under the header while scrolling and highlights the section in view (components/page-nav.js). Sections get ids from
+   their anchor setting, or one is generated. Renders nothing without JS or with fewer than two headings. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    if (string.IsNullOrWhiteSpace(title)) { title = Umbraco.GetDictionaryValue("EHC.PageNav.Title"); }
+    var sticky = !c.Value<bool>("notSticky");
+}
+<nav class="page-nav" aria-label="@title" data-page-nav @(sticky ? "data-sticky" : "") hidden>
+    <div class="border-y border-slate-200 bg-white/90 backdrop-blur dark:border-white/10 dark:bg-night-950/90">
+        <div class="wrap flex items-center gap-4">
+            <span class="hidden shrink-0 text-sm font-bold text-deep-900 md:block dark:text-white">@title</span>
+            <ul class="flex gap-1 overflow-x-auto py-2.5 [scrollbar-width:none]" data-page-nav-list></ul>
+        </div>
+    </div>
+</nav>
+<script src="~/assets/js/components/page-nav.js" asp-append-version="true" defer></script>

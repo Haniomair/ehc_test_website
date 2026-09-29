@@ -27,7 +27,7 @@
         if (!lv) return;
         any = true;
         q('[data-er-min]', card).textContent = d.minutes;
-        badge.className = 'whitespace-nowrap rounded-full px-2 py-0.5 text-[.7rem] font-bold ' + lv.badge;
+        badge.className = 'whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold ' + lv.badge;
         badge.textContent = labels[d.level] || d.level;
         var bar = q('[data-er-bar]', card);
         bar.className = 'block h-full rounded-full transition-all duration-700 ' + lv.bar;

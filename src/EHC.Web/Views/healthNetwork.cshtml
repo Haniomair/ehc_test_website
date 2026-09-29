@@ -1,0 +1,63 @@
+﻿@* Health network: header, counts (hospitals, primary care centres, emergency departments — counted from the facility
+   pages below), map of the network, hospitals as cards, primary care centres as a compact list by city; then the
+   page's own sections. *@
+@using System.Text.Json
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var facilities = Model.DescendantsOfType("facility").Where(f => f.IsVisible()).OrderBy(f => f.Name).ToList();
+    var hospitals = facilities.Where(f => f.Value<string>("facilityType") != "primaryCare").ToList();
+    var centers = facilities.Where(f => f.Value<string>("facilityType") == "primaryCare").ToList();
+    var er = facilities.Count(f => f.Value<bool>("hasEmergency"));
+    string FacilityMeta(IPublishedContent f) => string.Join(" · ", new[] { Umbraco.GetDictionaryValue("EHC.Facility.Type." + (f.Value<string>("facilityType") is { Length: > 0 } t ? t : "hospital")), f.Value<string>("city") }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    var points = JsonSerializer.Serialize(facilities
+        .Where(f => f.Value<decimal?>("latitude") is { } la && la != 0 && f.Value<decimal?>("longitude") is { } lo && lo != 0)
+        .Select(f => new { id = f.Key, name = f.Name, type = f.Value<string>("facilityType") ?? "", meta = FacilityMeta(f), lat = f.Value<decimal?>("latitude"), lng = f.Value<decimal?>("longitude"), er = f.Value<bool>("hasEmergency"), url = f.Url() }));
+    var byCity = centers.GroupBy(f => string.IsNullOrWhiteSpace(f.Value<string>("city")) ? "" : f.Value<string>("city")!).OrderBy(g => g.Key == "" ? 1 : 0).ThenBy(g => g.Key).ToList();
+    string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
+    ViewData["eyebrow"] = D("EHC.Network.Eyebrow");
+    (int Value, string Label, string Icon)[] stats = [(hospitals.Count, D("EHC.Network.Hospitals"), "hosp"), (centers.Count, D("EHC.Network.Centers"), "clinic"), (er, D("EHC.Network.Emergency"), "er")];
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@if (facilities.Count > 0)
+{
+    <div class="wrap py-10 lg:py-14">
+        <ul class="mb-8 grid gap-4 sm:grid-cols-3">
+            @foreach (var s in stats.Where(s => s.Value > 0))
+            {
+                <li class="card flex items-center gap-4 p-5">
+                    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-@s.Icon" /></svg></span>
+                    <span class="grid"><b class="text-3xl font-extrabold leading-none text-deep-900 dark:text-white">@s.Value</b><span class="text-sm text-slate-600 dark:text-slate-400">@s.Label</span></span>
+                </li>
+            }
+        </ul>
+        <div class="min-h-[380px] overflow-hidden rounded-[22px] border border-slate-200 dark:border-white/10" data-map data-points="@points" role="region" aria-label="@D("EHC.Facility.Map")"></div>
+
+        @if (hospitals.Count > 0)
+        {
+            <h2 class="mb-5 mt-12 text-2xl font-bold text-deep-900 dark:text-white">@D("EHC.Network.Hospitals")</h2>
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                @foreach (var f in hospitals) { @await Html.PartialAsync("cards/_FacilityCard", f) }
+            </div>
+        }
+        @if (centers.Count > 0)
+        {
+            <h2 class="mb-5 mt-12 text-2xl font-bold text-deep-900 dark:text-white">@D("EHC.Network.Centers") <span class="text-base font-semibold text-slate-500 dark:text-slate-400">(@centers.Count)</span></h2>
+            <div class="grid gap-8">
+                @foreach (var g in byCity)
+                {
+                    <div>
+                        @if (byCity.Count > 1) { <h3 class="mb-3 flex items-center gap-2 font-bold text-deep-900 dark:text-white"><svg class="ico !h-5 !w-5 text-brand-600 dark:text-brand-300" aria-hidden="true"><use href="#i-pin" /></svg>@(g.Key == "" ? D("EHC.Network.OtherTowns") : g.Key)</h3> }
+                        <ul class="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach (var f in g) { <li><a href="@f.Url()" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-deep-900 transition hover:bg-soft hover:text-brand-700 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-brand-300"><svg class="ico !h-4 !w-4 shrink-0 text-brand-600 dark:text-brand-300" aria-hidden="true"><use href="#i-clinic" /></svg>@f.Name</a></li> }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    @await Html.PartialAsync("site/_MapAssets")
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

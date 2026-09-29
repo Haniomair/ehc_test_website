@@ -16,7 +16,7 @@
         }
         @if (!string.IsNullOrWhiteSpace(Model.Intro))
         {
-            <p class="mt-3.5 max-w-[560px] text-[1.05rem] @(Model.OnDark ? "text-on-deep" : "text-slate-600 dark:text-slate-400")">@Model.Intro</p>
+            <p class="lead mt-3.5 max-w-[560px] @(Model.OnDark ? "text-on-deep" : "text-slate-600 dark:text-slate-400")">@Model.Intro</p>
         }
     </div>
 }

@@ -14,7 +14,7 @@ else if (Model.HasImage)
 {
     <picture class="media-bg">
         <source media="(max-width: 767px)" srcset="@Model.ImageMobile">
-        <img src="@Model.ImageDesktop" alt="@Model.Alt" fetchpriority="high">
+        <img src="@Model.ImageDesktop" alt="@Model.Alt" fetchpriority="@(Model.Lazy ? null : "high")" loading="@(Model.Lazy ? "lazy" : null)" decoding="async">
     </picture>
 }
 @if (Model.ShowPattern)

@@ -1,0 +1,49 @@
+@* Embed: a Microsoft Forms survey, a public Power BI report or an EHC Frappe web form. The editor's link is validated
+   and rebuilt on the server (Site/Embed.cs); nothing is loaded from the provider until the visitor chooses to
+   (components/embed.js), with a notice naming the provider and an "open in a new tab" fallback. The frame is sandboxed
+   and titled for screen readers. Invalid or unconfigured links render nothing. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Microsoft.Extensions.Options
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject IOptions<EmbedOptions> EmbedSettings
+@{
+    var c = Model.Content;
+    var provider = c.Value<string>("provider");
+    var src = Embed.Src(provider, c.Value<string>("embedUrl"), EmbedSettings.Value.FrappeHosts);
+    if (src is null) { return; }
+    var title = c.Value<string>("frameTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = Text.Plain(c.Value<string>("heading")); }
+    var size = c.Value<string>("size") ?? "medium";
+    var frameBox = size switch
+    {
+        "wide" => "aspect-video",
+        "small" => "h-[520px]",
+        "large" => "h-[960px] max-h-[90vh]",
+        _ => "h-[720px] max-h-[88vh]",
+    };
+    var providerName = Embed.ProviderName(provider, src);
+    var icon = provider switch { Embed.PowerBi => "target", Embed.MicrosoftForms => "note", _ => "doc" };
+    var newWindow = Umbraco.GetDictionaryValue("EHC.Common.NewWindow");
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <figure class="rv">
+        <div class="relative w-full overflow-hidden rounded-[22px] bg-soft ring-1 ring-slate-200 dark:bg-night-900 dark:ring-white/10 @frameBox" data-embed="@src" data-embed-title="@title">
+            <div class="absolute inset-0 grid place-items-center p-6 text-center" data-embed-placeholder>
+                <div class="grid max-w-[460px] justify-items-center gap-4">
+                    <span class="grid h-16 w-16 place-items-center rounded-2xl bg-white text-brand-600 shadow-soft dark:bg-white/10 dark:text-brand-300" aria-hidden="true"><svg class="ico !h-8 !w-8"><use href="#i-@icon" /></svg></span>
+                    <b class="text-lg text-deep-900 dark:text-white">@title</b>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">@string.Format(Umbraco.GetDictionaryValue("EHC.Embed.Notice") ?? "{0}", providerName)</p>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <button type="button" class="btn btn-primary" data-embed-load hidden>@Umbraco.GetDictionaryValue("EHC.Embed.Load")<span class="sr-only">: @title</span></button>
+                        <a class="btn btn-ghost" href="@src" target="_blank" rel="noopener noreferrer">@Umbraco.GetDictionaryValue("EHC.Embed.Open")<span class="sr-only"> @newWindow</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("caption"))) { <figcaption class="mt-3 text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("caption"))</figcaption> }
+    </figure>
+</div>
+<script src="~/assets/js/components/embed.js" asp-append-version="true" defer></script>

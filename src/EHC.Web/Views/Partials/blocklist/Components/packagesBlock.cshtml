@@ -1,0 +1,51 @@
+@* Packages (health check-ups, programmes): cards with name, price text, period/note, included items, badge and button.
+   One package can be highlighted. Price is free text so "##", "Free" or "Covered" all work. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cols = items.Count switch { 1 => "max-w-[420px] mx-auto", 2 => "md:grid-cols-2 max-w-[900px] mx-auto", 4 => "md:grid-cols-2 xl:grid-cols-4", _ => "md:grid-cols-2 lg:grid-cols-3" };
+}
+<div class="wrap">
+    <div class="rv sec-head sec-head-center">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="grid items-stretch gap-6 @cols">
+        @foreach (var p in items)
+        {
+            var hot = p.Value<bool>("highlight");
+            var features = p.Value<IEnumerable<string>>("features")?.Where(f => !string.IsNullOrWhiteSpace(f)).ToList() ?? [];
+            var link = p.Value<Link>("link");
+            var badge = p.Value<string>("badge");
+            <li class="rv">
+                <article class="relative flex h-full flex-col gap-5 rounded-[26px] p-7 transition hover:-translate-y-1 @(hot ? "bg-deep-900 text-white shadow-soft ring-2 ring-brand-500 dark:bg-deep-950" : "card")">
+                    @if (!string.IsNullOrWhiteSpace(badge)) { <span class="absolute -top-3 start-7 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">@badge</span> }
+                    <div class="flex items-center gap-3">
+                        @if (!string.IsNullOrWhiteSpace(p.Value<string>("icon"))) { <span class="grid h-12 w-12 place-items-center rounded-2xl @(hot ? "bg-white/10 text-brand-300" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true"><svg class="ico"><use href="#i-@(p.Value<string>("icon"))" /></svg></span> }
+                        <h3 class="text-xl font-bold @(hot ? "" : "text-deep-900 dark:text-white")">@(p.Value<string>("title"))</h3>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(p.Value<string>("price")))
+                    {
+                        <p class="flex flex-wrap items-baseline gap-x-2 border-b pb-5 @(hot ? "border-white/10" : "border-slate-100 dark:border-white/10")">
+                            <b class="text-4xl font-extrabold @(hot ? "text-brand-300" : "text-brand-700 dark:text-brand-300")">@(p.Value<string>("price"))</b>
+                            @if (!string.IsNullOrWhiteSpace(p.Value<string>("period"))) { <span class="text-sm @(hot ? "text-on-deep" : "text-slate-600 dark:text-slate-400")">@(p.Value<string>("period"))</span> }
+                        </p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(p.Value<string>("text"))) { <p class="@(hot ? "text-on-deep" : "text-slate-600 dark:text-slate-400")">@(p.Value<string>("text"))</p> }
+                    @if (features.Count > 0)
+                    {
+                        <ul class="grid gap-2.5 text-[.95rem]">
+                            @foreach (var f in features)
+                            {
+                                <li class="flex gap-2.5"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full @(hot ? "bg-brand-500 text-white" : "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300")" aria-hidden="true"><svg class="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5" /></svg></span>@f</li>
+                            }
+                        </ul>
+                    }
+                    @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn mt-auto w-full justify-center @(hot ? "btn-sand" : "btn-primary")">@link.Name</a> }
+                </article>
+            </li>
+        }
+    </ul>
+</div>

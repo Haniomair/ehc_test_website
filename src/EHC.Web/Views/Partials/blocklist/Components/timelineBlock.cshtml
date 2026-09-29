@@ -1,0 +1,70 @@
+@* Timeline / history: milestones (when, title, text, optional image).
+   Style "line": alternating around a centre line on wide screens, a single line on phones.
+   Style "cards": tall photo cards with a large year; the text slides up on hover or keyboard focus (always visible on
+   touch screens and under reduced motion); cards swipe sideways on phones. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("title"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cards = c.Value<string>("style") == "cards";
+    var lg = items.Count switch { 1 => "lg:grid-cols-1", 2 => "lg:grid-cols-2", 3 => "lg:grid-cols-3", _ => "lg:grid-cols-4" };
+    // more than four milestone cards: a carousel on every screen size (previous / next + page dots)
+    var rail = cards && items.Count > 4;
+    var railId = "tl-" + Model.ContentKey.ToString("N")[..8];
+}
+<div class="wrap">
+    <div class="rv sec-head sec-head-center">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    @if (cards)
+    {
+        @if (rail)
+        {
+            <div class="-mt-6 mb-6 flex justify-end gap-2">
+                <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-slate-200 hover:bg-soft dark:border-white/10 dark:hover:bg-white/5" data-rail-prev="@railId" aria-controls="@railId" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Previous")"><svg class="ico flip rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+                <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-slate-200 hover:bg-soft dark:border-white/10 dark:hover:bg-white/5" data-rail-next="@railId" aria-controls="@railId" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Next")"><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+            </div>
+        }
+        <ol id="@railId" class="@(rail ? "-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-4 [scrollbar-width:none] lg:mx-0 lg:px-0" : $"-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 lg:mx-0 lg:grid lg:overflow-visible lg:px-0 {lg}")" @(rail ? "tabindex=0" : "") aria-label="@(rail ? Text.Plain(c.Value<string>("heading")) : null)">
+            @foreach (var it in items)
+            {
+                var image = it.Value<MediaWithCrops>("image");
+                <li class="rv w-[78%] shrink-0 snap-start sm:w-[45%] @(rail ? "lg:w-[calc(25%-15px)]" : "lg:w-auto")">
+                    <article class="milestone group relative flex aspect-[3/5] max-h-[560px] w-full flex-col justify-end overflow-hidden rounded-[22px] bg-deep-900 text-white" tabindex="0" aria-label="@(it.Value<string>("when")) — @(it.Value<string>("title"))">
+                        @if (image is not null) { <img src="@image.GetCropUrl(600, 1000, furtherOptions: "format=webp&quality=80")" alt="" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy"> }
+                        <span class="absolute inset-0 bg-linear-to-t from-deep-950/95 via-deep-900/55 to-brand-700/25" aria-hidden="true"></span>
+                        <div class="relative p-7 text-center">
+                            <b class="block text-4xl font-extrabold tracking-tight">@(it.Value<string>("when"))</b>
+                            <div class="milestone-text">
+                                <h3 class="mt-3 text-lg font-bold">@(it.Value<string>("title"))</h3>
+                                @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <p class="mt-2 text-sm leading-relaxed text-white/85">@(it.Value<string>("text"))</p> }
+                            </div>
+                        </div>
+                    </article>
+                </li>
+            }
+        </ol>
+        @if (rail) { <div class="mt-6 flex justify-center gap-3.5" data-rail-dots="@railId" data-label="@Umbraco.GetDictionaryValue("EHC.Common.PageOf")" hidden></div> }
+    }
+    else
+    {
+    <ol class="relative mx-auto max-w-[980px] before:absolute before:inset-y-0 before:start-4 before:w-0.5 before:bg-brand-100 md:before:start-1/2 md:before:-ms-px dark:before:bg-white/10">
+        @for (var i = 0; i < items.Count; i++)
+        {
+            var it = items[i];
+            var image = it.Value<MediaWithCrops>("image");
+            var end = i % 2 == 1;
+            <li class="rv relative mb-10 ps-12 last:mb-0 md:w-1/2 md:ps-0 @(end ? "md:ms-auto md:ps-12" : "md:pe-12 md:text-end")">
+                <span class="absolute start-2 top-1.5 h-5 w-5 rounded-full border-4 border-white bg-brand-600 shadow-soft md:start-auto dark:border-night-950 @(end ? "md:-start-2.5" : "md:-end-2.5")" aria-hidden="true"></span>
+                <span class="inline-block rounded-full bg-brand-50 px-3 py-1 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">@(it.Value<string>("when"))</span>
+                <h3 class="mt-3 text-xl font-bold text-deep-900 dark:text-white">@(it.Value<string>("title"))</h3>
+                @if (!string.IsNullOrWhiteSpace(it.Value<string>("text"))) { <p class="mt-2 text-slate-600 dark:text-slate-400">@(it.Value<string>("text"))</p> }
+                @if (image is not null) { <img src="@image.GetCropUrl(640, 400, furtherOptions: "format=webp&quality=80")" alt="" class="mt-4 aspect-[16/10] w-full rounded-2xl object-cover" loading="lazy"> }
+            </li>
+        }
+    </ol>
+}
+</div>
+@if (rail) { <script src="~/assets/js/components/rail.js" asp-append-version="true" defer></script> }

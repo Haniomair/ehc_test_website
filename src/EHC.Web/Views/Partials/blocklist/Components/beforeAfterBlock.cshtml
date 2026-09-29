@@ -1,0 +1,38 @@
+@* Before / after comparison: two images of the same size with a draggable divider (a native range input, so it works
+   with keyboard and screen readers — components/before-after.js). Without JS both images show side by side. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var before = c.Value<MediaWithCrops>("beforeImage");
+    var after = c.Value<MediaWithCrops>("afterImage");
+    if (before is null || after is null) { return; }
+    var beforeLabel = c.Value<string>("beforeLabel");
+    if (string.IsNullOrWhiteSpace(beforeLabel)) { beforeLabel = Umbraco.GetDictionaryValue("EHC.Compare.Before"); }
+    var afterLabel = c.Value<string>("afterLabel");
+    if (string.IsNullOrWhiteSpace(afterLabel)) { afterLabel = Umbraco.GetDictionaryValue("EHC.Compare.After"); }
+    const string opts = "format=webp&quality=80";
+    var b = before.GetCropUrl(1400, 800, furtherOptions: opts);
+    var a = after.GetCropUrl(1400, 800, furtherOptions: opts);
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <figure class="rv mx-auto max-w-[1000px]">
+        <div class="compare grid gap-4 sm:grid-cols-2" data-compare>
+            <div class="compare-pane relative overflow-hidden rounded-[22px]">
+                <img src="@b" alt="@(c.Value<string>("beforeAlt"))" class="aspect-[7/4] w-full object-cover" loading="lazy" decoding="async">
+                <span class="compare-tag start-3">@beforeLabel</span>
+            </div>
+            <div class="compare-pane compare-after relative overflow-hidden rounded-[22px]">
+                <img src="@a" alt="@(c.Value<string>("afterAlt"))" class="aspect-[7/4] w-full object-cover" loading="lazy" decoding="async">
+                <span class="compare-tag end-3">@afterLabel</span>
+            </div>
+            <span class="compare-handle" aria-hidden="true"><span><svg class="ico !h-4 !w-4 rotate-180"><use href="#i-arrow" /></svg><svg class="ico !h-4 !w-4"><use href="#i-arrow" /></svg></span></span>
+            <input type="range" min="0" max="100" value="50" class="compare-range" aria-label="@Umbraco.GetDictionaryValue("EHC.Compare.Slider")" hidden>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("caption"))) { <figcaption class="mt-3 text-center text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("caption"))</figcaption> }
+    </figure>
+</div>
+<script src="~/assets/js/components/before-after.js" asp-append-version="true" defer></script>

@@ -11,6 +11,8 @@ namespace EHC.Web.Api;
 public static class ApiSetup
 {
     public const string Policy = "ehc-api";
+    public const string FeedbackPolicy = "ehc-feedback";
+    public const int ReadPermitsPerMinute = 600;
 
     public static void Add(IUmbracoBuilder builder)
     {
@@ -20,9 +22,15 @@ public static class ApiSetup
         services.AddRateLimiter(o =>
         {
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            // read-only, output-cached endpoints: counted per IP, and hospitals / offices share one public IP,
+            // so the limit only stops scripted floods, not a busy network of real visitors
             o.AddPolicy(Policy, http => RateLimitPartition.GetFixedWindowLimiter(
                 http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = ReadPermitsPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            // page feedback: a person answers a handful of pages; anything more is automated
+            o.AddPolicy(FeedbackPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
         });
 
         services.Configure<ErWaitOptions>(builder.Config.GetSection("Ehc:ErWait"));

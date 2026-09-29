@@ -8,7 +8,7 @@
     if (string.IsNullOrWhiteSpace(name)) { name = d.Name; }
     var photo = d.Value<MediaWithCrops>("photo");
     var specialty = d.Value<IPublishedContent>("specialty");
-    var initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Replace("د.", "").Replace("Dr", "").Trim().FirstOrDefault().ToString();
+    var initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Replace("د.", "").Replace("Dr", "").TrimStart('.', ' ').FirstOrDefault().ToString();
 }
 <a href="@d.Url()" class="card group flex h-full flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-soft">
     <div class="relative aspect-[4/3.6] overflow-hidden bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">

@@ -1,4 +1,4 @@
-/* Load synchronously in <head> (no defer) so dark mode, text size and contrast apply before first paint.
+/* Load synchronously in <head> (no defer) so dark mode, text size, contrast and the accessibility options apply before first paint.
    A choice made with the header/utility buttons is remembered (site.js); otherwise dark mode follows the OS. */
 (function () {
   var html = document.documentElement;
@@ -10,6 +10,9 @@
     var fs = parseInt(localStorage.getItem('ehc-fs') || '', 10);
     if (fs >= 14 && fs <= 20 && fs !== 16) html.style.setProperty('--fs', fs + 'px');
     if (localStorage.getItem('ehc-contrast') === '1') html.classList.add('contrast');
+    (localStorage.getItem('ehc-a11y') || '').split(',').forEach(function (k) {
+      if (/^(links|spacing|still|cursor|guide)$/.test(k)) html.classList.add('a11y-' + k);
+    });
   } catch (e) {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) html.classList.add('dark');
   }

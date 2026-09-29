@@ -20,7 +20,7 @@
     var disclaimer = c.Value<string>("disclaimer");
 }
 <div class="wrap" data-tabs>
-    <div class="rv mb-10">
+    <div class="rv sec-head">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), Id: id + "-h"))
     </div>
     @if (stages.Count > 1)
@@ -29,7 +29,7 @@
             @for (var i = 0; i < stages.Count; i++)
             {
                 var icon = stages[i].Value<string>("icon");
-                <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-500 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white">
+                <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")" class="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 font-semibold text-slate-600 transition aria-selected:bg-white aria-selected:text-deep-900 aria-selected:shadow-soft dark:text-slate-400 dark:aria-selected:bg-brand-500 dark:aria-selected:text-white">
                     @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg> }
                     <span>@(stages[i].Value<string>("label"))</span>
                 </button>

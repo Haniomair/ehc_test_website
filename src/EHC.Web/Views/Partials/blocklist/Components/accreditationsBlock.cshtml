@@ -1,4 +1,5 @@
-@* Block 17 "Accreditations": a strip of accreditation logos (or names when no logo). Logos need alt text = the name. *@
+@* Block 17 "Accreditations": a slider of accreditation logos (grayscale, colour on hover/focus) with page dots
+   (scroll-snap rail — components/rail.js). Items without a logo show their name as a wordmark. Logos use the name as alt text. *@
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @using Umbraco.Cms.Core.Models.PublishedContent
@@ -8,22 +9,30 @@
     var items = c.Value<BlockListModel>("items")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? [];
     if (items.Count == 0) { return; }
     var heading = c.Value<string>("heading");
+    var id = "acc-" + Model.ContentKey.ToString("N")[..8];
+    const string cell = "group flex h-32 items-center justify-center px-4 [&_img]:opacity-70 [&_img]:grayscale [&_img]:transition hover:[&_img]:opacity-100 hover:[&_img]:grayscale-0 focus-visible:[&_img]:opacity-100 focus-visible:[&_img]:grayscale-0 dark:[&_img]:opacity-85";
+}
+@{
+    void Mark(string? name, IPublishedContent? logo)
+    {
+        if (logo is not null) { <img src="@logo.Url()" alt="@name" class="max-h-24 w-auto max-w-full object-contain" loading="lazy"> }
+        else { <span class="text-3xl font-black tracking-[.04em] text-slate-500 dark:text-slate-300">@name</span> }
+    }
 }
 <div class="wrap">
-    <div class="flex flex-wrap items-center justify-center gap-7 border-y border-slate-200 py-10 text-base font-bold tracking-[.06em] text-slate-500 dark:border-white/10 dark:text-slate-400">
-        @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="text-base tracking-normal text-deep-900 dark:text-white">@heading</h2> }
-        <ul class="contents">
-            @foreach (var it in items)
-            {
-                var name = it.Value<string>("title");
-                var logo = it.Value<IPublishedContent>("logo");
-                var link = it.Value<Link>("link");
-                <li>
-                    @if (link is not null) { <a href="@link.Url" target="@link.Target" class="hover:text-deep-900 dark:hover:text-white">@if (logo is not null) {<img src="@logo.Url()" alt="@name" class="h-10 w-auto" loading="lazy">} else {<span>@name</span>}</a> }
-                    else if (logo is not null) { <img src="@logo.Url()" alt="@name" class="h-10 w-auto" loading="lazy"> }
-                    else { <span>@name</span> }
-                </li>
-            }
-        </ul>
-    </div>
+    @if (!string.IsNullOrWhiteSpace(heading)) { <h2 class="rv mb-4 text-center text-sm font-bold uppercase tracking-[.14em] text-slate-500 dark:text-slate-400">@heading</h2> }
+    <ul id="@id" class="rail rv flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&>li]:w-1/2 [&>li]:shrink-0 [&>li]:snap-start [&>li:first-child]:ms-auto [&>li:last-child]:me-auto sm:[&>li]:w-1/3 md:[&>li]:w-1/4 lg:[&>li]:w-1/6" tabindex="0" aria-label="@heading">
+        @foreach (var it in items)
+        {
+            var name = it.Value<string>("title");
+            var logo = it.Value<IPublishedContent>("logo");
+            var link = it.Value<Link>("link");
+            <li>
+                @if (link is not null) { <a href="@link.Url" target="@link.Target" class="@cell">@{ Mark(name, logo); }</a> }
+                else { <div class="@cell">@{ Mark(name, logo); }</div> }
+            </li>
+        }
+    </ul>
+    <div class="mt-4 flex justify-center gap-3.5" data-rail-dots="@id" data-label="@Umbraco.GetDictionaryValue("EHC.Common.PageOf")" hidden></div>
 </div>
+<script src="~/assets/js/components/rail.js" asp-append-version="true" defer></script>

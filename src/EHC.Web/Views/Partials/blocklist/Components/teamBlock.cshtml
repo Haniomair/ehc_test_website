@@ -1,0 +1,76 @@
+@* Team / leadership: people entered by hand (name, role, photo, short bio, profile link) in 2–4 columns, or a carousel
+   with previous/next and page dots (components/rail.js). For doctors use the Doctors section instead (it reads the
+   doctor directory). Style: cards · circles. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => !string.IsNullOrWhiteSpace(i.Value<string>("personName"))).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cols = c.Value<string>("columns") switch { "2" => "sm:grid-cols-2", "4" => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    var circles = c.Value<string>("style") == "circles";
+    var carousel = c.Value<string>("layout") == "carousel" && items.Count > 1;
+    var id = "tm-" + Model.ContentKey.ToString("N")[..8];
+    var width = c.Value<string>("columns") switch { "2" => "sm:[&>li]:w-[calc(50%-12px)]", "4" => "sm:[&>li]:w-[calc(50%-12px)] lg:[&>li]:w-[calc(25%-18px)]", _ => "sm:[&>li]:w-[calc(50%-12px)] lg:[&>li]:w-[calc(33.333%-16px)]" };
+}
+@{
+    void Person(IPublishedElement p)
+    {
+        var name = p.Value<string>("personName")!;
+        var photo = p.Value<MediaWithCrops>("image");
+        var initial = name.Replace("د.", "").Replace("Dr.", "").Trim().FirstOrDefault().ToString();
+        if (circles)
+        {
+            <div class="mx-auto grid h-40 w-40 place-items-center overflow-hidden rounded-full bg-linear-to-br from-brand-100 to-brand-50 ring-4 ring-white shadow-soft dark:from-deep-800 dark:to-deep-900 dark:ring-night-900">
+                @if (photo is not null) { <img src="@photo.GetCropUrl(320, 320, furtherOptions: "format=webp&quality=80")" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy"> }
+                else { <span class="text-5xl font-bold text-brand-300 dark:text-brand-400/40" aria-hidden="true">@initial</span> }
+            </div>
+        }
+        else
+        {
+            <div class="relative aspect-[4/4.4] overflow-hidden bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">
+                @if (photo is not null) { <img src="@photo.GetCropUrl(600, 660, furtherOptions: "format=webp&quality=80")" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy"> }
+                else { <span class="absolute inset-0 grid place-items-center text-6xl font-bold text-brand-300 dark:text-brand-400/40" aria-hidden="true">@initial</span> }
+            </div>
+        }
+        <div class="flex flex-1 flex-col gap-1 @(circles ? "pt-5 text-center" : "p-5")">
+            <b class="text-lg leading-snug text-deep-900 dark:text-white">@name</b>
+            @if (!string.IsNullOrWhiteSpace(p.Value<string>("role"))) { <span class="text-sm font-semibold text-brand-700 dark:text-brand-300">@(p.Value<string>("role"))</span> }
+            @if (!string.IsNullOrWhiteSpace(p.Value<string>("bio"))) { <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">@(p.Value<string>("bio"))</p> }
+        </div>
+    }
+}
+<div class="wrap">
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        @if (carousel)
+        {
+            <div class="flex gap-2">
+                <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-slate-200 hover:bg-soft dark:border-white/10 dark:hover:bg-white/5" data-rail-prev="@id" aria-controls="@id" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Previous")"><svg class="ico flip rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+                <button type="button" class="grid h-12 w-12 place-items-center rounded-full border border-slate-200 hover:bg-soft dark:border-white/10 dark:hover:bg-white/5" data-rail-next="@id" aria-controls="@id" aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Next")"><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+            </div>
+        }
+    </div>
+    <ul id="@id" class="@(carousel ? $"flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&>li]:w-[80%] [&>li]:shrink-0 [&>li]:snap-start {width}" : $"grid gap-6 {cols}")" @(carousel ? "tabindex=0" : "") aria-label="@(carousel ? Text.Plain(c.Value<string>("heading")) : null)">
+        @foreach (var p in items)
+        {
+            var link = p.Value<Link>("link");
+            var box = circles ? "group flex h-full flex-col" : "card group flex h-full flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-soft";
+            <li class="rv">
+                @if (link is not null)
+                {
+                    <a href="@link.Url" target="@link.Target" class="@box">@{ Person(p); }</a>
+                }
+                else
+                {
+                    <div class="@box">@{ Person(p); }</div>
+                }
+            </li>
+        }
+    </ul>
+    @if (carousel) { <div class="mt-6 flex justify-center gap-3.5" data-rail-dots="@id" data-label="@Umbraco.GetDictionaryValue("EHC.Common.PageOf")" hidden></div> }
+</div>
+@if (carousel) { <script src="~/assets/js/components/rail.js" asp-append-version="true" defer></script> }

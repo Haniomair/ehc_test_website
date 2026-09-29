@@ -1,0 +1,29 @@
+@* Pregnancy due date (Naegele's rule): first day of the last period + 280 days, adjusted for cycles other than
+   28 days. Also shows how far along the pregnancy is today and the trimester. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var id = (string)ViewData["toolId"]!;
+}
+<form class="tool-grid" novalidate data-calc="dueDate" data-fmt-age="@D("Due.AgeFormat")" data-trimesters="@System.Text.Json.JsonSerializer.Serialize(new[] { D("Due.T1"), D("Due.T2"), D("Due.T3") })">
+    <div class="grid content-start gap-5">
+        <p class="text-sm text-slate-600 dark:text-slate-400">@D("Due.Intro")</p>
+        @await Html.PartialAsync("tools/_Lmp", id)
+        @await Html.PartialAsync("tools/_Actions", D("Calculate"))
+    </div>
+    <div class="tool-result" data-tool-result aria-live="polite">
+        <p data-empty class="text-slate-600 dark:text-slate-400">@D("Empty")</p>
+        <div data-out hidden>
+            <span class="text-sm text-slate-600 dark:text-slate-400">@D("Due.Date")</span>
+            <b class="block text-[clamp(1.6rem,4vw,2.2rem)] font-extrabold leading-tight text-deep-900 dark:text-white" data-v="due"></b>
+            <span class="text-sm text-slate-600 dark:text-slate-400" data-v="dueHijri"></span>
+            <div class="mt-6">
+                <div class="mb-2 flex flex-wrap justify-between gap-2 text-sm"><span class="font-semibold text-deep-900 dark:text-white" data-v="age"></span><span class="tool-badge !mt-0" data-v="trimester" data-tone="info"></span></div>
+                <div class="h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10" role="progressbar" aria-valuemin="0" aria-valuemax="40" aria-label="@D("Due.Age")" data-v="progress"><i class="block h-full rounded-full bg-brand-500 transition-all duration-500" data-v="bar"></i></div>
+                <div class="mt-1.5 flex justify-between text-xs text-slate-600 dark:text-slate-400" aria-hidden="true"><span>0</span><span>13</span><span>27</span><span>40</span></div>
+            </div>
+            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">@D("Due.Note")</p>
+        </div>
+    </div>
+</form>

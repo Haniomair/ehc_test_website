@@ -1,0 +1,82 @@
+@* Visitor guide: visiting hours (days + times, free text for Ramadan / wards), visitor guidelines, what to bring and a
+   note, optionally for one facility (its name, phone and directions). Each card appears only when it has content. *@
+@using System.Globalization
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var hours = c.Value<BlockListModel>("hours")?.Select(h => h.Content).Where(h => !string.IsNullOrWhiteSpace(h.Value<string>("days"))).ToList() ?? [];
+    var rules = c.Value<IEnumerable<string>>("rules")?.Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ?? [];
+    var bring = c.Value<IEnumerable<string>>("bring")?.Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ?? [];
+    var note = c.Value<string>("note");
+    if (hours.Count == 0 && rules.Count == 0 && bring.Count == 0 && string.IsNullOrWhiteSpace(note)) { return; }
+    var facility = c.Value<IPublishedContent>("facility");
+    var link = c.Value<Link>("link");
+    var phone = facility?.Value<string>("phone");
+    var dial = new string((phone ?? "").Where(ch => char.IsDigit(ch) || ch == '+').ToArray());
+    var lat = facility?.Value<decimal?>("latitude");
+    var lng = facility?.Value<decimal?>("longitude");
+    var inv = CultureInfo.InvariantCulture;
+    var heading = c.Value<string>("heading");
+    if (string.IsNullOrWhiteSpace(heading)) { heading = Umbraco.GetDictionaryValue("EHC.Visit.Title"); }
+    var cards = (hours.Count > 0 ? 1 : 0) + (rules.Count > 0 ? 1 : 0) + (bring.Count > 0 ? 1 : 0);
+    var cols = cards switch { 3 => "lg:grid-cols-3", 2 => "md:grid-cols-2", _ => "" };
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Visit." + k) ?? "";
+}
+<div class="wrap">
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), heading, c.Value<string>("intro")))
+        @if (facility is not null)
+        {
+            <div class="flex flex-wrap gap-3">
+                <a href="@facility.Url()" class="btn btn-ghost btn-sm"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-hosp" /></svg><span>@facility.Name</span></a>
+                @if (dial.Length > 2) { <a href="tel:@dial" class="btn btn-ghost btn-sm"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-phone" /></svg><span dir="ltr">@phone</span></a> }
+                @if (lat is not null && lng is not null && lat != 0 && lng != 0) { <a href="https://www.openstreetmap.org/directions?to=@(lat.Value.ToString(inv))%2C@(lng.Value.ToString(inv))" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-compass" /></svg><span>@Umbraco.GetDictionaryValue("EHC.Facility.Directions")</span></a> }
+            </div>
+        }
+    </div>
+    @if (cards > 0)
+    {
+        <div class="grid gap-5 @cols">
+            @if (hours.Count > 0)
+            {
+                <div class="rv card p-6 sm:p-7">
+                    <h3 class="mb-4 flex items-center gap-3 text-lg font-bold text-deep-900 dark:text-white"><span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-clock" /></svg></span>@D("Hours")</h3>
+                    <table class="w-full text-sm">
+                        <tbody>
+                            @foreach (var h in hours) { <tr class="border-t border-slate-100 first:border-0 dark:border-white/10"><th scope="row" class="py-2.5 text-start font-medium text-deep-900 dark:text-white">@(h.Value<string>("days"))</th><td class="py-2.5 text-end text-slate-700 dark:text-slate-300">@(h.Value<string>("hours"))</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @if (rules.Count > 0)
+            {
+                <div class="rv card p-6 sm:p-7">
+                    <h3 class="mb-4 flex items-center gap-3 text-lg font-bold text-deep-900 dark:text-white"><span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-shield" /></svg></span>@D("Rules")</h3>
+                    <ul class="grid gap-2.5 text-sm text-slate-700 dark:text-slate-300">
+                        @foreach (var r in rules) { <li class="flex gap-2.5"><svg class="ico mt-0.5 !h-4 !w-4 text-brand-600 dark:text-brand-300" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg><span>@r</span></li> }
+                    </ul>
+                </div>
+            }
+            @if (bring.Count > 0)
+            {
+                <div class="rv card p-6 sm:p-7">
+                    <h3 class="mb-4 flex items-center gap-3 text-lg font-bold text-deep-900 dark:text-white"><span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-note" /></svg></span>@D("Bring")</h3>
+                    <ul class="grid gap-2.5 text-sm text-slate-700 dark:text-slate-300">
+                        @foreach (var r in bring) { <li class="flex gap-2.5"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden="true"></span><span>@r</span></li> }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(note) || link is not null)
+    {
+        <div class="rv mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[22px] bg-soft p-5 sm:p-6 dark:bg-white/5">
+            @if (!string.IsNullOrWhiteSpace(note)) { <p class="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300"><svg class="ico mt-0.5 shrink-0 text-brand-600 dark:text-brand-300" aria-hidden="true"><use href="#i-bulb" /></svg><span>@note</span></p> }
+            @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn btn-primary btn-sm">@link.Name</a> }
+        </div>
+    }
+</div>

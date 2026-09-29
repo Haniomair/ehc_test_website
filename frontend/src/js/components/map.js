@@ -1,91 +1,223 @@
 /* Facility maps ([data-map]) with Leaflet (served from /assets/vendor/leaflet).
-   Points come from data-points (JSON written by Razor) or data-src (GET /api/facilities…).
-   The list next to the map is the accessible alternative; the map is an enhancement.
-   Tiles: OpenStreetMap for development. Production tile provider is an open decision (docs/06-integrations.md). */
+   Points come from, in order: the facility finder's own list (same section), data-points (JSON written by Razor),
+   or data-src (GET /api/facilities…). The list next to the map is the accessible alternative; the map is an enhancement.
+   Look: theme-tinted tiles (ehc.css), pins with the facility-type icon, clusters when there are many points,
+   card popups with details / directions, and list cards that highlight their pin on hover or focus.
+   Basemap: the self-hosted PMTiles file (data-tiles on the script tag, built by `npm run tiles`) drawn by protomaps-leaflet;
+   no third-party map requests. Without the file the pins show on a plain background. */
 (function () {
   'use strict';
-  var TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  var ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  // OpenStreetMap data is ODbL: the attribution must stay on every map
+  var ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://protomaps.com">Protomaps</a>';
+  var TILES_MAX_ZOOM = 14; // highest zoom stored in the file (npm run tiles); deeper zooms scale that data
   var CENTER = [26.42, 50.09]; // Eastern Province (Dammam) when there are no points
+  var CLUSTER_FROM = 15;       // cluster only maps with many points
+  var ICONS = { hospital: 'hosp', primaryCare: 'clinic', specialist: 'star' };
 
-  function pinIcon(er) {
+  var me = document.currentScript;
+  function attr(n, d) { return (me && me.getAttribute(n)) || d; }
+  var T = {
+    zoomIn: attr('data-label-zoom-in', 'Zoom in'), zoomOut: attr('data-label-zoom-out', 'Zoom out'),
+    showAll: attr('data-label-show-all', 'Show all'), details: attr('data-label-details', 'Details'),
+    directions: attr('data-label-directions', 'Directions')
+  };
+  var rtl = document.documentElement.dir === 'rtl';
+
+  function svgIcon(name, cls) {
+    var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'), use = document.createElementNS(ns, 'use');
+    svg.setAttribute('class', cls || 'ico'); svg.setAttribute('aria-hidden', 'true'); use.setAttribute('href', '#i-' + name); svg.appendChild(use);
+    return svg;
+  }
+  // teardrop pin with the type icon; its tip sits on the coordinate
+  function pinIcon(p) {
     return window.L.divIcon({
-      className: 'ehc-pin',
-      html: '<span class="block h-5 w-5 rounded-full border-[3px] border-white shadow-soft ' + (er ? 'bg-emerg-600' : 'bg-brand-600') + '"></span>',
-      iconSize: [20, 20], iconAnchor: [10, 10]
+      className: 'ehc-pin' + (p.er ? ' is-er' : ''),
+      html: '<span class="ehc-pin-body"><svg class="ico" aria-hidden="true"><use href="#i-' + (ICONS[p.type] || 'hosp') + '"></use></svg></span>',
+      iconSize: [32, 40], iconAnchor: [16, 39], popupAnchor: [0, -36]
     });
+  }
+  function clusterIcon(c) {
+    var kids = c.getAllChildMarkers(), n = kids.length;
+    var er = kids.some(function (m) { return m.options.ehcEr; });
+    var size = n < 10 ? 38 : n < 50 ? 44 : 50;
+    return window.L.divIcon({
+      className: 'ehc-cluster' + (er ? ' has-er' : ''),
+      html: '<span>' + n + '</span>', iconSize: [size, size]
+    });
+  }
+  function popup(p) {
+    var box = document.createElement('div'); box.className = 'ehc-popup';
+    var title = document.createElement(p.url ? 'a' : 'b'); title.className = 'ehc-popup-title'; title.textContent = p.name;
+    if (p.url) title.href = p.url;
+    box.appendChild(title);
+    if (p.meta) { var m = document.createElement('p'); m.className = 'ehc-popup-meta'; m.textContent = p.meta; box.appendChild(m); }
+    var row = document.createElement('div'); row.className = 'ehc-popup-actions';
+    if (p.url) { var d = document.createElement('a'); d.href = p.url; d.className = 'ehc-popup-btn is-primary'; d.textContent = T.details; row.appendChild(d); }
+    var g = document.createElement('a');
+    g.href = 'https://www.openstreetmap.org/directions?to=' + p.lat + '%2C' + p.lng; g.target = '_blank'; g.rel = 'noopener';
+    g.className = 'ehc-popup-btn'; g.appendChild(svgIcon('pin', 'ico !h-4 !w-4')); g.appendChild(document.createTextNode(T.directions));
+    row.appendChild(g); box.appendChild(row);
+    return box;
+  }
+
+  // Sea names are letter-spaced in the basemap style, which protomaps-leaflet can't draw for Arabic (joined letters
+  // break or get cut). On Arabic pages those labels are left out; place names are unaffected.
+  function dropSeaLabels(rules) {
+    for (var i = (rules || []).length - 1; i >= 0; i--) if (rules[i].dataLayer === 'water') rules.splice(i, 1);
   }
 
   function draw(el, points) {
     var L = window.L;
-    var map = L.map(el, { scrollWheelZoom: false, zoomControl: true });
-    L.tileLayer(TILES, { maxZoom: 18, detectRetina: true, attribution: ATTRIBUTION }).addTo(map);
+    var map = L.map(el, { scrollWheelZoom: false, zoomControl: false, maxZoom: 18 });
+    var tiles = attr('data-tiles', '');
+    if (tiles && window.protomapsL) {
+      // one light style; dark mode recolours it in CSS, so switching theme needs no reload
+      var lang = document.documentElement.lang || 'ar';
+      var base = window.protomapsL.leafletLayer({ url: tiles, flavor: 'light', lang: lang, maxDataZoom: TILES_MAX_ZOOM, attribution: ATTRIBUTION });
+      if (lang === 'ar') dropSeaLabels(base.labelRules);
+      base.addTo(map);
+    }
+    L.control.zoom({ position: rtl ? 'topright' : 'topleft', zoomInTitle: T.zoomIn, zoomOutTitle: T.zoomOut }).addTo(map);
+
+    var clustered = points.length >= CLUSTER_FROM && L.markerClusterGroup;
+    var layer = clustered
+      ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 46, spiderfyDistanceMultiplier: 1.6, iconCreateFunction: clusterIcon, chunkedLoading: true })
+      : L.layerGroup();
+    layer.addTo(map);
+
     var bounds = [], markers = [];
-    points.forEach(function (p) {
-      var lat = +p.lat, lng = +p.lng;
-      if (!isFinite(lat) || !isFinite(lng) || (!lat && !lng)) return;
-      var m = L.marker([lat, lng], { icon: pinIcon(!!(p.er || p.hasEmergency)), title: p.name, alt: p.name, keyboard: true }).addTo(map);
-      var a = document.createElement(p.url ? 'a' : 'b');
-      a.textContent = p.name;
-      if (p.url) a.href = p.url;
-      m.bindPopup(a);
-      bounds.push([lat, lng]);
-      markers.push({ marker: m, type: p.type || '', er: !!(p.er || p.hasEmergency), lat: lat, lng: lng, id: p.id });
-      // highlight the matching card in a list on the same page
+    points.forEach(function (raw) {
+      var p = { id: raw.id, name: raw.name, url: raw.url, meta: raw.meta || raw.city || '', type: raw.type || '', er: !!(raw.er || raw.hasEmergency), lat: +raw.lat, lng: +raw.lng };
+      if (!isFinite(p.lat) || !isFinite(p.lng) || (!p.lat && !p.lng)) return;
+      var m = L.marker([p.lat, p.lng], { icon: pinIcon(p), title: p.name, alt: p.name, keyboard: true, riseOnHover: true, ehcEr: p.er });
+      m.bindPopup(popup(p), { closeButton: true, autoPanPadding: [24, 24], maxWidth: 280, minWidth: 220 });
       m.on('click', function () {
         var card = document.querySelector('[data-facility="' + p.id + '"]');
-        if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        if (!card || card.offsetParent === null) return;
+        card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        card.classList.add('is-map-active');
+        setTimeout(function () { card.classList.remove('is-map-active'); }, 1600);
       });
+      bounds.push([p.lat, p.lng]);
+      markers.push({ marker: m, id: p.id, type: p.type, er: p.er });
     });
-    if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 13 });
-    else if (bounds.length === 1) map.setView(bounds[0], parseInt(el.getAttribute('data-zoom') || '13', 10));
-    else map.setView(CENTER, 9);
+    layer.addLayers ? layer.addLayers(markers.map(function (x) { return x.marker; })) : markers.forEach(function (x) { layer.addLayer(x.marker); });
+
+    var single = parseInt(el.getAttribute('data-zoom') || '13', 10);
+    function fitAll() {
+      var vis = markers.filter(function (x) { return layer.hasLayer(x.marker); }).map(function (x) { return x.marker.getLatLng(); });
+      if (vis.length > 1) map.fitBounds(vis, { padding: [40, 40], maxZoom: 13 });
+      else if (vis.length === 1) map.setView(vis[0], single);
+      else if (bounds.length === 1) map.setView(bounds[0], single);
+      else map.setView(CENTER, 9);
+    }
+    fitAll();
+
+    // "show all" control under the zoom buttons (only useful with several points)
+    if (bounds.length > 1) {
+      var ShowAll = L.Control.extend({
+        options: { position: rtl ? 'topright' : 'topleft' },
+        onAdd: function () {
+          var bar = L.DomUtil.create('div', 'leaflet-bar ehc-map-fit');
+          var b = L.DomUtil.create('a', '', bar);
+          b.href = '#'; b.title = T.showAll; b.setAttribute('role', 'button'); b.setAttribute('aria-label', T.showAll);
+          b.appendChild(svgIcon('target', 'ico !h-[18px] !w-[18px]'));
+          L.DomEvent.on(b, 'click', function (e) { L.DomEvent.preventDefault(e); fitAll(); });
+          L.DomEvent.disableClickPropagation(bar);
+          return bar;
+        }
+      });
+      map.addControl(new ShowAll());
+    }
+
+    // highlight a pin (or the cluster holding it) while its list card is hovered / focused
+    var lit = null;
+    function light(id) {
+      if (lit) { L.DomUtil.removeClass(lit, 'is-active'); lit = null; }
+      var x = id && markers.filter(function (k) { return k.id === id; })[0];
+      if (!x || !layer.hasLayer(x.marker)) return;
+      var shown = layer.getVisibleParent ? layer.getVisibleParent(x.marker) : x.marker;
+      var node = shown && shown.getElement && shown.getElement();
+      if (node) { L.DomUtil.addClass(node, 'is-active'); lit = node; }
+    }
+    [].forEach.call(document.querySelectorAll('[data-facility]'), function (card) {
+      var id = card.getAttribute('data-facility');
+      card.addEventListener('mouseenter', function () { light(id); });
+      card.addEventListener('focus', function () { light(id); });
+      card.addEventListener('mouseleave', function () { light(null); });
+      card.addEventListener('blur', function () { light(null); });
+    });
+
     // filter from outside: el.dispatchEvent(new CustomEvent('map:filter', { detail: 'hospital' | 'emergency' | 'all' }))
     el.addEventListener('map:filter', function (e) {
       var f = e.detail || 'all';
-      markers.forEach(function (x) {
-        var on = f === 'all' || (f === 'emergency' ? x.er : x.type === f);
-        if (on && !map.hasLayer(x.marker)) x.marker.addTo(map);
-        if (!on && map.hasLayer(x.marker)) map.removeLayer(x.marker);
-      });
+      var keep = markers.filter(function (x) { return f === 'all' || (f === 'emergency' ? x.er : x.type === f); }).map(function (x) { return x.marker; });
+      layer.clearLayers();
+      if (layer.addLayers) layer.addLayers(keep); else keep.forEach(function (m) { layer.addLayer(m); });
     });
     el.__markers = markers;
     return map;
   }
 
-  function init(el) {
-    if (el.hasAttribute('data-map-ready') || !window.L) return;
-    el.setAttribute('data-map-ready', '');
+  // a facility finder already lists every facility with its coordinates: use those, no request needed
+  function listPoints(el) {
+    var root = el.closest('[data-finder]');
+    if (!root) return [];
+    return [].slice.call(root.querySelectorAll('[data-finder-list] > [data-lat]')).map(function (row) {
+      var card = row.querySelector('[data-facility]'), name = card && card.querySelector('b'), meta = card && card.querySelector('b + span');
+      return {
+        id: card ? card.getAttribute('data-facility') : '', name: name ? name.textContent.trim() : '', url: card ? card.getAttribute('href') : '',
+        meta: meta ? meta.textContent.replace(/\s+/g, ' ').trim() : '',
+        lat: row.getAttribute('data-lat'), lng: row.getAttribute('data-lng'), type: row.getAttribute('data-type') || '', er: row.getAttribute('data-er') === '1'
+      };
+    }).filter(function (p) { return p.name && p.lat && p.lng; });
+  }
+  function points(el) {
+    var listed = listPoints(el);
+    if (listed.length) return Promise.resolve(listed);
     var src = el.getAttribute('data-src');
     if (src) {
-      fetch(src, { headers: { 'Accept': 'application/json' } })
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .then(function (items) { el.__map = draw(el, items || []); el.dispatchEvent(new CustomEvent('map:ready', { detail: items })); })
-        .catch(function () { el.__map = draw(el, []); });
-      return;
+      return fetch(src, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .catch(function () { return []; });
     }
-    var points;
-    try { points = JSON.parse(el.getAttribute('data-points') || '[]'); } catch (e) { points = []; }
-    el.__map = draw(el, points);
+    try { return Promise.resolve(JSON.parse(el.getAttribute('data-points') || '[]')); } catch (e) { return Promise.resolve([]); }
   }
 
-  // Leaflet is only downloaded when a map is about to be seen (keeps it off the critical path)
-  var me = document.currentScript;
-  var jsUrl = (me && me.getAttribute('data-leaflet-js')) || '/assets/vendor/leaflet/leaflet.js';
-  var cssUrl = (me && me.getAttribute('data-leaflet-css')) || '/assets/vendor/leaflet/leaflet.css';
-  var loading = null;
-  function leaflet() {
-    if (window.L) return Promise.resolve();
-    if (loading) return loading;
-    loading = new Promise(function (resolve, reject) {
-      if (!document.querySelector('link[data-leaflet]')) {
-        var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = cssUrl; l.setAttribute('data-leaflet', ''); document.head.appendChild(l);
-      }
-      var s = document.createElement('script'); s.src = jsUrl; s.onload = function () { resolve(); }; s.onerror = reject; document.head.appendChild(s);
-    });
-    return loading;
+  // Leaflet (and the cluster plugin, when a map needs it) is only downloaded when a map is about to be seen
+  var loaded = {};
+  function script(url) {
+    if (loaded[url]) return loaded[url];
+    return (loaded[url] = new Promise(function (resolve, reject) { var s = document.createElement('script'); s.src = url; s.onload = function () { resolve(); }; s.onerror = reject; document.head.appendChild(s); }));
   }
-  function start(el) { leaflet().then(function () { init(el); }).catch(function () { /* list stays usable without the map */ }); }
+  function css(url) {
+    if (document.querySelector('link[href="' + url + '"]')) return;
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = url; document.head.appendChild(l);
+  }
+  function leaflet() {
+    css(attr('data-leaflet-css', '/assets/vendor/leaflet/leaflet.css'));
+    return (window.L ? Promise.resolve() : script(attr('data-leaflet-js', '/assets/vendor/leaflet/leaflet.js'))).then(function () {
+      // the basemap renderer needs Leaflet first; a failure only costs the background, not the pins
+      if (attr('data-tiles', '') && !window.protomapsL) return script(attr('data-protomaps-js', '/assets/vendor/protomaps-leaflet/protomaps-leaflet.js')).catch(function () { });
+    });
+  }
+  function cluster() {
+    if (window.L && window.L.markerClusterGroup) return Promise.resolve();
+    css(attr('data-cluster-css', '/assets/vendor/leaflet.markercluster/MarkerCluster.css'));
+    return script(attr('data-cluster-js', '/assets/vendor/leaflet.markercluster/leaflet.markercluster.js')).catch(function () { /* plain pins */ });
+  }
+
+  function start(el) {
+    if (el.hasAttribute('data-map-ready')) return;
+    el.setAttribute('data-map-ready', '');
+    Promise.all([leaflet(), points(el)]).then(function (r) {
+      var items = r[1] || [];
+      return (items.length >= CLUSTER_FROM ? cluster() : Promise.resolve()).then(function () {
+        el.__map = draw(el, items);
+        el.dispatchEvent(new CustomEvent('map:ready', { detail: items }));
+      });
+    }).catch(function () { /* list stays usable without the map */ });
+  }
   function all() {
     var maps = [].slice.call(document.querySelectorAll('[data-map]:not([data-map-ready])'));
     if (!maps.length) return;

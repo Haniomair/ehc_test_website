@@ -1,2 +1,18 @@
-@* Map component. It loads Leaflet (/assets/vendor/leaflet) itself, only when a [data-map] element comes near the viewport. *@
-<script src="~/assets/js/components/map.js" asp-append-version="true" defer data-leaflet-js="@Url.Content("~/assets/vendor/leaflet/leaflet.js")" data-leaflet-css="@Url.Content("~/assets/vendor/leaflet/leaflet.css")"></script>
+@* Map component. It loads Leaflet (/assets/vendor/leaflet) itself, only when a [data-map] element comes near the viewport,
+   and the cluster plugin only for maps with many points. The basemap is the self-hosted PMTiles file (Site/MapTiles.cs,
+   `npm run tiles`) drawn by protomaps-leaflet; without the file, maps show their pins on a plain background.
+   Control and popup labels come from the dictionary. *@
+@using EHC.Web.Site
+@using Microsoft.AspNetCore.Hosting
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<object>
+@inject IWebHostEnvironment Env
+@{
+    var tiles = MapTiles.Url(Env);
+}
+<script src="~/assets/js/components/map.js" asp-append-version="true" defer
+        data-leaflet-js="@Url.Content("~/assets/vendor/leaflet/leaflet.js")" data-leaflet-css="@Url.Content("~/assets/vendor/leaflet/leaflet.css")"
+        data-cluster-js="@Url.Content("~/assets/vendor/leaflet.markercluster/leaflet.markercluster.js")" data-cluster-css="@Url.Content("~/assets/vendor/leaflet.markercluster/MarkerCluster.css")"
+        data-tiles="@tiles" data-protomaps-js="@Url.Content("~/assets/vendor/protomaps-leaflet/protomaps-leaflet.js")"
+        data-label-zoom-in="@Umbraco.GetDictionaryValue("EHC.Map.ZoomIn")" data-label-zoom-out="@Umbraco.GetDictionaryValue("EHC.Map.ZoomOut")"
+        data-label-show-all="@Umbraco.GetDictionaryValue("EHC.Map.ShowAll")" data-label-details="@Umbraco.GetDictionaryValue("EHC.Events.Details")"
+        data-label-directions="@Umbraco.GetDictionaryValue("EHC.Facility.Directions")"></script>

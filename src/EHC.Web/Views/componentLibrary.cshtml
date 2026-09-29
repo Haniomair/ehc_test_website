@@ -1,0 +1,171 @@
+﻿@* Component library (alternate template for a landing page): every section of the page is shown once, as a live
+   scaled-down preview in a filterable grid; selecting a tile opens it full size (components/component-library.js).
+   Components from the catalogue that are not on this page are previewed live from the first page that uses them
+   (with a link to it); only components no page uses yet fall back to an icon card.
+   Without JS the sections simply render full size one after another. *@
+@using System.Globalization
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    Layout = "master.cshtml";
+    var culture = CultureInfo.CurrentUICulture;
+    var ar = culture.TwoLetterISOLanguageName == "ar";
+    var blocks = Model.Value<BlockListModel>("blocks")?.ToList() ?? [];
+
+    // render a block through the shared wrapper (settings, visibility); "" when it produces no output
+    async Task<string> Render(BlockListItem block)
+    {
+        var content = await Html.PartialAsync("blocklist/default", new BlockListModel(new List<BlockListItem> { block }));
+        using var writer = new System.IO.StringWriter();
+        content.WriteTo(writer, Encoder);
+        return writer.ToString();
+    }
+    string Subtitle(BlockListItem block)
+    {
+        var c = block.Content;
+        // heroes / banners split the title into a plain part and a highlighted part
+        var title = string.Join(" ", new[] { c.Value<string>("title"), c.Value<string>("titleHighlight") }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        return Text.Plain(c.Value<string>("heading") ?? (title.Length > 0 ? title : null) ?? c.Value<string>("attribution") ?? c.Value<string>("text"));
+    }
+
+    var tiles = new List<(BlockListItem Block, ComponentCatalog.Component? Info, string Html, string Subtitle, IPublishedContent? From)>();
+    foreach (var block in blocks)
+    {
+        var html = await Render(block);
+        if (string.IsNullOrWhiteSpace(html)) { continue; }
+        tiles.Add((block, ComponentCatalog.Find(block.Content.ContentType.Alias), html, Subtitle(block), null));
+    }
+
+    // catalogue entries not on this page: the pages that use them, and their instances to preview from
+    var shown = tiles.Select(t => t.Block.Content.ContentType.Alias).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var usedOn = new Dictionary<string, List<IPublishedContent>>(StringComparer.OrdinalIgnoreCase);
+    var samples = new Dictionary<string, List<(BlockListItem Block, IPublishedContent Page)>>(StringComparer.OrdinalIgnoreCase);
+    foreach (var page in Umbraco.ContentAtRoot().SelectMany(r => new[] { r }.Concat(r.Descendants())))
+    {
+        if (page.Id == Model.Id) { continue; }
+        var list = page.Value<BlockListModel>("blocks");
+        if (list is null) { continue; }
+        foreach (var block in list)
+        {
+            var alias = block.Content.ContentType.Alias;
+            if (!usedOn.TryGetValue(alias, out var pages)) { usedOn[alias] = pages = []; }
+            if (pages.Count < 3 && !pages.Contains(page)) { pages.Add(page); }
+            if (!samples.TryGetValue(alias, out var found)) { samples[alias] = found = []; }
+            if (found.Count < 3) { found.Add((block, page)); }
+        }
+    }
+    foreach (var info in ComponentCatalog.All.Where(c => !shown.Contains(c.Alias)))
+    {
+        // first instance that renders (hidden or scheduled-out ones produce nothing)
+        foreach (var (block, page) in samples.GetValueOrDefault(info.Alias) ?? [])
+        {
+            var html = await Render(block);
+            if (string.IsNullOrWhiteSpace(html)) { continue; }
+            tiles.Add((block, info, html, Subtitle(block), page));
+            shown.Add(info.Alias);
+            break;
+        }
+    }
+    var elsewhere = ComponentCatalog.All.Where(c => !shown.Contains(c.Alias)).ToList();
+    var categories = ComponentCatalog.Categories
+        .Where(cat => tiles.Any(t => t.Info?.CategoryKey == cat.Key) || elsewhere.Any(e => e.CategoryKey == cat.Key))
+        .ToList();
+    string L(string a, string e) => ar ? a : e;
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+
+<div class="wrap pb-20" data-library>
+    <div class="lib-toolbar sticky top-[var(--header-h,0px)] z-20 -mx-4 mb-8 flex flex-wrap items-center gap-3 border-b border-slate-200/70 bg-white/90 px-4 py-4 backdrop-blur dark:border-white/10 dark:bg-night-950/90" hidden data-library-toolbar>
+        <label class="relative flex-1 basis-60">
+            <span class="sr-only">@L("ابحث في المكونات", "Search components")</span>
+            <svg class="ico pointer-events-none absolute start-3.5 top-1/2 !h-5 !w-5 -translate-y-1/2 text-slate-400" aria-hidden="true"><use href="#i-search" /></svg>
+            <input type="search" class="w-full rounded-full border border-slate-200 bg-white py-2.5 pe-4 ps-11 text-sm dark:border-white/15 dark:bg-white/5" placeholder="@L("ابحث بالاسم أو الوصف…", "Search by name or description…")" data-library-search>
+        </label>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="@L("التصنيفات", "Categories")">
+            <button type="button" class="chip" aria-pressed="true" data-library-cat="">@L("الكل", "All") <span class="font-semibold">@(tiles.Count + elsewhere.Count)</span></button>
+            @foreach (var cat in categories)
+            {
+                var n = tiles.Count(t => t.Info?.CategoryKey == cat.Key) + elsewhere.Count(e => e.CategoryKey == cat.Key);
+                <button type="button" class="chip" aria-pressed="false" data-library-cat="@cat.Key">@cat.Name(culture) <span class="font-semibold">@n</span></button>
+            }
+        </div>
+        <p class="w-full text-sm text-slate-600 dark:text-slate-400" aria-live="polite" data-library-count></p>
+    </div>
+
+    <ul class="lib-grid" data-library-grid>
+        @for (var i = 0; i < tiles.Count; i++)
+        {
+            var (block, info, html, subtitle, from) = tiles[i];
+            var alias = block.Content.ContentType.Alias;
+            var name = info?.Name(culture) ?? block.Content.ContentType.Alias;
+            var cat = info is null ? null : ComponentCatalog.CategoryOf(info);
+            <li class="lib-tile" id="c-@(i + 1)" data-cat="@info?.CategoryKey" data-text="@($"{name} {subtitle} {info?.Description(culture)} {alias}".ToLowerInvariant())">
+                <div class="lib-frame" data-library-frame>
+                    <div class="lib-stage" data-library-stage>@Html.Raw(html)</div>
+                </div>
+                <div class="lib-meta">
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        @if (cat is not null) { <span class="rounded-full bg-brand-50 px-2.5 py-1 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">@cat.Name(culture)</span> }
+                        <code class="rounded bg-soft px-1.5 py-0.5 text-slate-600 dark:bg-white/5 dark:text-slate-400" dir="ltr">@alias</code>
+                    </div>
+                    <h2 class="mt-2 text-lg font-bold text-deep-900 dark:text-white">@name</h2>
+                    @if (!string.IsNullOrWhiteSpace(subtitle)) { <p class="text-sm font-semibold text-brand-700 dark:text-brand-300" data-library-sub>@subtitle</p> }
+                    @if (info is not null) { <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">@info.Description(culture)</p> }
+                    @if (from is not null) { <p class="relative z-[3] mt-2 text-sm text-slate-600 dark:text-slate-400">@L("مثال من:", "Example from:") <a class="link" href="@from.Url()">@from.Name</a></p> }
+                    <button type="button" class="lib-open" data-library-open hidden>
+                        <span class="sr-only">@L("عرض بالحجم الكامل:", "View full size:") @name @subtitle</span>
+                    </button>
+                </div>
+            </li>
+        }
+        @foreach (var e in elsewhere)
+        {
+            var pages = usedOn.GetValueOrDefault(e.Alias) ?? [];
+            <li class="lib-tile lib-tile-ref" data-cat="@e.CategoryKey" data-text="@($"{e.Name(culture)} {e.Description(culture)} {e.Alias}".ToLowerInvariant())">
+                <div class="lib-frame grid place-items-center bg-linear-to-br from-brand-50 to-soft dark:from-brand-500/10 dark:to-night-900">
+                    <span class="grid h-20 w-20 place-items-center rounded-3xl bg-white text-brand-600 shadow-soft dark:bg-white/10 dark:text-brand-300" aria-hidden="true"><svg class="ico !h-9 !w-9"><use href="#i-@e.Icon" /></svg></span>
+                </div>
+                <div class="lib-meta">
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="rounded-full bg-brand-50 px-2.5 py-1 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">@ComponentCatalog.CategoryOf(e).Name(culture)</span>
+                        <code class="rounded bg-soft px-1.5 py-0.5 text-slate-600 dark:bg-white/5 dark:text-slate-400" dir="ltr">@e.Alias</code>
+                    </div>
+                    <h2 class="mt-2 text-lg font-bold text-deep-900 dark:text-white">@e.Name(culture)</h2>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">@e.Description(culture)</p>
+                    <p class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                        @if (pages.Count == 0)
+                        {
+                            <span class="text-slate-600 dark:text-slate-400">@L("غير مستخدم في أي صفحة بعد.", "Not used on any page yet.")</span>
+                        }
+                        else
+                        {
+                            <span class="text-slate-600 dark:text-slate-400">@L("شاهده في:", "See it on:")</span>
+                            @foreach (var p in pages) { <a class="link" href="@p.Url()">@p.Name</a> }
+                        }
+                    </p>
+                </div>
+            </li>
+        }
+    </ul>
+    <p class="mt-10 hidden text-center text-slate-600 dark:text-slate-400" data-library-empty>@L("لا توجد مكونات مطابقة.", "No components match.")</p>
+</div>
+
+<dialog class="lib-dialog" data-library-dialog aria-labelledby="lib-dialog-title">
+    <div class="lib-dialog-bar">
+        <div class="min-w-0">
+            <p class="truncate text-xs text-white/70" data-library-dialog-cat></p>
+            <h2 id="lib-dialog-title" class="truncate text-lg font-bold text-white" data-library-dialog-title></h2>
+        </div>
+        <div class="flex shrink-0 gap-2">
+            <button type="button" class="lib-dialog-btn" data-library-prev aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Previous")"><svg class="ico flip rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+            <button type="button" class="lib-dialog-btn" data-library-next aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Next")"><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+            <button type="button" class="lib-dialog-btn" data-library-close aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Close")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>
+        </div>
+    </div>
+    <div class="lib-dialog-body" data-library-dialog-body></div>
+</dialog>
+<script src="~/assets/js/components/component-library.js" asp-append-version="true" defer
+        data-count-one="@L("مكوّن واحد", "1 component")" data-count-many="@L("{0} مكوّنات", "{0} components")"></script>

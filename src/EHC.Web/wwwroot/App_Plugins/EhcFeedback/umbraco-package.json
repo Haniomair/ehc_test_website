@@ -1,0 +1,17 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Page feedback",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.PageFeedback",
+      "name": "Page feedback",
+      "element": "/App_Plugins/EhcFeedback/feedback-dashboard.js",
+      "weight": -20,
+      "meta": { "label": "Page feedback", "pathname": "page-feedback" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

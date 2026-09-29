@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EHC.Web.Site;
 
@@ -7,20 +9,27 @@ namespace EHC.Web.Site;
 /// Security headers for the public site. The Content-Security-Policy is not applied to the Umbraco backoffice
 /// (/umbraco), which ships its own. Scripts and style sheets are same-origin only; inline style *attributes* are
 /// allowed (theme colour variables and image focal points are rendered as validated style="--…" values).
-/// Map tiles: OpenStreetMap for now — change `Tiles` when the production provider is chosen (docs/06).
+/// Map tiles are self-hosted (MapTiles: one PMTiles file read with range requests), so no map host is allowed.
 /// </summary>
 public static class SecurityHeaders
 {
-    public const string Tiles = "https://tile.openstreetmap.org";
+    /// <summary>Video section: YouTube thumbnails and the privacy-enhanced player (loaded only after the visitor presses play).</summary>
+    public const string YouTubeImages = "https://i.ytimg.com";
+    public const string YouTubePlayer = "https://www.youtube-nocookie.com";
 
-    public static readonly string Csp = string.Join("; ",
+    /// <summary>The policy without any configured Frappe hosts (Microsoft Forms and Power BI are always allowed).</summary>
+    public static string Csp => Build([]);
+
+    /// <summary>Builds the policy; <paramref name="frameSources"/> are the Embed section's allowed frame origins.</summary>
+    public static string Build(IEnumerable<string> frameSources) => string.Join("; ",
         "default-src 'self'",
         "script-src 'self'",
         "style-src 'self'",
         "style-src-attr 'unsafe-inline'",
-        $"img-src 'self' data: {Tiles}",
+        $"img-src 'self' data: {YouTubeImages}",
         "font-src 'self'",
         "media-src 'self'",
+        $"frame-src {string.Join(' ', new[] { YouTubePlayer }.Concat(frameSources).Distinct())}",
         "connect-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
@@ -28,24 +37,35 @@ public static class SecurityHeaders
         "frame-ancestors 'self'",
         "upgrade-insecure-requests");
 
-    public static void Use(IApplicationBuilder app) => app.Use(async (context, next) =>
+    public static void Use(IApplicationBuilder app)
     {
-        context.Response.OnStarting(() =>
+        var options = app.ApplicationServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmbedOptions>>().Value;
+        var csp = Build(Embed.FrameSources(options));
+        var cspHttp = csp.Replace("; upgrade-insecure-requests", "");
+        var noIndex = app.ApplicationServices.GetRequiredService<IConfiguration>().GetValue<bool>("Ehc:Seo:NoIndex");
+        app.Use(async (context, next) =>
         {
-            var h = context.Response.Headers;
-            h.XContentTypeOptions = "nosniff";
-            h["Referrer-Policy"] = "strict-origin-when-cross-origin";
-            h["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=(), payment=(), usb=()";
-            h["Cross-Origin-Opener-Policy"] = "same-origin";
-            if (!IsBackoffice(context.Request.Path))
+            context.Response.OnStarting(() =>
             {
-                h.XFrameOptions = "SAMEORIGIN";
-                h.ContentSecurityPolicy = context.Request.IsHttps ? Csp : Csp.Replace("; upgrade-insecure-requests", "");
-            }
-            return Task.CompletedTask;
+                var h = context.Response.Headers;
+                h.XContentTypeOptions = "nosniff";
+                h["Referrer-Policy"] = "strict-origin-when-cross-origin";
+                h["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=(), payment=(), usb=()";
+                h["Cross-Origin-Opener-Policy"] = "same-origin";
+                if (noIndex)
+                {
+                    h["X-Robots-Tag"] = "noindex, nofollow";
+                }
+                if (!IsBackoffice(context.Request.Path))
+                {
+                    h.XFrameOptions = "SAMEORIGIN";
+                    h.ContentSecurityPolicy = context.Request.IsHttps ? csp : cspHttp;
+                }
+                return Task.CompletedTask;
+            });
+            await next(context);
         });
-        await next(context);
-    });
+    }
 
     public static bool IsBackoffice(PathString path) =>
         path.StartsWithSegments("/umbraco", StringComparison.OrdinalIgnoreCase)

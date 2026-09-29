@@ -1,0 +1,80 @@
+@* A–Z index: every specialty, facility, health tool or health article (or the pages under a chosen page), grouped by
+   letter (Arabic or Latin alphabet by language; see Site/AzIndex.cs). Letter links and the list work without JS;
+   components/az-index.js adds a live name filter. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var source = c.Value<string>("source") ?? "specialties";
+    var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
+    IEnumerable<IPublishedContent> nodes = source switch
+    {
+        "facilities" => home?.DescendantsOfType("facility") ?? [],
+        "healthTools" => home?.DescendantsOfType("healthTool") ?? [],
+        "healthArticles" => home?.DescendantsOfType("healthArticle") ?? [],
+        "children" => c.Value<IPublishedContent>("root")?.Children() ?? [],
+        _ => home?.DescendantsOfType("specialty") ?? [],
+    };
+    string? Note(IPublishedContent n) => n.ContentType.Alias switch
+    {
+        "facility" => string.Join(" · ", new[] { Umbraco.GetDictionaryValue("EHC.Facility.Type." + (n.Value<string>("facilityType") ?? "hospital")), n.Value<string>("city") }.Where(x => !string.IsNullOrWhiteSpace(x))),
+        "healthArticle" => n.Value<string>("topic") is { } t ? Umbraco.GetDictionaryValue("EHC.Health.Topic." + t) : null,
+        _ => null,
+    };
+    var arabic = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var groups = AzIndex.Build(nodes.Where(n => n.IsVisible()).Select(n => new AzIndex.Entry(n.Name, n.Url(), Note(n))), arabic, source == "facilities" ? AzIndex.FacilityWords : null);
+    if (groups.Count == 0) { return; }
+    var present = groups.Select(g => g.Letter).ToHashSet();
+    var own = AzIndex.Letters(arabic);
+    var letters = own.Concat(groups.Select(g => g.Letter).Where(l => !own.Contains(l))).ToList();
+    var id = "az-" + Model.ContentKey.ToString("N")[..8];
+    int Index(string l) => letters.IndexOf(l);
+}
+<div class="wrap" data-az>
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <div class="sticky top-[var(--header-h,76px)] z-20 -mx-4 mb-8 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border dark:border-white/10 dark:bg-night-950/95">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Az.Letters")" class="min-w-0 flex-1">
+                <ul class="flex flex-wrap gap-1">
+                    @foreach (var l in letters)
+                    {
+                        <li>
+                            @if (present.Contains(l)) { <a href="#@id-@Index(l)" class="az-letter">@l</a> }
+                            else { <span class="az-letter az-off" aria-hidden="true">@l</span> }
+                        </li>
+                    }
+                </ul>
+            </nav>
+            <div class="relative lg:w-72" hidden data-az-search>
+                <label for="@id-q" class="sr-only">@Umbraco.GetDictionaryValue("EHC.Az.Filter")</label>
+                <svg class="ico pointer-events-none absolute inset-y-0 start-3 my-auto !h-5 !w-5 text-slate-500" aria-hidden="true"><use href="#i-search" /></svg>
+                <input id="@id-q" type="search" class="field !h-11 ps-10" placeholder="@Umbraco.GetDictionaryValue("EHC.Az.Filter")" data-az-filter autocomplete="off">
+            </div>
+        </div>
+    </div>
+    <p class="sr-only" role="status" data-az-status data-format="@Umbraco.GetDictionaryValue("EHC.Common.ResultCount")"></p>
+    <div class="grid gap-10">
+        @foreach (var g in groups)
+        {
+            <section id="@id-@Index(g.Letter)" class="scroll-mt-40" aria-labelledby="@id-h-@Index(g.Letter)" data-az-group>
+                <h3 id="@id-h-@Index(g.Letter)" class="mb-4 flex items-center gap-3 text-2xl font-extrabold text-brand-700 dark:text-brand-300"><span>@g.Letter</span><span class="h-px flex-1 bg-slate-200 dark:bg-white/10" aria-hidden="true"></span></h3>
+                <ul class="grid gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach (var e in g.Entries)
+                    {
+                        <li data-az-item>
+                            <a href="@e.Url" class="group flex flex-col rounded-xl px-3 py-2 transition hover:bg-soft dark:hover:bg-white/5">
+                                <span class="font-semibold text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@e.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(e.Note)) { <span class="text-xs text-slate-600 dark:text-slate-400">@e.Note</span> }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        <p class="card p-8 text-center text-slate-600 dark:text-slate-400" data-az-none hidden>@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+    </div>
+</div>
+<script src="~/assets/js/components/az-index.js" asp-append-version="true" defer></script>

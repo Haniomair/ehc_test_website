@@ -29,20 +29,4 @@ public class ContrastTests
     [InlineData("#FFFFFF", "#FFFFFF", 1.0)]
     public void Ratio_matches_wcag(string a, string b, double expected)
         => Assert.Equal(expected, Contrast.Ratio(a, b), 2);
-
-    [Fact]
-    public void Default_brand_blue_passes_as_brand500_but_not_as_brand600()
-    {
-        // #2490CC is the EHC default brand-500: 3.5:1 with white (see CHANGELOG), fine for large UI, not for button text.
-        Assert.Empty(Contrast.Check(new Dictionary<string, string?> { ["brand500"] = "#2490CC" }));
-        Assert.Single(Contrast.Check(new Dictionary<string, string?> { ["brand600"] = "#2490CC" }));
-    }
-
-    [Fact]
-    public void Empty_and_invalid_overrides_are_ignored()
-        => Assert.Empty(Contrast.Check(new Dictionary<string, string?> { ["brand600"] = "", ["deep900"] = null, ["accent400"] = "red" }));
-
-    [Fact]
-    public void Pale_deep900_fails_both_rules()
-        => Assert.Equal(2, Contrast.Check(new Dictionary<string, string?> { ["deep900"] = "#B0C4DE" }).Count);
 }

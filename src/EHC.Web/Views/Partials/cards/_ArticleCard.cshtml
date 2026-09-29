@@ -1,0 +1,28 @@
+@* Health article card: photo (or topic icon), topic, title, summary (intro), reading time. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var a = Model;
+    var topic = a.Value<string>("topic");
+    var image = a.Value<MediaWithCrops>("image");
+    var minutes = HealthArticles.ReadingMinutes(a.Value<IHtmlEncodedString>("body")?.ToHtmlString());
+}
+<a href="@a.Url()" class="card group flex h-full flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-soft">
+    @if (image is not null)
+    {
+        <img src="@image.GetCropUrl(640, 400, furtherOptions: "format=webp&quality=80")" alt="" class="aspect-[16/10] w-full object-cover" loading="lazy" decoding="async">
+    }
+    else
+    {
+        <span class="grid aspect-[16/10] place-items-center bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300" aria-hidden="true"><svg class="ico !h-12 !w-12"><use href="#i-@HealthArticles.IconFor(topic)" /></svg></span>
+    }
+    <span class="flex flex-1 flex-col gap-2 p-5">
+        @if (!string.IsNullOrWhiteSpace(topic)) { <span class="text-xs font-bold uppercase tracking-wider text-brand-700 rtl:tracking-normal dark:text-brand-300">@Umbraco.GetDictionaryValue("EHC.Health.Topic." + topic)</span> }
+        <b class="text-lg leading-snug text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@a.Name</b>
+        @if (!string.IsNullOrWhiteSpace(a.Value<string>("intro"))) { <span class="line-clamp-3 text-sm text-slate-600 dark:text-slate-400">@(a.Value<string>("intro"))</span> }
+        <span class="mt-auto flex items-center gap-1.5 pt-2 text-xs text-slate-600 dark:text-slate-400"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-clock" /></svg>@string.Format(Umbraco.GetDictionaryValue("EHC.Health.ReadingTime") ?? "{0}", minutes)</span>
+    </span>
+</a>

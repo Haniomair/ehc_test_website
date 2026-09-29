@@ -1,0 +1,39 @@
+@* Emergency & important numbers: tap-to-call tiles. Tiles marked "urgent" use the fixed emergency red (never themed);
+   the others use the brand colours. Each tile: number, label, optional note and icon. Only official numbers. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content)
+        .Select(i => (Item: i, Dial: new string((i.Value<string>("number") ?? "").Where(ch => char.IsDigit(ch) || ch == '+').ToArray())))
+        .Where(x => x.Dial.Length > 0)
+        .ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var cols = items.Count switch { 1 => "", 2 => "sm:grid-cols-2", 3 => "sm:grid-cols-3", _ => "sm:grid-cols-2 lg:grid-cols-4" };
+    var call = Umbraco.GetDictionaryValue("EHC.Emergency.Call");
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="grid gap-4 @cols">
+        @foreach (var (it, dial) in items)
+        {
+            var urgent = it.Value<bool>("urgent");
+            var icon = it.Value<string>("icon");
+            if (string.IsNullOrWhiteSpace(icon)) { icon = urgent ? "er" : "phone"; }
+            var label = it.Value<string>("label");
+            <li class="rv">
+                <a href="tel:@dial" class="group flex h-full items-center gap-4 rounded-[22px] p-5 transition hover:-translate-y-0.5 @(urgent ? "bg-emerg-600 text-white hover:bg-emerg-600/90" : "card hover:shadow-soft")">
+                    <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl @(urgent ? "bg-white/15" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-@icon" /></svg></span>
+                    <span class="grid min-w-0">
+                        <b class="text-3xl font-extrabold leading-none tracking-tight"><span dir="ltr">@(it.Value<string>("number"))</span></b>
+                        <span class="mt-1 font-semibold @(urgent ? "" : "text-deep-900 dark:text-white")">@label</span>
+                        @if (!string.IsNullOrWhiteSpace(it.Value<string>("note"))) { <span class="text-xs @(urgent ? "text-white/85" : "text-slate-600 dark:text-slate-400")">@(it.Value<string>("note"))</span> }
+                    </span>
+                    <span class="sr-only">@call</span>
+                    <svg class="ico ms-auto !h-5 !w-5 shrink-0 opacity-60 transition group-hover:opacity-100" aria-hidden="true"><use href="#i-phone" /></svg>
+                </a>
+            </li>
+        }
+    </ul>
+</div>

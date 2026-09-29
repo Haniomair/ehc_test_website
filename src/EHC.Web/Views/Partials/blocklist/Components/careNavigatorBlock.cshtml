@@ -48,7 +48,7 @@
             </div>
             @if (who.Count > 1)
             {
-                <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
+                <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
                 <div class="mb-5 flex flex-wrap gap-2" role="group" aria-labelledby="@("nvw-" + Model.ContentKey.ToString("N")[..8])">
                     @for (var i = 0; i < who.Count; i++)
                     {
@@ -56,7 +56,7 @@
                     }
                 </div>
             }
-            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvn-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[.7rem]">@(who.Count > 1 ? "2" : "1")</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Need")</p>
+            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvn-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">@(who.Count > 1 ? "2" : "1")</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Need")</p>
             <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-labelledby="@("nvn-" + Model.ContentKey.ToString("N")[..8])">
                 @foreach (var n in needs)
                 {
@@ -68,7 +68,7 @@
                     <span data-nav-icon class="grid h-10 w-10 shrink-0 place-items-center rounded-xl @(first.urgent ? "bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300" : "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300")"><svg class="ico" aria-hidden="true"><use href="#i-@first.icon" /></svg></span>
                     <div class="min-w-0 flex-1"><b data-nav-title class="block leading-snug">@first.title</b><span data-nav-text class="block text-sm text-slate-500 dark:text-slate-400">@first.text</span></div>
                 </div>
-                <a data-nav-cta href="@first.href" class="btn btn-primary mt-3 w-full !py-2.5 text-sm @(first.urgent ? "!bg-emerg-600 !shadow-none" : "") @(string.IsNullOrWhiteSpace(first.cta) ? "hidden" : "")">@first.cta</a>
+                <a data-nav-cta href="@first.href" class="btn btn-primary mt-3 w-full btn-sm @(first.urgent ? "!bg-emerg-600 !shadow-none" : "") @(string.IsNullOrWhiteSpace(first.cta) ? "hidden" : "")">@first.cta</a>
             </div>
         </div>
     }

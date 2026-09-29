@@ -1,7 +1,8 @@
 @* Block 11 "Health tools" (Know your numbers): BMI calculator + reference cards + disclaimer.
    Medical wording (BMI categories/tips in the dictionary, reference values here) must be approved by the clinical team.
-   Behaviour: frontend/src/js/components/bmi.js. *@
+   Calculator: Views/Partials/tools/_BmiSlider.cshtml (also used on the BMI tool page). *@
 @using EHC.Web.Blocks
+@using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
@@ -12,50 +13,21 @@
     if (!showBmi && cards.Count == 0) { return; }
     var ctas = c.Value<IEnumerable<Link>>("bmiCtas")?.ToList() ?? [];
     var disclaimer = c.Value<string>("disclaimer");
-    string D(string key) => Umbraco.GetDictionaryValue("EHC.Bmi." + key) ?? "";
-    // category texts for the script: [upper bound, label, tip, style]
-    var categories = System.Text.Json.JsonSerializer.Serialize(new object[]
-    {
-        new object[] { 18.5, D("Under"), D("UnderTip"), "under" },
-        new object[] { 25, D("Healthy"), D("HealthyTip"), "healthy" },
-        new object[] { 30, D("Over"), D("OverTip"), "over" },
-        new object[] { 999, D("Obese"), D("ObeseTip"), "obese" },
-    });
     var id = "bmi-" + Model.ContentKey.ToString("N")[..8];
 }
 <div class="wrap">
-    <div class="rv mb-10">
+    <div class="rv sec-head">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
     </div>
     <div class="grid gap-5 @(showBmi && cards.Count > 0 ? "lg:grid-cols-[1.25fr_.75fr]" : "")">
         @if (showBmi)
         {
-            <div class="rv card p-6 sm:p-8" data-bmi data-categories="@categories">
-                <div class="mb-6 flex items-center gap-3">
-                    <span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-target" /></svg></span>
-                    <div><h3 class="text-lg font-bold">@D("Title")</h3><span class="text-sm text-slate-500 dark:text-slate-400">@D("Adults")</span></div>
-                </div>
-                <div class="grid gap-8 sm:grid-cols-2">
-                    <div class="grid gap-6">
-                        <label class="block" for="@id-h"><span class="mb-2 flex justify-between text-sm font-semibold"><span>@D("Height")</span><span><b data-bmi-hv>170</b> @D("Cm")</span></span><input id="@id-h" data-bmi-h type="range" min="140" max="210" value="170" class="w-full accent-brand-500"></label>
-                        <label class="block" for="@id-w"><span class="mb-2 flex justify-between text-sm font-semibold"><span>@D("Weight")</span><span><b data-bmi-wv>72</b> @D("Kg")</span></span><input id="@id-w" data-bmi-w type="range" min="40" max="160" value="72" class="w-full accent-brand-500"></label>
-                    </div>
-                    <div class="rounded-2xl bg-soft p-5 text-center dark:bg-white/5" aria-live="polite">
-                        <span class="text-sm text-slate-500 dark:text-slate-400">@D("Yours")</span>
-                        <b data-bmi-value class="block text-[3.2rem] font-extrabold leading-none text-deep-900 dark:text-white">24.9</b>
-                        <span data-bmi-cat class="mt-2 inline-block rounded-full px-3 py-1 text-sm font-bold"></span>
-                    </div>
-                </div>
-                <div class="relative mt-8" dir="ltr" aria-hidden="true">
-                    <div class="flex h-3 overflow-hidden rounded-full"><i class="w-[14%] bg-brand-300"></i><i class="w-[26%] bg-emerald-500"></i><i class="w-[20%] bg-accent-400"></i><i class="w-[40%] bg-highlight-500"></i></div>
-                    <span data-bmi-marker class="absolute -top-1.5 start-1/2 h-6 w-6 -translate-x-1/2 rounded-full border-4 border-white bg-deep-900 shadow-soft transition-all duration-300 dark:border-night-900 dark:bg-white"></span>
-                    <div class="mt-2 flex justify-between text-[.7rem] text-slate-500 dark:text-slate-400"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
-                </div>
-                <p data-bmi-tip class="mt-5 text-sm text-slate-600 dark:text-slate-300"></p>
+            <div class="rv card p-6 sm:p-8">
+                @await Html.PartialAsync("tools/_BmiSlider", new BmiSlider(id, ShowTitle: true))
                 @if (ctas.Count > 0)
                 {
                     <div class="mt-5 flex flex-wrap gap-3">
-                        @for (var i = 0; i < ctas.Count; i++) { <a href="@ctas[i].Url" target="@ctas[i].Target" class="btn @(i == 0 ? "btn-primary" : "btn-ghost") !py-2.5 text-sm">@ctas[i].Name</a> }
+                        @for (var i = 0; i < ctas.Count; i++) { <a href="@ctas[i].Url" target="@ctas[i].Target" class="btn @(i == 0 ? "btn-primary" : "btn-ghost") btn-sm">@ctas[i].Name</a> }
                     </div>
                 }
             </div>
@@ -69,13 +41,13 @@
                     var link = r.Value<Link>("link");
                     var dark = i == 0;
                     <div class="rv rounded-[22px] p-6 @(dark ? "bg-deep-900 text-white dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20" : "bg-soft dark:bg-night-900 dark:ring-1 dark:ring-white/10")">
-                        <span class="text-xs font-bold uppercase tracking-widest rtl:tracking-normal @(dark ? "text-brand-300" : "text-support-500 dark:text-support-300")">@(r.Value<string>("label"))</span>
+                        <span class="text-xs font-bold uppercase tracking-widest rtl:tracking-normal @(dark ? "text-brand-300" : "text-support-800 dark:text-support-300")">@(r.Value<string>("label"))</span>
                         <b class="mt-2 block text-[2.4rem] font-extrabold leading-none @(dark ? "" : "text-deep-900 dark:text-white")" dir="ltr">@(r.Value<string>("value"))</b>
-                        @if (!string.IsNullOrWhiteSpace(r.Value<string>("unit"))) { <span class="mt-1 block text-sm @(dark ? "text-brand-100" : "text-slate-500 dark:text-slate-400")">@(r.Value<string>("unit"))</span> }
-                        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold @(dark ? "text-brand-300" : "link")"><span>@link.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+                        @if (!string.IsNullOrWhiteSpace(r.Value<string>("unit"))) { <span class="mt-1 block text-sm @(dark ? "text-brand-100" : "text-slate-600 dark:text-slate-400")">@(r.Value<string>("unit"))</span> }
+                        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="mt-3 inline-flex items-center gap-1.5 py-1 text-sm font-semibold @(dark ? "text-brand-300" : "link")"><span>@link.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
                     </div>
                 }
-                @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="text-[.72rem] text-slate-500 dark:text-slate-400">@disclaimer</p> }
+                @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="text-xs text-slate-500 dark:text-slate-400">@disclaimer</p> }
             </div>
         }
     </div>

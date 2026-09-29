@@ -1,0 +1,26 @@
+@* Section heading: a standalone title band (eyebrow, heading with *highlight*, intro, buttons). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject System.Text.Encodings.Web.HtmlEncoder Encoder
+@{
+    var c = Model.Content;
+    var heading = c.Value<string>("heading");
+    if (string.IsNullOrWhiteSpace(heading)) { return; }
+    var center = c.Value<string>("align") == "center";
+    var ctas = c.Value<IEnumerable<Link>>("ctas")?.ToList() ?? [];
+}
+<div class="wrap @(center ? "text-center" : "")">
+    <div class="rv @(center ? "mx-auto max-w-[760px]" : "max-w-[860px]")">
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("eyebrow"))) { <div class="eyebrow @(center ? "justify-center" : "")">@(c.Value<string>("eyebrow"))</div> }
+        <h2 class="h2">@Text.Emphasis(heading, Encoder)</h2>
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("intro"))) { <p class="mt-4 text-[1.1rem] text-slate-600 dark:text-slate-400 @(center ? "mx-auto max-w-[620px]" : "max-w-[640px]")">@(c.Value<string>("intro"))</p> }
+        @if (ctas.Count > 0)
+        {
+            <div class="mt-7 flex flex-wrap gap-3 @(center ? "justify-center" : "")">
+                @for (var i = 0; i < ctas.Count; i++) { <a class="btn @(i == 0 ? "btn-primary" : "btn-ghost")" href="@ctas[i].Url" target="@ctas[i].Target">@ctas[i].Name</a> }
+            </div>
+        }
+    </div>
+</div>

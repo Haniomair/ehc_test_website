@@ -1,0 +1,56 @@
+@* Image gallery: grid or masonry, 2–4 columns, caption per image, optional lightbox (components/lightbox.js).
+   Each item needs its own alt text; items without an image are skipped. *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var items = c.Value<BlockListModel>("items")?.Select(i => i.Content).Where(i => i.Value<MediaWithCrops>("image") is not null).ToList() ?? [];
+    if (items.Count == 0) { return; }
+    var masonry = c.Value<string>("layout") == "masonry";
+    var cols = c.Value<string>("columns") switch { "2" => "sm:columns-2", "4" => "sm:columns-2 lg:columns-4", _ => "sm:columns-2 lg:columns-3" };
+    var grid = c.Value<string>("columns") switch { "2" => "sm:grid-cols-2", "4" => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+    var lightbox = c.Value<bool>("lightbox");
+    var id = "gl-" + Model.ContentKey.ToString("N")[..8];
+}
+<div class="wrap">
+    <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))</div>
+    <ul class="@(masonry ? $"gap-5 {cols} [&>li]:mb-5 [&>li]:break-inside-avoid" : $"grid gap-5 {grid}")" @(lightbox ? "data-lightbox" : "") id="@id">
+        @foreach (var it in items)
+        {
+            var img = it.Value<MediaWithCrops>("image")!;
+            var alt = it.Value<string>("alt") ?? "";
+            var caption = it.Value<string>("caption");
+            var thumb = masonry ? img.GetCropUrl(width: 800, furtherOptions: "format=webp&quality=80") : img.GetCropUrl(800, 600, furtherOptions: "format=webp&quality=80");
+            var full = img.GetCropUrl(width: 1800, furtherOptions: "format=webp&quality=82");
+            <li class="rv">
+                <figure class="group overflow-hidden rounded-[22px] bg-soft dark:bg-night-900">
+                    @if (lightbox)
+                    {
+                        <a href="@full" class="relative block overflow-hidden focus-visible:outline-offset-[-4px]" data-lightbox-item data-caption="@caption">
+                            <img src="@thumb" alt="@alt" class="w-full object-cover transition duration-500 group-hover:scale-105 @(masonry ? "" : "aspect-[4/3]")" loading="lazy" decoding="async">
+                            <span class="absolute end-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-deep-900 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100" aria-hidden="true"><svg class="ico !h-5 !w-5"><use href="#i-search" /></svg></span>
+                        </a>
+                    }
+                    else
+                    {
+                        <img src="@thumb" alt="@alt" class="w-full object-cover @(masonry ? "" : "aspect-[4/3]")" loading="lazy" decoding="async">
+                    }
+                    @if (!string.IsNullOrWhiteSpace(caption)) { <figcaption class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">@caption</figcaption> }
+                </figure>
+            </li>
+        }
+    </ul>
+@if (lightbox)
+{
+    <dialog class="lightbox" data-lightbox-dialog aria-label="@Umbraco.GetDictionaryValue("EHC.Gallery.Viewer")">
+        <figure class="lightbox-figure"><img alt="" data-lightbox-img><figcaption data-lightbox-caption></figcaption></figure>
+        <button type="button" class="lightbox-btn end-4 top-4" data-lightbox-close aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Close")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>
+        <button type="button" class="lightbox-btn start-4 top-1/2 -translate-y-1/2" data-lightbox-prev aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Previous")"><svg class="ico flip rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+        <button type="button" class="lightbox-btn end-4 top-1/2 -translate-y-1/2" data-lightbox-next aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Next")"><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+        <p class="lightbox-count" data-lightbox-count aria-live="polite"></p>
+    </dialog>
+    <script src="~/assets/js/components/lightbox.js" asp-append-version="true" defer></script>
+}
+</div>

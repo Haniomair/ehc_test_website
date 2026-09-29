@@ -25,6 +25,6 @@
     <b class="relative mt-auto text-[1.5rem] leading-tight">@title</b>
     @if (start is { } s)
     {
-        <span class="relative mt-2 text-sm text-white/85"><time datetime="@s.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@s.ToString("d MMMM")</time>@if (end is { } e) {<text> – </text><time datetime="@e.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@e.ToString("d MMMM yyyy")</time>}</span>
+        <span class="relative mt-2 block text-sm text-white/85">@EHC.Web.Site.Dates.Html(s)@if (end is { } e && e != s) {<br>@EHC.Web.Site.Dates.Html(e)}</span>
     }
 </a>

@@ -13,6 +13,7 @@
   ./deploy/deploy-staging.ps1                    # build + deploy code
   ./deploy/deploy-staging.ps1 -Settings          # also upload src/EHC.Web/appsettings.Staging.local.json
   ./deploy/deploy-staging.ps1 -SeedData          # also REPLACE the server database and media with the local ones
+  ./deploy/deploy-staging.ps1 -NoCode -Media     # only upload new/changed media files (nothing is deleted)
   ./deploy/deploy-staging.ps1 -WhatIf            # show what would change, change nothing
 #>
 [CmdletBinding()]
@@ -21,6 +22,9 @@ param(
     [switch]$SelfContained,  # bundle the .NET runtime (when the host doesn't offer .NET 10)
     [switch]$Settings,       # upload the server settings file
     [switch]$SeedData,       # overwrite the server's umbraco/Data and wwwroot/media with the local copies
+    [string]$DataFrom,       # with -SeedData: folder to upload as umbraco/Data (e.g. a snapshot of a running site)
+    [switch]$Media,          # upload new and changed files in wwwroot/media; never deletes files on the server
+    [switch]$NoCode,         # skip the build and code deploy (for -Settings, -SeedData or -Media on their own)
     [switch]$AllowUntrusted, # accept a self-signed certificate on the Web Deploy endpoint
     [switch]$WhatIf
 )
@@ -59,26 +63,13 @@ if (-not (Test-Path $msdeploy)) {
     throw "Web Deploy is not installed. Install Web Deploy from Microsoft, then run this again."
 }
 
-# --- build -------------------------------------------------------------------------------------------------
-if (-not $SkipFrontend) {
-    Push-Location (Join-Path $root 'frontend')
-    try {
-        npm ci; if ($LASTEXITCODE) { throw 'npm ci failed' }
-        npm run publish:umbraco; if ($LASTEXITCODE) { throw 'npm run publish:umbraco failed' }
-    } finally { Pop-Location }
-}
-
-if (Test-Path $out) { Remove-Item $out -Recurse -Force }
-$publishArgs = @('publish', $web, '-c', 'Release', '-o', $out, '-p:EnvironmentName=Staging')
-if ($SelfContained) { $publishArgs += @('-r', 'win-x64', '--self-contained') }
-dotnet @publishArgs
-if ($LASTEXITCODE) { throw 'dotnet publish failed' }
-
-# --- deploy ------------------------------------------------------------------------------------------------
+# --- deploy helpers ----------------------------------------------------------------------------------------
 $dest = "computerName=`"https://${server}:8172/msdeploy.axd?site=$site`",userName=`"$user`",password=`"$password`",authType=Basic"
-$common = @('-enableRule:AppOffline', '-retryAttempts:3', '-retryInterval:3000')
-if ($AllowUntrusted) { $common += '-allowUntrusted' }
-if ($WhatIf) { $common += '-whatif' }
+$retry = @('-retryAttempts:3', '-retryInterval:3000')
+if ($AllowUntrusted) { $retry += '-allowUntrusted' }
+if ($WhatIf) { $retry += '-whatif' }
+# takes the site offline while files are replaced (unlocks the DLLs and the database)
+$common = @('-enableRule:AppOffline') + $retry
 
 function Invoke-MsDeploy([string[]]$arguments) {
     # msdeploy parses its own command line, so pass it verbatim rather than through PowerShell's quoting
@@ -86,25 +77,45 @@ function Invoke-MsDeploy([string[]]$arguments) {
     if ($p.ExitCode) { throw "msdeploy failed (exit code $($p.ExitCode))" }
 }
 
-# map tiles are built separately (npm run tiles); without them, keep the server's copy instead of deleting it
-$tilesSkip = @()
-if (-not (Test-Path (Join-Path $out 'wwwroot\tiles\ehc-region.pmtiles'))) {
-    Write-Warning 'No map tiles in this build: the tiles on the server are left as they are.'
-    $tilesSkip = @('-skip:Directory="\\wwwroot\\tiles$"')
-}
+if (-not $NoCode) {
+    # --- build -------------------------------------------------------------------------------------------------
+    if (-not $SkipFrontend) {
+        Push-Location (Join-Path $root 'frontend')
+        try {
+            npm ci; if ($LASTEXITCODE) { throw 'npm ci failed' }
+            npm run publish:umbraco; if ($LASTEXITCODE) { throw 'npm run publish:umbraco failed' }
+        } finally { Pop-Location }
+    }
 
-Write-Host "Deploying code to $site on $server ..."
-Invoke-MsDeploy (@(
-    '-verb:sync',
-    "-source:contentPath=`"$out`"",
-    "-dest:contentPath=`"$site`",$dest",
-    '-skip:Directory="\\umbraco\\Data$"',
-    '-skip:Directory="\\umbraco\\Logs$"',
-    '-skip:Directory="\\umbraco\\mediacache$"',
-    '-skip:Directory="\\wwwroot\\media$"',
-    '-skip:Directory="\\logs$"',
-    '-skip:File="\\appsettings\.[^\\]+\.local\.json$"'
-) + $tilesSkip + $common)
+    if (Test-Path $out) { Remove-Item $out -Recurse -Force }
+    $publishArgs = @('publish', $web, '-c', 'Release', '-o', $out, '-p:EnvironmentName=Staging')
+    if ($SelfContained) { $publishArgs += @('-r', 'win-x64', '--self-contained') }
+    dotnet @publishArgs
+    if ($LASTEXITCODE) { throw 'dotnet publish failed' }
+    # Umbraco creates umbraco/ on the server at runtime; keep it in the source so the sync doesn't try to delete it
+    New-Item -ItemType Directory -Force (Join-Path $out 'umbraco') | Out-Null
+
+    # --- deploy code -------------------------------------------------------------------------------------------
+    # map tiles are built separately (npm run tiles); without them, keep the server's copy instead of deleting it
+    $tilesSkip = @()
+    if (-not (Test-Path (Join-Path $out 'wwwroot\tiles\ehc-region.pmtiles'))) {
+        Write-Warning 'No map tiles in this build: the tiles on the server are left as they are.'
+        $tilesSkip = @('-skip:Directory="\\wwwroot\\tiles$"')
+    }
+
+    Write-Host "Deploying code to $site on $server ..."
+    Invoke-MsDeploy (@(
+        '-verb:sync',
+        "-source:contentPath=`"$out`"",
+        "-dest:contentPath=`"$site`",$dest",
+        '-skip:Directory="\\umbraco\\Data$"',
+        '-skip:Directory="\\umbraco\\Logs$"',
+        '-skip:Directory="\\umbraco\\mediacache$"',
+        '-skip:Directory="\\wwwroot\\media$"',
+        '-skip:Directory="\\logs$"',
+        '-skip:File="\\appsettings\.[^\\]+\.local\.json$"'
+    ) + $tilesSkip + $common)
+}
 
 if ($Settings) {
     $file = Join-Path $web 'appsettings.Staging.local.json'
@@ -112,18 +123,24 @@ if ($Settings) {
     Write-Host 'Uploading server settings ...'
     Invoke-MsDeploy (@(
         '-verb:sync',
-        "-source:filePath=`"$file`"",
-        "-dest:filePath=`"$site/appsettings.Staging.local.json`",$dest"
+        "-source:contentPath=`"$file`"",
+        "-dest:contentPath=`"$site/appsettings.Staging.local.json`",$dest"
     ) + $common)
 }
 
 if ($SeedData) {
     $answer = Read-Host 'This REPLACES the database and media on the server with your local copies. Type YES to continue'
     if ($answer -cne 'YES') { throw 'Cancelled.' }
-    Write-Host 'Stop the local site first so the SQLite database is complete on disk.'
+    if ($DataFrom) {
+        # msdeploy reads a relative contentPath as an IIS site name: always pass a full path
+        $DataFrom = (Resolve-Path $DataFrom).Path
+    } else {
+        $DataFrom = Join-Path $web 'umbraco\Data'
+        Write-Host 'Stop the local site first so the SQLite database is complete on disk.'
+    }
     Invoke-MsDeploy (@(
         '-verb:sync',
-        "-source:contentPath=`"$(Join-Path $web 'umbraco\Data')`"",
+        "-source:contentPath=`"$DataFrom`"",
         "-dest:contentPath=`"$site/umbraco/Data`",$dest",
         '-skip:Directory="\\TEMP$"'
     ) + $common)
@@ -135,6 +152,18 @@ if ($SeedData) {
             "-dest:contentPath=`"$site/wwwroot/media`",$dest"
         ) + $common)
     }
+}
+
+if ($Media -and -not $SeedData) {
+    $media = Join-Path $web 'wwwroot\media'
+    if (-not (Test-Path $media)) { throw "No local media folder: $media" }
+    Write-Host 'Uploading new and changed media files (nothing is deleted on the server) ...'
+    Invoke-MsDeploy (@(
+        '-verb:sync',
+        "-source:contentPath=`"$media`"",
+        "-dest:contentPath=`"$site/wwwroot/media`",$dest",
+        '-enableRule:DoNotDeleteRule'
+    ) + $retry)
 }
 
 Write-Host 'Done.'

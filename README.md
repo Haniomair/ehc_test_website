@@ -68,6 +68,13 @@ Later deploys: `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.p
 logs and settings file are skipped, so content edited on the test server is kept. `-WhatIf` lists the changes
 without making them. After `-SeedData`, content on the server is replaced by the local copy.
 
+Moving content from a local machine to the test server without replacing it:
+1. Content: deploy as usual (the `src/EHC.Web/uSync/Content` files are part of the site), then on the test server open
+   Settings > uSync and import Content. Pages that exist only on the server are kept.
+2. Media files (uSync carries the media items, not the files):
+   `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1 -NoCode -Media` uploads new and changed files
+   in `wwwroot/media` and never deletes files on the server. `-NoCode` skips the build and code deploy.
+
 ### Continuous deployment
 Branches: work on `develop`, open a pull request `develop` -> `test`; merging it deploys to the test server.
 `main` is kept for production. `.github/workflows/ci-deploy.yml` builds and tests every pull request to `test` or
@@ -77,8 +84,17 @@ Settings > Environments > `staging`:
   `EHC_DEPLOY_SELF_CONTAINED` / `EHC_DEPLOY_ALLOW_UNTRUSTED` set to `true`;
 - secret `EHC_DEPLOY_PASSWORD`.
 
+On every start (so after every deploy) the server imports the schema from `src/EHC.Web/uSync` (document, element
+and data types, templates, languages); content is not imported. Make schema changes locally, not on the test server:
+they are replaced by the repository version on the next deploy.
+
 The pipeline deploys code only. The server settings file and the first `-SeedData` upload are done from a local
 machine, as above.
+
+Web application firewall (ModSecurity, OWASP CRS): the backoffice login and API trip a few generic rules. Switch off
+rule IDs `920230` (multiple URL encoding, login ReturnUrl), `942430` (SQL special characters, same URL) and `911100`
+(HTTP method policy, blocks DELETE). If the backoffice shows an IIS "403 - Forbidden" page, look up the rule ID in the
+ModSecurity log and add it.
 
 If the site shows HTTP 500.3x, set `stdoutLogEnabled="true"` in the server's `web.config` and read `logs/stdout*`;
 Umbraco's own log is in `umbraco/Logs`.

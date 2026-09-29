@@ -53,10 +53,10 @@
             @if (fSpec is not null || fFac is not null || fLang is not null) { <a href="@req.Path" class="btn btn-ghost !py-2.5">@Umbraco.GetDictionaryValue("EHC.Common.Clear")</a> }
         </div>
     </form>
-    <p class="mb-5 text-sm text-slate-500" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
+    <p class="mb-5 text-sm text-slate-500 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
     @if (list.Count == 0)
     {
-        <p class="card p-10 text-center text-slate-500">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+        <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
     }
     else
     {

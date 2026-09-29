@@ -1,4 +1,2 @@
-@* Leaflet + the map component. Include once on pages/blocks that render a [data-map] element. *@
-<link rel="stylesheet" href="~/assets/vendor/leaflet/leaflet.css" asp-append-version="true">
-<script src="~/assets/vendor/leaflet/leaflet.js" asp-append-version="true" defer></script>
-<script src="~/assets/js/components/map.js" asp-append-version="true" defer></script>
+@* Map component. It loads Leaflet (/assets/vendor/leaflet) itself, only when a [data-map] element comes near the viewport. *@
+<script src="~/assets/js/components/map.js" asp-append-version="true" defer data-leaflet-js="@Url.Content("~/assets/vendor/leaflet/leaflet.js")" data-leaflet-css="@Url.Content("~/assets/vendor/leaflet/leaflet.css")"></script>

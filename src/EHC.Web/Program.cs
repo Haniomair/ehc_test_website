@@ -1,5 +1,6 @@
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
 
 #if DEBUG
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
@@ -15,6 +16,11 @@ WebApplication app = builder.Build();
 
 
 await app.BootUmbracoAsync();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
 
 
 app.UseUmbraco()

@@ -30,11 +30,11 @@
         <dl class="card grid gap-4 p-6 text-sm">
             @if (!string.IsNullOrWhiteSpace(Model.Value<string>("address")) || !string.IsNullOrWhiteSpace(Model.Value<string>("city")))
             {
-                <div class="flex gap-3"><svg class="ico shrink-0 text-brand-500" aria-hidden="true"><use href="#i-pin" /></svg><div><dt class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Address")</dt><dd>@(Model.Value<string>("address"))@if (!string.IsNullOrWhiteSpace(Model.Value<string>("city"))) {<span class="block text-slate-500">@(Model.Value<string>("city"))</span>}</dd></div></div>
+                <div class="flex gap-3"><dt class="shrink-0"><svg class="ico text-brand-500" aria-hidden="true"><use href="#i-pin" /></svg><span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Address")</span></dt><dd>@(Model.Value<string>("address"))@if (!string.IsNullOrWhiteSpace(Model.Value<string>("city"))) {<span class="block text-slate-500 dark:text-slate-400">@(Model.Value<string>("city"))</span>}</dd></div>
             }
             @if (!string.IsNullOrWhiteSpace(phone))
             {
-                <div class="flex gap-3"><svg class="ico shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone" /></svg><div><dt class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Phone")</dt><dd>@if (dial.Length > 2) {<a href="tel:@dial" class="font-semibold hover:underline" dir="ltr">@phone</a>} else {<span dir="ltr">@phone</span>}</dd></div></div>
+                <div class="flex gap-3"><dt class="shrink-0"><svg class="ico text-brand-500" aria-hidden="true"><use href="#i-phone" /></svg><span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Facility.Phone")</span></dt><dd>@if (dial.Length > 2) {<a href="tel:@dial" class="font-semibold hover:underline" dir="ltr">@phone</a>} else {<span dir="ltr">@phone</span>}</dd></div>
             }
         </dl>
         @if (hours.Count > 0)

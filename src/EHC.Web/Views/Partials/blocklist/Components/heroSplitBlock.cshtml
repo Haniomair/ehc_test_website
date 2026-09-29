@@ -42,7 +42,7 @@
                 {
                     <div class="absolute -bottom-5 start-6 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-soft dark:bg-night-950">
                         @if (!string.IsNullOrWhiteSpace(badgeIcon)) { <span class="grid h-10 w-10 place-items-center rounded-xl bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300"><svg class="ico" aria-hidden="true"><use href="#i-@badgeIcon" /></svg></span> }
-                        <div><b class="block text-deep-900 dark:text-white">@badgeTitle</b>@if (!string.IsNullOrWhiteSpace(c.Value<string>("badgeSubtitle"))) {<span class="text-xs text-slate-500">@(c.Value<string>("badgeSubtitle"))</span>}</div>
+                        <div><b class="block text-deep-900 dark:text-white">@badgeTitle</b>@if (!string.IsNullOrWhiteSpace(c.Value<string>("badgeSubtitle"))) {<span class="text-xs text-slate-500 dark:text-slate-400">@(c.Value<string>("badgeSubtitle"))</span>}</div>
                     </div>
                 }
             </div>

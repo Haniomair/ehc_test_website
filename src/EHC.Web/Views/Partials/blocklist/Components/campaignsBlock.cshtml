@@ -17,7 +17,7 @@
         ? c.Value<BlockListModel>("calendarItems")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? []
         : [];
     if (campaigns.Count == 0 && calendar.Count == 0) { return; }
-    string Tone(string? key) => key switch { "highlight" => "text-highlight-500", "support" => "text-support-500", "accent" => "text-accent-500", _ => "text-brand-500" };
+    string Tone(string? key) => key switch { "highlight" => "text-highlight-800 dark:text-highlight-500", "support" => "text-support-800 dark:text-support-300", "accent" => "text-deep-900 dark:text-accent-400", _ => "text-brand-600 dark:text-brand-300" };
     string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
 }
 <div class="wrap">

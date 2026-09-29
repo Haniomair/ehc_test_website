@@ -22,14 +22,14 @@
 <div class="bg-soft dark:bg-night-900/60">
     <div class="wrap py-10 lg:py-14">
         <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-8 text-sm">
-            <ol class="flex flex-wrap items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <ol class="flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-400">
                 @foreach (var a in crumbs) { <li class="flex items-center gap-1.5"><a href="@a.Url()" class="hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li> }
                 <li aria-current="page" class="font-semibold text-deep-900 dark:text-white">@name</li>
             </ol>
         </nav>
         <div class="grid items-center gap-8 md:grid-cols-[260px_1fr]">
             <div class="aspect-square overflow-hidden rounded-[28px] bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">
-                @if (photo is not null) { <img src="@photo.GetCropUrl(520, 520)" alt="@name" class="h-full w-full object-cover"> }
+                @if (photo is not null) { <img src="@photo.GetCropUrl(520, 520, furtherOptions: "format=webp&quality=80")" alt="@name" class="h-full w-full object-cover"> }
                 else { <span class="grid h-full place-items-center text-7xl font-bold text-brand-300" aria-hidden="true">@name.Trim().FirstOrDefault()</span> }
             </div>
             <div>

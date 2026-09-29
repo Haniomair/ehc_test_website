@@ -13,6 +13,7 @@ const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
 const checks = [
   ['white on brand-600 (primary button)', t => ['#FFFFFF', t['brand-600']], 4.5],
   ['brand-600 on white (links, icons)', t => [t['brand-600'], '#FFFFFF'], 4.5],
+  ['brand-700 on soft (links, eyebrows on light bands)', t => [t['brand-700'], t['soft']], 4.5],
   ['deep-900 on soft (headings)', t => [t['deep-900'], t['soft']], 7],
   ['brand-300 on deep-900 (hero highlight)', t => [t['brand-300'], t['deep-900']], 4.5],
   ['on-deep on deep-900 (muted text on dark)', t => [t['on-deep'], t['deep-900']], 4.5],

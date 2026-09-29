@@ -12,10 +12,10 @@
     // allow-list: editor picks a colour key, never a class
     (string Card, string Button, string Dot, string When) Palette(string? key) => key switch
     {
-        "highlight" => ("from-highlight-500 to-highlight-800", "text-highlight-800", "bg-highlight-500", "text-highlight-500"),
-        "accent" => ("from-accent-400 to-accent-500", "text-deep-900", "bg-accent-400", "text-accent-500"),
-        "support" => ("from-support-500 to-support-900", "text-support-900", "bg-support-500", "text-support-500 dark:text-support-300"),
-        _ => ("from-brand-500 to-deep-900", "text-deep-900", "bg-brand-500", "text-brand-500 dark:text-brand-300"),
+        "highlight" => ("from-highlight-500 to-highlight-800", "text-highlight-800", "bg-highlight-500", "text-highlight-800 dark:text-highlight-500"),
+        "accent" => ("from-accent-400 to-accent-500", "text-deep-900", "bg-accent-400", "text-deep-900 dark:text-accent-400"),
+        "support" => ("from-support-500 to-support-900", "text-support-900", "bg-support-500", "text-support-800 dark:text-support-300"),
+        _ => ("from-brand-500 to-deep-900", "text-deep-900", "bg-brand-500", "text-brand-600 dark:text-brand-300"),
     };
     var disclaimer = c.Value<string>("disclaimer");
 }
@@ -64,6 +64,6 @@
             }
         </div>
     }
-    @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="mt-5 text-[.75rem] text-slate-500">@disclaimer</p> }
+    @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="mt-5 text-[.75rem] text-slate-500 dark:text-slate-400">@disclaimer</p> }
 </div>
 <script src="~/assets/js/components/tabs.js" asp-append-version="true" defer></script>

@@ -14,7 +14,7 @@
     <div class="relative aspect-[4/3.6] overflow-hidden bg-linear-to-br from-brand-100 to-brand-50 dark:from-deep-800 dark:to-deep-900">
         @if (photo is not null)
         {
-            <img src="@photo.GetCropUrl(600, 540)" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
+            <img src="@photo.GetCropUrl(600, 540, furtherOptions: "format=webp&quality=80")" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
         }
         else
         {

@@ -19,7 +19,7 @@
   function draw(el, points) {
     var L = window.L;
     var map = L.map(el, { scrollWheelZoom: false, zoomControl: true });
-    L.tileLayer(TILES, { maxZoom: 18, attribution: ATTRIBUTION }).addTo(map);
+    L.tileLayer(TILES, { maxZoom: 18, detectRetina: true, attribution: ATTRIBUTION }).addTo(map);
     var bounds = [], markers = [];
     points.forEach(function (p) {
       var lat = +p.lat, lng = +p.lng;
@@ -69,6 +69,31 @@
     el.__map = draw(el, points);
   }
 
-  function all() { [].forEach.call(document.querySelectorAll('[data-map]'), init); }
+  // Leaflet is only downloaded when a map is about to be seen (keeps it off the critical path)
+  var me = document.currentScript;
+  var jsUrl = (me && me.getAttribute('data-leaflet-js')) || '/assets/vendor/leaflet/leaflet.js';
+  var cssUrl = (me && me.getAttribute('data-leaflet-css')) || '/assets/vendor/leaflet/leaflet.css';
+  var loading = null;
+  function leaflet() {
+    if (window.L) return Promise.resolve();
+    if (loading) return loading;
+    loading = new Promise(function (resolve, reject) {
+      if (!document.querySelector('link[data-leaflet]')) {
+        var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = cssUrl; l.setAttribute('data-leaflet', ''); document.head.appendChild(l);
+      }
+      var s = document.createElement('script'); s.src = jsUrl; s.onload = function () { resolve(); }; s.onerror = reject; document.head.appendChild(s);
+    });
+    return loading;
+  }
+  function start(el) { leaflet().then(function () { init(el); }).catch(function () { /* list stays usable without the map */ }); }
+  function all() {
+    var maps = [].slice.call(document.querySelectorAll('[data-map]:not([data-map-ready])'));
+    if (!maps.length) return;
+    if (!('IntersectionObserver' in window)) { maps.forEach(start); return; }
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); start(e.target); } });
+    }, { rootMargin: '400px 0px' });
+    maps.forEach(function (m) { io.observe(m); });
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', all); else all();
 })();

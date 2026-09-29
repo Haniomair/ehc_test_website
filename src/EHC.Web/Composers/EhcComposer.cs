@@ -36,6 +36,7 @@ public sealed class EhcComposer : IComposer
         });
 
         EHC.Web.Api.ApiSetup.Add(builder);
+        Performance.Add(builder);
         builder.Services.AddScoped<IThemeResolver, ThemeResolver>();
         builder.Services.AddScoped<ISiteContext, SiteContext>();
         builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, LanguageSeeder>();
@@ -46,6 +47,11 @@ public sealed class EhcComposer : IComposer
         {
             PrePipeline = app => app.Use(async (context, next) =>
             {
+                // Umbraco creates no request context for file-like paths (.xml); the sitemap needs one to build URLs
+                if (context.Request.Path.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Request.Path = EHC.Web.Api.SeoController.SitemapPath;
+                }
                 if (context.Request.Path == "/" && (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method)))
                 {
                     context.Response.Redirect("/ar/" + context.Request.QueryString, permanent: false);
@@ -55,6 +61,10 @@ public sealed class EhcComposer : IComposer
             }),
         }));
 
-        // Phase 5: builder.Services.AddHttpClient<IErWaitTimeProvider, ...>();
+        // security headers + CSP (public site; the backoffice keeps its own policy)
+        builder.Services.Configure<UmbracoPipelineOptions>(o => o.AddFilter(new UmbracoPipelineFilter("EhcSecurityHeaders")
+        {
+            PrePipeline = SecurityHeaders.Use,
+        }));
     }
 }

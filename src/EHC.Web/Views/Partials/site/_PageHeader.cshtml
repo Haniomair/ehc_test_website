@@ -19,7 +19,7 @@
         @if (crumbs.Count > 0)
         {
             <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-6 text-sm">
-                <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-500 dark:text-slate-400")">
+                <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-600 dark:text-slate-400")">
                     @foreach (var a in crumbs)
                     {
                         <li class="flex items-center gap-1.5"><a href="@a.Url()" class="hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>

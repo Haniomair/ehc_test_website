@@ -7,9 +7,22 @@
     Layout = null;
     var site = Site.Get(Model);                           // culture comes from the hostname (/ar, /en)
     var theme = site.Theme;
+    var siteName = Umbraco.GetDictionaryValue("EHC.Common.SiteName");
+    if (string.IsNullOrWhiteSpace(siteName)) { siteName = "EHC"; }
     var metaTitle = Model.Value<string>("metaTitle");
-    if (string.IsNullOrWhiteSpace(metaTitle)) { metaTitle = Model.Name; }
+    if (string.IsNullOrWhiteSpace(metaTitle))
+    {
+        var pageTitle = Model.Value<string>("pageTitle");
+        metaTitle = Model.ContentType.Alias == "home" ? siteName : $"{(string.IsNullOrWhiteSpace(pageTitle) ? Model.Name : pageTitle)} | {siteName}";
+    }
     var metaDescription = Model.Value<string>("metaDescription");
+    if (string.IsNullOrWhiteSpace(metaDescription)) { metaDescription = Model.Value<string>("intro"); }
+    if (string.IsNullOrWhiteSpace(metaDescription)) { metaDescription = Umbraco.GetDictionaryValue("EHC.Common.SiteDescription"); }
+    var canonical = site.Alternates.FirstOrDefault(a => a.Culture == site.Culture.Name)?.Url ?? Model.Url(mode: global::Umbraco.Cms.Core.Models.PublishedContent.UrlMode.Absolute);
+    var origin = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var ogImage = Model.Value<global::Umbraco.Cms.Core.Models.MediaWithCrops>("ogImage")?.GetCropUrl(1200, 630) ?? site.LogoUrl;
+    if (ogImage.StartsWith('/')) { ogImage = origin + ogImage; }
+    var arabic = site.Alternates.FirstOrDefault(a => a.Language == "ar");
 }
 <!DOCTYPE html>
 @* Razor drops a null style attribute; data-theme goes through HtmlAttributes.Data (Razor keeps empty data-* attributes). Keep it last: attributes after a C# expression are no longer dropped. *@
@@ -26,10 +39,21 @@
     {
         <meta name="robots" content="noindex">
     }
+    <link rel="canonical" href="@canonical">
     @foreach (var alt in site.Alternates)
     {
         <link rel="alternate" hreflang="@alt.Language" href="@alt.Url">
     }
+    @if (arabic is not null) { <link rel="alternate" hreflang="x-default" href="@arabic.Url"> }
+    <meta property="og:site_name" content="@siteName">
+    <meta property="og:type" content="@(Model.ContentType.Alias == "newsItem" ? "article" : "website")">
+    <meta property="og:title" content="@metaTitle">
+    @if (!string.IsNullOrWhiteSpace(metaDescription)) { <meta property="og:description" content="@metaDescription"> }
+    <meta property="og:url" content="@canonical">
+    <meta property="og:image" content="@ogImage">
+    <meta property="og:locale" content="@site.Culture.Name.Replace('-', '_')">
+    @foreach (var alt in site.Alternates.Where(a => a.Culture != site.Culture.Name)) { <meta property="og:locale:alternate" content="@alt.Culture.Replace('-', '_')"> }
+    <meta name="twitter:card" content="summary_large_image">
     <script src="~/assets/js/theme-init.js" asp-append-version="true"></script>  @* sets .dark before paint; no inline script (CSP) *@
     <link rel="preload" href="~/assets/fonts/cairo-arabic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="~/assets/css/ehc.css" asp-append-version="true">

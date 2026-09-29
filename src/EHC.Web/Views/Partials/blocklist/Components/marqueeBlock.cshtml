@@ -15,7 +15,8 @@
         {
             for (var i = 0; i < words.Count; i++)
             {
-                <span class="inline-flex items-center gap-12 @(i % 3 == 0 ? "text-brand-500 dark:text-brand-300" : "text-stroke")">@words[i]<span class="text-[.6em] text-brand-500">✦</span></span>
+                @* purely decorative (the whole ticker is aria-hidden): words are drawn by CSS so they are not treated as page text *@
+                <span class="inline-flex items-center gap-12"><span class="marquee-word @(i % 3 == 0 ? "text-brand-500 dark:text-brand-300" : "text-stroke")" data-word="@words[i]"></span><span class="marquee-word text-[.6em] text-brand-500" data-word="✦"></span></span>
             }
         }
     </div>

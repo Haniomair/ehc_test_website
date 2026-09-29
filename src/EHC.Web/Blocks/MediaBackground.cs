@@ -55,13 +55,13 @@ public sealed record MediaBackground(
         if (videoType is null) videoUrl = null;
 
         return new MediaBackground(
-            image?.GetCropUrl("desktop") ?? image?.Url(),
-            image?.GetCropUrl("mobile") ?? image?.Url(),
-            image?.GetCropUrl(1200, 1020) ?? image?.Url(),
+            Crop(image, "desktop"),
+            Crop(image, "mobile"),
+            image?.GetCropUrl(1200, 1020, furtherOptions: Webp) ?? image?.Url(),
             e.Value<string>("imageAlt")?.Trim() ?? "",
             videoUrl,
             videoType,
-            poster?.GetCropUrl(1920, 1080) ?? poster?.Url(),
+            poster?.GetCropUrl(1920, 1080, furtherOptions: Webp) ?? poster?.Url(),
             overlay,
             strength,
             FocalOf(image),
@@ -70,8 +70,8 @@ public sealed record MediaBackground(
 
     /// <summary>Inner-page header image (pageHeaderComposition): theme tint, medium, decorative (the h1 carries the meaning).</summary>
     public static MediaBackground ForHeader(MediaWithCrops? image) => new(
-        image?.GetCropUrl("desktop") ?? image?.Url(),
-        image?.GetCropUrl("mobile") ?? image?.Url(),
+        Crop(image, "desktop"),
+        Crop(image, "mobile"),
         image?.Url(),
         "",
         null,
@@ -81,6 +81,11 @@ public sealed record MediaBackground(
         "medium",
         FocalOf(image),
         false);
+
+    private const string Webp = "format=webp&quality=80";
+
+    private static string? Crop(MediaWithCrops? image, string alias) =>
+        image is null ? null : image.GetCropUrl(cropAlias: alias, useCropDimensions: true, furtherOptions: Webp) ?? image.Url();
 
     private static string FocalOf(MediaWithCrops? image)
     {

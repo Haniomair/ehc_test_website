@@ -44,7 +44,7 @@
                     if (visible) { shown++; }
                     <div class="@(visible ? "" : "hidden")" data-type="@(f.Value<string>("facilityType"))" data-er="@(f.Value<bool>("hasEmergency") ? "1" : "0")" data-lat="@(f.Value<decimal?>("latitude")?.ToString(System.Globalization.CultureInfo.InvariantCulture))" data-lng="@(f.Value<decimal?>("longitude")?.ToString(System.Globalization.CultureInfo.InvariantCulture))">
                         @await Html.PartialAsync("cards/_FacilityCard", f)
-                        <span class="hidden px-5 pt-1 text-xs text-slate-500" data-finder-distance></span>
+                        <span class="hidden px-5 pt-1 text-xs text-slate-500 dark:text-slate-400" data-finder-distance></span>
                     </div>
                 }
             </div>

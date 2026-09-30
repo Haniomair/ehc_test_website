@@ -27,6 +27,12 @@
      on a descendant lets auto-dark back in for that subtree. */
   html:not(.dark) { color-scheme: only light; }
   html.dark { color-scheme: dark; }
+  /* Samsung Internet ignores the above and force-darkens any site whose CSS has no prefers-color-scheme query:
+     this query is how it detects that the site has its own dark theme. Keep it. */
+  @media (prefers-color-scheme: dark) {
+    html:not(.dark) { color-scheme: only light; }
+    html.dark { color-scheme: dark; }
+  }
   /* sand ring + dark inner halo: at least 3:1 against light and dark surfaces (WCAG 1.4.11) */
   :focus-visible { outline: 3px solid var(--accent-400); outline-offset: 2px; border-radius: 6px; box-shadow: 0 0 0 2px var(--deep-950); }
   /* sliders: the track is thin, the control keeps a 24px target */
@@ -131,6 +137,9 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
    Tiles are greyscale and partly transparent over a theme colour: a calm, tinted map that follows the active theme
    and lets the brand pins stand out. (Blend modes don't work here: Leaflet's transformed panes isolate the tiles.) */
 [data-map].leaflet-container { background: var(--brand-200); font: inherit; }
+/* touch screens: "use two fingers" hint over the map when one finger drags (components/map.js) */
+.ehc-map-hint { @apply pointer-events-none absolute inset-0 z-[1000] grid place-items-center bg-deep-950/55 p-6 text-center text-base font-semibold text-white opacity-0 transition-opacity duration-300; }
+.ehc-map-hint.is-on { opacity: 1; }
 [data-map] .leaflet-tile-pane { filter: grayscale(1) contrast(1.05) brightness(1.06); opacity: .82; }
 .dark [data-map].leaflet-container { background: var(--deep-700); }
 .dark [data-map] .leaflet-tile-pane { filter: grayscale(1) invert(1) contrast(.9) brightness(.85); opacity: .6; }

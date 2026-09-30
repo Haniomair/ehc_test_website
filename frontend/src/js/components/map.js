@@ -19,8 +19,11 @@
   var T = {
     zoomIn: attr('data-label-zoom-in', 'Zoom in'), zoomOut: attr('data-label-zoom-out', 'Zoom out'),
     showAll: attr('data-label-show-all', 'Show all'), details: attr('data-label-details', 'Details'),
-    directions: attr('data-label-directions', 'Directions')
+    directions: attr('data-label-directions', 'Directions'),
+    twoFingers: attr('data-label-two-fingers', 'Use two fingers to move the map')
   };
+  // touch screens: one finger scrolls the page, two fingers move / zoom the map (pinch also pans in Leaflet)
+  var touchOnly = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(hover: hover)').matches);
   var rtl = document.documentElement.dir === 'rtl';
 
   function svgIcon(name, cls) {
@@ -66,9 +69,27 @@
     for (var i = (rules || []).length - 1; i >= 0; i--) if (rules[i].dataLayer === 'water') rules.splice(i, 1);
   }
 
+  // shown briefly when a single finger drags across the map (the page scrolls instead)
+  function twoFingerHint(el) {
+    var hint = document.createElement('div'), timer = null, moved = false, x0 = 0, y0 = 0;
+    hint.className = 'ehc-map-hint'; hint.setAttribute('aria-hidden', 'true'); hint.textContent = T.twoFingers;
+    el.appendChild(hint);
+    el.addEventListener('touchstart', function (e) {
+      moved = false; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+      if (e.touches.length > 1) { clearTimeout(timer); hint.classList.remove('is-on'); }
+    }, { passive: true });
+    el.addEventListener('touchmove', function (e) {
+      if (moved || e.touches.length !== 1 || Math.abs(e.touches[0].clientX - x0) + Math.abs(e.touches[0].clientY - y0) < 12) return;
+      moved = true;
+      hint.classList.add('is-on');
+      clearTimeout(timer); timer = setTimeout(function () { hint.classList.remove('is-on'); }, 1500);
+    }, { passive: true });
+  }
+
   function draw(el, points) {
     var L = window.L;
-    var map = L.map(el, { scrollWheelZoom: false, zoomControl: false, maxZoom: 18 });
+    var map = L.map(el, { scrollWheelZoom: false, zoomControl: false, maxZoom: 18, dragging: !touchOnly });
+    if (touchOnly) twoFingerHint(el);
     var tiles = attr('data-tiles', '');
     if (tiles && window.protomapsL) {
       // one light style; dark mode recolours it in CSS, so switching theme needs no reload

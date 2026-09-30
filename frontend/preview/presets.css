@@ -44,7 +44,7 @@
   --highlight-500: #C2569B; --highlight-800: #6E2358;
   --soft: #F3FAF9;       --on-deep: #BFE6E3;
   --hero-0-glow: #EFBF45; --hero-0-from: #062629; --hero-0-via: #0E464C; --hero-0-to: #0B7A77;
-  --pattern-image: url('../dist/img/motifs/eid.svg');
+  --pattern-image: url('../dist/img/motifs/eid-fitr.svg');
 }
 
 /* ---------- Eid al-Adha — warmth & generosity: deep crimson, cream & gold ---------- */
@@ -56,10 +56,10 @@
   --accent-400: #D9A843; --accent-500: #C29030;
   --soft: #FBF5F1;       --on-deep: #EBC9CF;
   --hero-0-glow: #D9A843; --hero-0-from: #220A10; --hero-0-via: #46141E; --hero-0-to: #8E2A3B;
-  --pattern-image: url('../dist/img/motifs/eid.svg');
+  --pattern-image: url('../dist/img/motifs/eid-adha.svg');
 }
 
-/* ---------- Hajj season — ihram white, kiswa black, earth & gold, geometric rosette ---------- */
+/* ---------- Hajj season — ihram white, kiswa black, earth & gold, Kaaba and tawaf ---------- */
 [data-theme="hajj"] {
   --brand-50:  #F7F1E6;  --brand-100: #EEE2CB;  --brand-200: #DDC59A;  --brand-300: #E8D3A2;
   --brand-400: #9C7634;  --brand-500: #7A5A24;  --brand-600: #664B1D;  --brand-700: #523C17;

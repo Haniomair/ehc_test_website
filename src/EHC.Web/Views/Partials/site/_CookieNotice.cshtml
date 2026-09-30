@@ -1,0 +1,28 @@
+@* Cookie notice. Hidden until site.js finds no stored choice ("ehc-consent"); reopened from the footer ("Cookie settings").
+   Not a modal: the page stays usable. The choice is exposed as html[data-consent="all|essential"] and an "ehc:consent"
+   event, so any optional script (analytics) added later must wait for "all". Both choices get equal weight on purpose. *@
+@using EHC.Web.Site
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Cookies." + k) ?? "";
+    var privacy = Model.PrivacyLink;
+}
+<section id="consent" class="consent hidden" aria-labelledby="consent-title" data-consent-notice>
+    <div class="flex items-start gap-3">
+        <span class="mega-ic !h-10 !w-10 shrink-0" aria-hidden="true"><svg class="ico"><use href="#i-cookie" /></svg></span>
+        <div class="min-w-0">
+            <h2 id="consent-title" class="text-[.95rem] font-bold text-deep-900 dark:text-white">@D("Title")</h2>
+            <p class="mt-1 text-[.8rem] leading-relaxed text-slate-600 dark:text-slate-300">
+                @D("Text")
+                @if (!string.IsNullOrWhiteSpace(privacy?.Url))
+                {
+                    <a href="@privacy.Url" target="@privacy.Target" class="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-600 dark:text-brand-300">@D("Privacy")</a>
+                }
+            </p>
+        </div>
+    </div>
+    <div class="mt-3.5 grid grid-cols-2 gap-2">
+        <button type="button" data-action="consent" data-choice="essential" class="btn btn-primary btn-sm">@D("EssentialOnly")</button>
+        <button type="button" data-action="consent" data-choice="all" class="btn btn-primary btn-sm">@D("AcceptAll")</button>
+    </div>
+</section>

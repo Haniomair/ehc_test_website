@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#5B6B80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Eid al-Fitr: fireworks over a crescent, hanging stars -->
+  <g>
+    <path d="M140.0 70.0L168.0 70.0"/>
+    <circle cx="176.0" cy="70.0" r="2.6" fill="#5B6B80"/>
+    <path d="M138.8 76.1L164.7 86.8"/>
+    <circle cx="172.0" cy="89.9" r="2.6" fill="#5B6B80"/>
+    <path d="M135.3 81.3L155.1 101.1"/>
+    <circle cx="160.8" cy="106.8" r="2.6" fill="#5B6B80"/>
+    <path d="M130.1 84.8L140.8 110.7"/>
+    <circle cx="143.9" cy="118.0" r="2.6" fill="#5B6B80"/>
+    <path d="M124.0 86.0L124.0 114.0"/>
+    <circle cx="124.0" cy="122.0" r="2.6" fill="#5B6B80"/>
+    <path d="M117.9 84.8L107.2 110.7"/>
+    <circle cx="104.1" cy="118.0" r="2.6" fill="#5B6B80"/>
+    <path d="M112.7 81.3L92.9 101.1"/>
+    <circle cx="87.2" cy="106.8" r="2.6" fill="#5B6B80"/>
+    <path d="M109.2 76.1L83.3 86.8"/>
+    <circle cx="76.0" cy="89.9" r="2.6" fill="#5B6B80"/>
+    <path d="M108.0 70.0L80.0 70.0"/>
+    <circle cx="72.0" cy="70.0" r="2.6" fill="#5B6B80"/>
+    <path d="M109.2 63.9L83.3 53.2"/>
+    <circle cx="76.0" cy="50.1" r="2.6" fill="#5B6B80"/>
+    <path d="M112.7 58.7L92.9 38.9"/>
+    <circle cx="87.2" cy="33.2" r="2.6" fill="#5B6B80"/>
+    <path d="M117.9 55.2L107.2 29.3"/>
+    <circle cx="104.1" cy="22.0" r="2.6" fill="#5B6B80"/>
+    <path d="M124.0 54.0L124.0 26.0"/>
+    <circle cx="124.0" cy="18.0" r="2.6" fill="#5B6B80"/>
+    <path d="M130.1 55.2L140.8 29.3"/>
+    <circle cx="143.9" cy="22.0" r="2.6" fill="#5B6B80"/>
+    <path d="M135.3 58.7L155.1 38.9"/>
+    <circle cx="160.8" cy="33.2" r="2.6" fill="#5B6B80"/>
+    <path d="M138.8 63.9L164.7 53.2"/>
+    <circle cx="172.0" cy="50.1" r="2.6" fill="#5B6B80"/>
+  </g>
+  <circle cx="124" cy="70" r="6" fill="#5B6B80" fill-opacity=".25"/>
+  <g stroke-width="2.5">
+    <path d="M53.6 54.4L67.0 58.5"/>
+    <circle cx="71.8" cy="60.0" r="2" fill="#5B6B80"/>
+    <path d="M50.8 58.4L59.2 69.6"/>
+    <circle cx="62.2" cy="73.6" r="2" fill="#5B6B80"/>
+    <path d="M46.1 60.0L46.3 74.0"/>
+    <circle cx="46.4" cy="79.0" r="2" fill="#5B6B80"/>
+    <path d="M41.4 58.5L33.3 70.0"/>
+    <circle cx="30.4" cy="74.1" r="2" fill="#5B6B80"/>
+    <path d="M38.4 54.6L25.2 59.1"/>
+    <circle cx="20.4" cy="60.7" r="2" fill="#5B6B80"/>
+    <path d="M38.4 49.6L25.0 45.5"/>
+    <circle cx="20.2" cy="44.0" r="2" fill="#5B6B80"/>
+    <path d="M41.2 45.6L32.8 34.4"/>
+    <circle cx="29.8" cy="30.4" r="2" fill="#5B6B80"/>
+    <path d="M45.9 44.0L45.7 30.0"/>
+    <circle cx="45.6" cy="25.0" r="2" fill="#5B6B80"/>
+    <path d="M50.6 45.5L58.7 34.0"/>
+    <circle cx="61.6" cy="29.9" r="2" fill="#5B6B80"/>
+    <path d="M53.6 49.4L66.8 44.9"/>
+    <circle cx="71.6" cy="43.3" r="2" fill="#5B6B80"/>
+  </g>
+  <g stroke-width="2.2">
+    <path d="M177.9 139.2L186.7 141.0"/>
+    <circle cx="190.6" cy="141.8" r="1.6" fill="#5B6B80"/>
+    <path d="M175.3 143.0L180.3 150.5"/>
+    <circle cx="182.5" cy="153.8" r="1.6" fill="#5B6B80"/>
+    <path d="M170.8 143.9L169.0 152.7"/>
+    <circle cx="168.2" cy="156.6" r="1.6" fill="#5B6B80"/>
+    <path d="M167.0 141.3L159.5 146.3"/>
+    <circle cx="156.2" cy="148.5" r="1.6" fill="#5B6B80"/>
+    <path d="M166.1 136.8L157.3 135.0"/>
+    <circle cx="153.4" cy="134.2" r="1.6" fill="#5B6B80"/>
+    <path d="M168.7 133.0L163.7 125.5"/>
+    <circle cx="161.5" cy="122.2" r="1.6" fill="#5B6B80"/>
+    <path d="M173.2 132.1L175.0 123.3"/>
+    <circle cx="175.8" cy="119.4" r="1.6" fill="#5B6B80"/>
+    <path d="M177.0 134.7L184.5 129.7"/>
+    <circle cx="187.8" cy="127.5" r="1.6" fill="#5B6B80"/>
+  </g>
+  <path d="M66 96a50 50 0 1 0 52 72a40 40 0 1 1-52-72z" fill="#5B6B80" fill-opacity=".14"/>
+  <path d="M40 0v18M150 0v6M184 0v30"/>
+  <path d="M40.0 18.0L42.6 24.4L49.5 24.9L44.2 29.4L45.9 36.1L40.0 32.4L34.1 36.1L35.8 29.4L30.5 24.9L37.4 24.4z" fill="#5B6B80" fill-opacity=".2"/>
+  <path d="M184.0 31.0L186.4 36.8L192.6 37.2L187.8 41.2L189.3 47.3L184.0 44.0L178.7 47.3L180.2 41.2L175.4 37.2L181.6 36.8z" fill="#5B6B80" fill-opacity=".2"/>
+  <circle cx="150" cy="12" r="5" fill="#5B6B80" fill-opacity=".2"/>
+  <path d="M150 138v6M147 141h6M26 118v8M22 122h8M100 186v7M96.5 189.5h7" stroke-width="2.2"/>
+</svg>

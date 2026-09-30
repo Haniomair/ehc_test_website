@@ -1,14 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#5B6B80" stroke-width="2.5" stroke-linejoin="round">
-  <!-- geometric rosette: 8-point star within interlaced octagons -->
-  <circle cx="100" cy="100" r="92"/>
-  <circle cx="100" cy="100" r="80" stroke-dasharray="2 6" stroke-linecap="round"/>
-  <g fill="#5B6B80" fill-opacity=".07">
-    <rect x="40" y="40" width="120" height="120"/>
-    <rect x="40" y="40" width="120" height="120" transform="rotate(45 100 100)"/>
-  </g>
-  <rect x="62" y="62" width="76" height="76"/>
-  <rect x="62" y="62" width="76" height="76" transform="rotate(45 100 100)"/>
-  <rect x="62" y="62" width="76" height="76" transform="rotate(22.5 100 100)"/>
-  <rect x="62" y="62" width="76" height="76" transform="rotate(67.5 100 100)"/>
-  <circle cx="100" cy="100" r="18" fill="#5B6B80" fill-opacity=".15"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#5B6B80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Hajj: the Kaaba with its band and door, the rings of tawaf, minarets -->
+  <path d="M20 150A80 22 0 0 1 50 132.8M150 132.8A80 22 0 0 1 180 150" stroke-dasharray="0 8"/>
+  <path d="M20 150A80 22 0 0 0 180 150" stroke-dasharray="0 8"/>
+  <path d="M4 152A96 32 0 0 1 50 124.7M150 124.7A96 32 0 0 1 196 152" stroke-dasharray="0 10"/>
+  <path d="M4 152A96 32 0 0 0 196 152" stroke-dasharray="0 10"/>
+  <path d="M100 52l50 16-50 16-50-16z" fill="#5B6B80" fill-opacity=".06"/>
+  <path d="M50 68l50 16v66l-50-16z" fill="#5B6B80" fill-opacity=".2"/>
+  <path d="M100 84l50-16v66l-50 16z" fill="#5B6B80" fill-opacity=".1"/>
+  <!-- hizam (gold band) -->
+  <path d="M50 80l50 16 50-16M50 90l50 16 50-16" stroke-width="2.4"/>
+  <path d="M50 80l50 16v10l-50-16zM100 96l50-16v10l-50 16z" fill="#5B6B80" fill-opacity=".25" stroke="none"/>
+  <path d="M58 86.5l4 1.3M68 89.7l4 1.3M78 92.9l4 1.3M88 96.1l4 1.3M108 99.4l4-1.3M118 96.2l4-1.3M128 93l4-1.3M138 89.8l4-1.3" stroke-width="1.6"/>
+  <!-- door -->
+  <path d="M114 116l14-4.5v24l-14 4.5z" fill="#5B6B80" fill-opacity=".25"/>
+  <path d="M12 120V48h8V120"/><path d="M9 48h14M10 66h12"/><path d="M13 48V36h6v12M13 36q3-8 3-14q0 6 3 14"/>
+  <path d="M180 120V48h8V120"/><path d="M177 48h14M178 66h12"/><path d="M181 48V36h6v12M181 36q3-8 3-14q0 6 3 14"/>
 </svg>

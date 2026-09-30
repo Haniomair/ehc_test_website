@@ -7,6 +7,9 @@ for (const d of ['fonts', 'img', 'js']) {
   mkdirSync(`${out}/${d}`, { recursive: true });
   cpSync(`src/${d}`, `${out}/${d}`, { recursive: true });
 }
+// plain stylesheets outside the Tailwind build
+mkdirSync(`${out}/css`, { recursive: true });
+cpSync('src/css/customizer-vt.css', `${out}/css/customizer-vt.css`);
 // third-party libraries served from our own origin (no CDN, CSP 'self')
 mkdirSync(`${out}/vendor/leaflet`, { recursive: true });
 for (const f of ['leaflet.js', 'leaflet.css', 'images']) {

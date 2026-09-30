@@ -41,17 +41,15 @@
         </div>
         <div class="mt-10 flex flex-wrap justify-between gap-4 border-t border-white/10 pt-5 text-[.8rem]">
             <span>@copyright</span>
-            @if (Model.UtilityLinks.Count > 0)
-            {
-                <span>
-                    @for (var i = 0; i < Model.UtilityLinks.Count; i++)
-                    {
-                        var l = Model.UtilityLinks[i];
-                        if (i > 0) { <text> · </text> }
-                        <a href="@l.Url" target="@l.Target" class="hover:text-white">@l.Name</a>
-                    }
-                </span>
-            }
+            <span>
+                @for (var i = 0; i < Model.UtilityLinks.Count; i++)
+                {
+                    var l = Model.UtilityLinks[i];
+                    <a href="@l.Url" target="@l.Target" class="hover:text-white">@l.Name</a>
+                    <text> · </text>
+                }
+                <button type="button" data-action="consent-open" aria-controls="consent" class="underline-offset-2 hover:text-white hover:underline">@Umbraco.GetDictionaryValue("EHC.Cookies.Settings")</button>
+            </span>
         </div>
     </div>
 </footer>

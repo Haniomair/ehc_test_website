@@ -28,6 +28,8 @@ public sealed record ResolvedTheme(
         {
             var parts = CssVariables.Select(kv => $"{kv.Key}:{kv.Value}").ToList();
             if (PatternCss is not null) parts.Add($"--pattern-image:{PatternCss}");
+            // only the EHC star turns; pictures (Kaaba, ram, crescent, uploads) stay upright
+            if (PatternCss is not null && PatternCss != ThemeResolver.StarPattern) parts.Add("--pattern-spin:none");
             return parts.Count == 0 ? null : string.Join(";", parts);
         }
     }
@@ -39,7 +41,8 @@ public interface IThemeResolver
 }
 
 /// <summary>
-/// Picks the theme for a request: a backoffice user's preview (ThemePreview), else the first live entry of the schedule
+/// Picks the theme for a request: a backoffice user's preview (ThemePreview), else a reviewer's look-customizer choice,
+/// else the first live entry of the schedule
 /// in Site settings, else the default theme. A theme's look is built from its colours by <see cref="Palette"/>
 /// (docs/04-theme-system.md); nothing comes from CSS presets.
 /// </summary>
@@ -64,9 +67,25 @@ public sealed partial class ThemeResolver(
     private static readonly Dictionary<string, string> Motifs = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Ramadan"] = "url('/assets/img/motifs/ramadan.svg')",
-        ["Eid"] = "url('/assets/img/motifs/eid.svg')",
+        ["Eid al-Fitr"] = "url('/assets/img/motifs/eid-fitr.svg')",
+        ["Eid al-Adha"] = "url('/assets/img/motifs/eid-adha.svg')",
+        ["Eid"] = "url('/assets/img/motifs/eid-fitr.svg')",   // value used before the two Eids had their own motif
         ["Hajj"] = "url('/assets/img/motifs/hajj.svg')",
         ["None"] = "none",
+    };
+
+    /// <summary>The default pattern (EHC star), as the customizer sets it explicitly.</summary>
+    public const string StarPattern = "url('/assets/img/mark.png')";
+
+    /// <summary>Motifs a reviewer can try in the look customizer (key → CSS), "star" being the EHC mark.</summary>
+    public static readonly IReadOnlyDictionary<string, string> CustomizerPatterns = new Dictionary<string, string>
+    {
+        ["star"] = StarPattern,
+        ["ramadan"] = Motifs["Ramadan"],
+        ["eid-fitr"] = Motifs["Eid al-Fitr"],
+        ["eid-adha"] = Motifs["Eid al-Adha"],
+        ["hajj"] = Motifs["Hajj"],
+        ["none"] = "none",
     };
 
     // themes change rarely: cache the built look per theme version and culture (ribbon text is per language)
@@ -74,7 +93,17 @@ public sealed partial class ThemeResolver(
 
     public ResolvedTheme Resolve(IPublishedContent current)
     {
+        var resolved = ResolveTheme(current);
+        // a reviewer's pattern choice in the look customizer replaces the theme's motif (allow-listed key)
+        return EHC.Web.Site.Customizer.Current(http.HttpContext)?.Pattern is { } key && CustomizerPatterns.TryGetValue(key, out var css)
+            ? resolved with { PatternCss = css }
+            : resolved;
+    }
+
+    private ResolvedTheme ResolveTheme(IPublishedContent current)
+    {
         if (PreviewTheme() is { } preview) return Build(preview, fallback, logger);
+        if (CustomizerTheme() is { } chosen) return Build(chosen, fallback, logger);
 
         var home = current.AncestorOrSelf("home") ?? current.Root();
         var settings = home?.Value<IPublishedContent>(fallback, "settings");
@@ -92,6 +121,15 @@ public sealed partial class ThemeResolver(
         if (http.HttpContext?.Items[ThemePreview.ItemKey] is not Guid key) return null;
         if (!umbraco.TryGetUmbracoContext(out var ctx) || ctx.Content is null) return null;
         var node = ctx.Content.GetById(true, key) ?? ctx.Content.GetById(key);
+        return node?.ContentType.Alias == "theme" ? node : null;
+    }
+
+    /// <summary>The published theme a reviewer picked in the look customizer (Site/Customizer.cs).</summary>
+    private IPublishedContent? CustomizerTheme()
+    {
+        if (EHC.Web.Site.Customizer.Current(http.HttpContext)?.Theme is not Guid key) return null;
+        if (!umbraco.TryGetUmbracoContext(out var ctx) || ctx.Content is null) return null;
+        var node = ctx.Content.GetById(key);
         return node?.ContentType.Alias == "theme" ? node : null;
     }
 

@@ -1,6 +1,9 @@
 /* Campaign hero ([data-hero]): tabbed slides with auto-rotation.
    - Tabs follow the WAI-ARIA tabs pattern (click, Arrow keys, Home/End).
-   - Auto-rotation has a visible pause button (WCAG 2.2.2), pauses on hover/focus, and is off under prefers-reduced-motion.
+   - Auto-rotation has a visible pause button (WCAG 2.2.2), waits while hovered or keyboard-focused, and is off under
+     prefers-reduced-motion. The active tab's progress bar is the clock: the next slide comes when its animation ends,
+     and holding pauses the bar itself (.is-held), so bar and slide can never disagree.
+   - Slides are stacked (.hero-slides); inactive ones get .slide-off, keeping the hero at the tallest slide's height.
    Safe to load more than once and with any number of heroes on the page. */
 (function () {
   'use strict';
@@ -15,7 +18,7 @@
     if (slides.length < 2 || tabs.length !== slides.length) return;
 
     var interval = parseInt(root.getAttribute('data-interval') || '7000', 10);
-    var cur = 0, timer = null, paused = reduce, hovering = false;
+    var cur = 0, paused = reduce || root.getAttribute('data-autoplay') === 'false', pointer = false, keyboard = false;
     root.style.setProperty('--hero-interval', interval + 'ms');
 
     function setBg(cls) {
@@ -23,13 +26,14 @@
       root.classList.remove('hero-bg-0', 'hero-bg-1', 'hero-bg-2');
       if (/^hero-bg-[012]$/.test(cls)) root.classList.add(cls);
     }
-    function schedule() {
-      clearTimeout(timer);
-      if (!paused && !hovering) timer = setTimeout(function () { go((cur + 1) % slides.length, false); }, interval);
-    }
+    function hold() { root.classList.toggle('is-held', pointer || keyboard); }
     function go(i, focus) {
+      var changed = i !== cur;
       cur = i;
-      slides.forEach(function (s, j) { s.classList.toggle('hidden', j !== i); });
+      slides.forEach(function (s, j) {
+        s.classList.toggle('slide-off', j !== i);
+        if (j === i && changed) { s.classList.remove('anim-fadeup'); void s.offsetWidth; s.classList.add('anim-fadeup'); }   // replay the entrance
+      });
       tabs.forEach(function (t, j) {
         var on = j === i;
         t.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -52,7 +56,6 @@
         if (/^(light|medium|strong)$/.test(st || '')) root.setAttribute('data-strength', st);
         if (/^[0-9.]+% [0-9.]+%$/.test(fo || '')) root.style.setProperty('--focal', fo);
       }
-      schedule();
     }
     function setPaused(p) {
       paused = p;
@@ -77,10 +80,17 @@
       });
     });
     if (pauseBtn) pauseBtn.addEventListener('click', function () { setPaused(!paused); });
-    root.addEventListener('mouseenter', function () { hovering = true; clearTimeout(timer); });
-    root.addEventListener('mouseleave', function () { hovering = false; schedule(); });
-    root.addEventListener('focusin', function () { hovering = true; clearTimeout(timer); });
-    root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) { hovering = false; schedule(); } });
+    // the active bar finished filling: next slide
+    root.addEventListener('animationend', function (e) {
+      if (paused || e.animationName !== 'ehc-prog' || !tabs[cur].contains(e.target)) return;
+      go((cur + 1) % slides.length, false);
+    });
+    // mouse only: a touch tap fires enter with no leave, which would stop rotation for good
+    root.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { pointer = true; hold(); } });
+    root.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { pointer = false; hold(); } });
+    // only keyboard focus holds: after a mouse click focus stays on the tab and would stop rotation for good
+    root.addEventListener('focusin', function (e) { keyboard = !!(e.target.matches && e.target.matches(':focus-visible')); hold(); });
+    root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) { keyboard = false; hold(); } });
 
     setPaused(paused);
   }

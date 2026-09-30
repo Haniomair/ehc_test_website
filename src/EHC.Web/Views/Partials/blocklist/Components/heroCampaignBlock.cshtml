@@ -8,11 +8,12 @@
     var c = Model.Content;
     var slides = c.Value<BlockListModel>("slides")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("title"))).ToList() ?? [];
     if (slides.Count == 0) { return; }
+    var custom = EHC.Web.Site.Customizer.Current(Context);   // a reviewer's look-customizer choices (allow-listed)
     var seconds = c.Value<int>("autoRotateSeconds");
     if (seconds is <= 0 or > 60) { seconds = 7; }
-    var panel = c.Value<string>("rightPanel") ?? "cards";
+    var panel = custom?.HeroPanel ?? c.Value<string>("rightPanel") ?? "cards";
     var cards = c.Value<BlockListModel>("floatingCards")?.Select(x => x.Content).ToList() ?? [];
-    var navigator = panel == "navigator" ? EHC.Web.Blocks.HeroNavigator.Embedded(Umbraco.AssignedContentItem.Value<BlockListModel>("blocks")) : null;
+    var navigator = panel == "navigator" ? EHC.Web.Blocks.HeroNavigator.Embedded(Umbraco.AssignedContentItem.Value<BlockListModel>("blocks"), custom?.HeroPanel) : null;
     var showPanel = panel != "none" && (cards.Count > 0 || panel == "art" || navigator is not null);
     string Bg(IPublishedElement s) => s.Value<string>("backgroundPreset") switch { "1" => "hero-bg-1", "2" => "hero-bg-2", _ => "hero-bg-0" };   // allow-list
     var id = "hero-" + Model.ContentKey.ToString("N")[..8];
@@ -23,7 +24,7 @@
 }
 @* With photos/videos on any slide the hero becomes a media-hero; each slide's media layer is swapped by the script,
    together with its overlay, strength and focal point. *@
-<div data-hero data-interval="@(seconds * 1000)" class="@(anyMedia ? "media-hero" : Bg(slides[0]) + " relative overflow-hidden transition-[background] duration-700") text-white" style="@(anyMedia ? media[0].FocalStyle : null)"@EHC.Web.Blocks.HtmlAttributes.Data("overlay", anyMedia ? media[0].Overlay : null)@EHC.Web.Blocks.HtmlAttributes.Data("strength", anyMedia ? media[0].Strength : null)>
+<div data-hero data-interval="@(seconds * 1000)"@EHC.Web.Blocks.HtmlAttributes.Data("autoplay", custom?.HeroRotate is false ? "false" : null) class="@(anyMedia ? "media-hero" : Bg(slides[0]) + " relative overflow-hidden transition-[background] duration-700") text-white" style="@(anyMedia ? media[0].FocalStyle : null)"@EHC.Web.Blocks.HtmlAttributes.Data("overlay", anyMedia ? media[0].Overlay : null)@EHC.Web.Blocks.HtmlAttributes.Data("strength", anyMedia ? media[0].Strength : null)>
     @if (anyMedia)
     {
         for (var i = 0; i < media.Count; i++)
@@ -35,13 +36,15 @@
     <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08]" aria-hidden="true"></div>
     <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:pb-[120px] lg:pt-10 @(showPanel ? "lg:grid-cols-[1.05fr_.95fr]" : "")">
         <div>
+            @* all slides share one grid cell, so the hero keeps the height of the tallest (no jump when slides change) *@
+            <div class="hero-slides">
             @for (var i = 0; i < slides.Count; i++)
             {
                 var s = slides[i];
                 var primary = s.Value<Link>("primaryCta");
                 var secondary = s.Value<Link>("secondaryCta");
                 var highlight = s.Value<string>("titleHighlight");
-                <div class="slide anim-fadeup @(i == 0 ? "" : "hidden")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-bg="@Bg(s)" data-overlay="@(media[i].HasMedia ? media[i].Overlay : "")" data-strength="@media[i].Strength" data-focal="@media[i].Focal">
+                <div class="slide anim-fadeup @(i == 0 ? "" : "slide-off")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-bg="@Bg(s)" data-overlay="@(media[i].HasMedia ? media[i].Overlay : "")" data-strength="@media[i].Strength" data-focal="@media[i].Focal">
                     @if (!string.IsNullOrWhiteSpace(s.Value<string>("kicker")))
                     {
                         <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium">
@@ -69,6 +72,7 @@
                     @if (!string.IsNullOrWhiteSpace(s.Value<string>("finePrint"))) { <div class="mt-4 text-[.8rem] text-white/65">@(s.Value<string>("finePrint"))</div> }
                 </div>
             }
+            </div>
             @if (slides.Count > 1)
             {
                 <div class="mt-8 flex items-end gap-2 sm:mt-11 sm:gap-3.5">

@@ -40,6 +40,7 @@ public sealed class EhcComposer : IComposer
         Performance.Add(builder);
         MapTiles.Add(builder);
         ThemePreview.Add(builder);
+        Customizer.Add(builder);
         builder.Services.AddScoped<IThemeResolver, ThemeResolver>();
         builder.Services.AddScoped<ISiteContext, SiteContext>();
         builder.Services.Configure<EmbedOptions>(builder.Config.GetSection("Ehc:Embed"));

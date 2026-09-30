@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#5B6B80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Eid al-Adha: a ram with curled horns under a crescent -->
+  <path d="M94 12a20 20 0 1 0 22 26a16 16 0 1 1-22-26z" fill="#5B6B80" fill-opacity=".16"/>
+  <path d="M128.0 14.0L129.5 17.9L133.7 18.1L130.5 20.8L131.5 24.9L128.0 22.6L124.5 24.9L125.5 20.8L122.3 18.1L126.5 17.9z" fill="#5B6B80" fill-opacity=".25"/>
+  <!-- horns -->
+  <path d="M88 76C72 52 36 56 34 88c-1 24 26 32 36 16c7-11-2-24-13-20c-8 3-7 14 1 14" fill="#5B6B80" fill-opacity=".08"/>
+  <path d="M112 76c16-24 52-20 54 12c1 24-26 32-36 16c-7-11 2-24 13-20c8 3 7 14-1 14" fill="#5B6B80" fill-opacity=".08"/>
+  <path d="M46 70c6 2 10 6 12 11M154 70c-6 2-10 6-12 11" stroke-width="2"/>
+  <!-- head -->
+  <path d="M84 78q16-12 32 0l-2 44q-2 22-14 28q-12-6-14-28z" fill="#5B6B80" fill-opacity=".12"/>
+  <path d="M90 76q10 8 20 0M88 84q12 8 24 0" stroke-width="2"/>
+  <!-- ears -->
+  <path d="M85 116q-18-1-28 10q16 5 28-2M115 116q18-1 28 10q-16 5-28-2" fill="#5B6B80" fill-opacity=".1"/>
+  <!-- eyes, nose -->
+  <path d="M90 106q3-3 6 0M104 106q3-3 6 0"/>
+  <path d="M94 138q6 4 12 0M100 138v4"/>
+  <!-- ground line and sparkles -->
+  <path d="M40 176h120" stroke-dasharray="1 9"/>
+  <path d="M26 30v10M21 35h10M176 128v10M171 133h10M30 138v8M26 142h8" stroke-width="2.2"/>
+  <circle cx="170" cy="40" r="2.4" fill="#5B6B80"/><circle cx="48" cy="158" r="2" fill="#5B6B80"/>
+</svg>

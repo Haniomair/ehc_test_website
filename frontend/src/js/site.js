@@ -39,12 +39,27 @@
   syncContrast();
   on('contrast', function () { store.set('ehc-contrast', html.classList.toggle('contrast') ? '1' : '0'); syncContrast(); });
 
+  // ---------- enter/exit transitions: .is-open is added one frame after .hidden is removed, and .hidden comes back
+  // when the exit transition has run (at once when there is none: reduced motion, "pause animations") ----------
+  function reveal(el) {
+    clearTimeout(el._hideTimer);
+    el.classList.remove('hidden');
+    void el.offsetWidth;
+    el.classList.add('is-open');
+  }
+  function conceal(el) {
+    el.classList.remove('is-open');
+    var ms = parseFloat(getComputedStyle($('.panel-sheet', el) || el).transitionDuration) * 1000 || 0;
+    clearTimeout(el._hideTimer);
+    if (ms) el._hideTimer = setTimeout(function () { el.classList.add('hidden'); }, ms); else el.classList.add('hidden');
+  }
+
   // ---------- modal helper (drawer, search): focus in, Tab trapped, Esc closes, focus returns ----------
   var openModal = null, returnTo = null;
   function showModal(el, focusEl) {
     if (!el) return;
     returnTo = document.activeElement;
-    el.classList.remove('hidden');
+    if (el.classList.contains('panel')) reveal(el); else el.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     openModal = el;
     $$('[aria-controls="' + el.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'true'); });
@@ -52,7 +67,7 @@
   }
   function hideModal() {
     if (!openModal) return;
-    openModal.classList.add('hidden');
+    if (openModal.classList.contains('panel')) conceal(openModal); else openModal.classList.add('hidden');
     document.body.style.overflow = '';
     $$('[aria-controls="' + openModal.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
     openModal = null;
@@ -117,6 +132,51 @@
     html.classList.toggle('dark', !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)); syncDarkButtons();
     syncA11y();
   });
+
+  // ---------- cookie notice: choice stored as "ehc-consent" = "<version>|all|essential|<ISO date>", asked again after a
+  // year or when CONSENT_VERSION changes (bump it when the cookie policy changes). Optional scripts must wait for
+  // html[data-consent="all"] or the "ehc:consent" event. ----------
+  var consent = $('#consent'), CONSENT_VERSION = '1', consentReturn = null;
+  function storedConsent() {
+    var v = (store.get('ehc-consent') || '').split('|');
+    var at = Date.parse(v[2] || '');
+    if (v[0] !== CONSENT_VERSION || !/^(all|essential)$/.test(v[1]) || !(at > Date.now() - 365 * 864e5)) return null;
+    return v[1];
+  }
+  function applyConsent(choice) {
+    html.setAttribute('data-consent', choice);
+    document.dispatchEvent(new CustomEvent('ehc:consent', { detail: { choice: choice } }));
+  }
+  if (consent) {
+    var given = storedConsent();
+    if (given) applyConsent(given); else reveal(consent);
+    on('consent', function (el) {
+      var choice = el.getAttribute('data-choice') === 'all' ? 'all' : 'essential';
+      store.set('ehc-consent', [CONSENT_VERSION, choice, new Date().toISOString()].join('|'));
+      applyConsent(choice);
+      conceal(consent);
+      $$('[data-action="consent-open"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+      if (consentReturn && consentReturn.focus) consentReturn.focus();
+      consentReturn = null;
+    });
+    on('consent-open', function (el) {
+      consentReturn = el;
+      el.setAttribute('aria-expanded', 'true');
+      reveal(consent);
+      consent.setAttribute('tabindex', '-1');
+      consent.focus();
+    });
+  }
+
+  // ---------- look customizer (reviewers only; the form itself is components/customizer.js) ----------
+  var customizer = $('#customizer');
+  on('customizer-open', function () { showModal(customizer); });
+  on('customizer-close', hideModal);
+  // rendered open after a customizer change: adopt it without the slide-in; focus the control that was used
+  if (customizer && customizer.hasAttribute('data-reopened')) {
+    showModal(customizer, $('[data-cz-focus]', customizer));
+    returnTo = $('[data-action="customizer-open"]');
+  }
 
   // ---------- search palette ----------
   var search = $('#search'), sIn = $('#sIn');

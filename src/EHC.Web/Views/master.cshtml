@@ -26,10 +26,13 @@
 }
 <!DOCTYPE html>
 @* The active theme's colours arrive as CSS variables in the style attribute (Razor drops it when there is no theme). *@
-<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" style="@theme.InlineStyle">
+@* class: look-customizer choices of a reviewer (allow-listed, Site/Customizer.cs); dropped when there are none. *@
+<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" class="@Customizer.Current(Context)?.HtmlClass" style="@theme.InlineStyle">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @* the site draws both schemes itself: stops mobile browsers (Chrome auto-dark, Samsung Internet) force-darkening it *@
+    <meta name="color-scheme" content="light dark">
     <title>@metaTitle</title>
     @if (!string.IsNullOrWhiteSpace(metaDescription))
     {
@@ -57,10 +60,17 @@
     <script src="~/assets/js/theme-init.js" asp-append-version="true"></script>  @* sets .dark before paint; no inline script (CSP) *@
     <link rel="preload" href="~/assets/fonts/cairo-arabic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="~/assets/css/ehc.css" asp-append-version="true">
+    @if (Customizer.IsOn(Context))
+    {
+        <link rel="stylesheet" href="~/assets/css/customizer-vt.css" asp-append-version="true">
+        @* after a customizer change: show the page only once customizer.js has restored the scroll position *@
+        if (Context.Request.Cookies[Customizer.OpenCookieName] == "1") { <link rel="expect" href="#cz-ready" blocking="render"> }
+    }
 </head>
 <body class="leading-relaxed">
     @await Html.PartialAsync("site/_Icons")
     <a href="#main" class="absolute start-3 -top-16 z-[100] rounded-lg bg-deep-900 px-3.5 py-2.5 text-white focus:top-3">@Umbraco.GetDictionaryValue("EHC.Common.SkipToContent")</a>
+    @await Html.PartialAsync("site/_CookieNotice", site)  @* early in the tab order; shown fixed at the bottom *@
 
     @await Html.PartialAsync("site/_StagingRibbon", site)
     @await Html.PartialAsync("site/_Ribbon", theme)
@@ -78,6 +88,7 @@
     @await Html.PartialAsync("site/_Search")
     @await Html.PartialAsync("site/_A11yPanel", site)
     @await Html.PartialAsync("site/_Assistant", site)
+    @await Html.PartialAsync("site/_Customizer", site)
     <script src="~/assets/js/site.js" asp-append-version="true" defer></script>
 </body>
 </html>

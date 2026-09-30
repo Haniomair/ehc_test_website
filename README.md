@@ -85,7 +85,7 @@ Settings > Environments > `staging`:
 - secret `EHC_DEPLOY_PASSWORD`.
 
 On every start (so after every deploy) the server imports the schema from `src/EHC.Web/uSync` (document, element
-and data types, templates, languages); content is not imported. Make schema changes locally, not on the test server:
+and data types, templates, languages, dictionary items); content is not imported. Make schema changes locally, not on the test server:
 they are replaced by the repository version on the next deploy.
 
 The pipeline deploys code only. The server settings file and the first `-SeedData` upload are done from a local

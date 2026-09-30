@@ -6,9 +6,9 @@
 @{
     var items = Model.MegaMenu?.ToList() ?? [];
 }
-<div id="drawer" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.Menu")">
-    <div class="absolute inset-0 bg-deep-950/50" data-action="drawer-close"></div>
-    <div class="absolute inset-y-0 end-0 flex w-[min(380px,100%)] flex-col overflow-y-auto bg-white p-5 dark:bg-night-900">
+<div id="drawer" class="panel fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.Menu")">
+    <div class="panel-backdrop absolute inset-0 bg-deep-950/50" data-action="drawer-close"></div>
+    <div class="panel-sheet absolute inset-y-0 end-0 flex w-[min(380px,100%)] flex-col overflow-y-auto bg-white p-5 dark:bg-night-900">
         <div class="mb-4 flex items-center justify-between">
             <img class="h-9 dark:brightness-0 dark:invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")">
             <button type="button" data-action="drawer-close" class="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-white/15" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.CloseMenu")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>

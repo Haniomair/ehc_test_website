@@ -10,8 +10,9 @@
     var title = c.Value<string>("title");
     if (string.IsNullOrWhiteSpace(title)) { return; }
     var bg = MediaBackground.From(c);
-    var imageFirst = c.Value<string>("imageSide") == "start";
-    var tilted = c.Value<string>("frameStyle") != "plain";
+    var custom = EHC.Web.Site.Customizer.Current(Context);   // a reviewer's look-customizer choices (allow-listed)
+    var imageFirst = (custom?.HeroSide ?? c.Value<string>("imageSide")) == "start";
+    var tilted = (custom?.HeroFrame ?? c.Value<string>("frameStyle")) != "plain";
     var highlight = c.Value<string>("titleHighlight");
     var primary = c.Value<Link>("primaryCta");
     var secondary = c.Value<Link>("secondaryCta");

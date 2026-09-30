@@ -36,6 +36,7 @@ public sealed class SiteData
     public IReadOnlyList<Link> AppLinks { get; init; } = [];
     public Link? HeaderCta { get; init; }
     public Link? NearestLink { get; init; }
+    public Link? PrivacyLink { get; init; }
     public bool ShowStagingRibbon { get; init; }
     public required IReadOnlyList<AlternateLink> Alternates { get; init; }
     public AlternateLink? OtherLanguage => Alternates.FirstOrDefault(a => a.Culture != Culture.Name);
@@ -96,6 +97,7 @@ public sealed class SiteContext(IThemeResolver themes) : ISiteContext
             AppLinks = settings?.Value<IEnumerable<Link>>("sehhatyLinks")?.ToList() ?? [],
             HeaderCta = navigation?.Value<Link>("headerCta"),
             NearestLink = navigation?.Value<Link>("nearestLink"),
+            PrivacyLink = navigation?.Value<Link>("privacyLink"),
             ShowStagingRibbon = settings?.Value<bool>("showConceptRibbon") ?? false,
             Alternates = alternates,
         };

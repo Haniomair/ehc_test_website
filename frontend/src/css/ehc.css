@@ -22,6 +22,11 @@
 
   html { font-size: var(--fs, 16px); scroll-behavior: smooth; }
   body { @apply bg-white text-deep-950 antialiased dark:bg-night-950 dark:text-slate-100; overflow-x: clip; }
+  /* the site's toggle decides, not the phone: "only light" forbids browser auto-dark (Chrome, Samsung Internet)
+     from repainting light mode, and native controls follow the toggle. Set on <html> only: a plain "light"
+     on a descendant lets auto-dark back in for that subtree. */
+  html:not(.dark) { color-scheme: only light; }
+  html.dark { color-scheme: dark; }
   /* sand ring + dark inner halo: at least 3:1 against light and dark surfaces (WCAG 1.4.11) */
   :focus-visible { outline: 3px solid var(--accent-400); outline-offset: 2px; border-radius: 6px; box-shadow: 0 0 0 2px var(--deep-950); }
   /* sliders: the track is thin, the control keeps a 24px target */
@@ -106,11 +111,17 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 
 /* motion */
 .anim-spin-slow { animation: ehc-spin 120s linear infinite; }
+.mark-bg.anim-spin-slow { animation-name: var(--pattern-spin, ehc-spin); }   /* themes with a pictorial motif set none */
 .anim-bob { animation: ehc-bob 6s ease-in-out infinite; }
 .anim-marquee { animation: ehc-mq 40s linear infinite; }
 html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .anim-fadeup { animation: ehc-fadeUp .7s ease both; }
 .prog-on .bar i { animation: ehc-prog var(--hero-interval, 7s) linear forwards; }
+.is-held .prog-on .bar i { animation-play-state: paused; }   /* hover / keyboard focus: the bar (and so the rotation) waits */
+/* campaign hero: slides stacked in one cell; inactive ones stay in layout (height of the tallest) but are not seen or read */
+.hero-slides { display: grid; }
+.hero-slides > .slide { grid-area: 1 / 1; }
+.slide-off { visibility: hidden; opacity: 0; pointer-events: none; }
 .rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
 .rv.in { opacity: 1; transform: none; }
 
@@ -355,9 +366,12 @@ html[dir="rtl"] .compare.is-ready .compare-after { clip-path: inset(0 var(--pos)
 
 /* ------------------------------------------------ accessibility panel (site/_A11yPanel, site.js)
    Options are classes on <html>: a11y-links | a11y-spacing | a11y-still | a11y-cursor | a11y-guide */
-.a11y-tile { @apply flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 text-center text-sm font-semibold leading-snug text-deep-900 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:text-white; }
+.a11y-tile { @apply flex min-h-[52px] items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-start text-[.8rem] font-semibold leading-snug text-deep-900 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:text-white; }
 .a11y-tile[aria-pressed="true"] { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
-.a11y-tile .ico { @apply h-6 w-6; }
+.a11y-tile .ico { @apply h-5 w-5 text-brand-600 dark:text-brand-300; }
+.a11y-tile[aria-pressed="true"] .ico { @apply text-current; }
+.a11y-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }  /* odd count: the last option takes the full row */
+.a11y-step { @apply grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-sm font-bold text-deep-900 transition hover:border-brand-500 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-40 dark:border-white/15 dark:text-white; }
 
 .a11y-links a { text-decoration-line: underline !important; text-decoration-thickness: 2px !important; text-underline-offset: .2em; outline: 2px solid color-mix(in srgb, var(--accent-400) 80%, transparent); outline-offset: 2px; }
 /* WCAG 1.4.12 text spacing; letter spacing is left out for Arabic, where it breaks the joins between letters */
@@ -375,6 +389,27 @@ html.a11y-still { scroll-behavior: auto; }
 .a11y-cursor :is(a, button, [role="button"], label, select, summary), .a11y-cursor :is(a, button, [role="button"], label, select, summary) * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'%3E%3Cpath d='M9 11V4.5a1.5 1.5 0 013 0V10l1-.2a1.5 1.5 0 012.9.4l.1.1a1.5 1.5 0 012.9.6v5.6A5.5 5.5 0 0113.4 22h-1.1a5.5 5.5 0 01-4.6-2.5L4.4 14.4a1.5 1.5 0 012.3-1.9z' fill='%23000' stroke='%23fff' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 12 3, pointer !important; }
 /* reading guide: a clear band that follows the pointer (or keyboard focus), the rest of the page dimmed */
 .a11y-guide-bar { position: fixed; inset-inline: 0; top: -1.75rem; height: 3.5rem; z-index: 75; pointer-events: none; border-block: 3px solid var(--accent-400); box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--deep-950) 40%, transparent); }
+
+/* ------------------------------------------------ side panels (#drawer, #a11y): site.js adds .is-open one frame after
+   removing .hidden, and adds .hidden back when the exit transition ends. No motion under reduced motion / a11y-still. */
+.panel-backdrop { opacity: 0; transition: opacity .3s ease; }
+.panel-sheet { --panel-from: 100%; transform: translateX(var(--panel-from)); transition: transform .38s cubic-bezier(.22, 1, .36, 1); box-shadow: 0 0 48px rgb(10 42 79 / .22); }
+[dir="rtl"] .panel-sheet { --panel-from: -100%; }
+.panel.is-open .panel-backdrop { opacity: 1; }
+.panel.is-open .panel-sheet { transform: none; }
+.panel:not(.is-open) { pointer-events: none; }
+.panel:not(.is-open) .panel-backdrop { transition-duration: .22s; }
+.panel:not(.is-open) .panel-sheet { transition-duration: .22s; transition-timing-function: cubic-bezier(.4, 0, 1, 1); }
+body:has(> #customizer.is-open) { overflow: hidden; }            /* from first paint when rendered open */
+.panel-sheet-start { --panel-from: -100%; }                       /* a sheet on the start side (customizer) */
+[dir="rtl"] .panel-sheet.panel-sheet-start { --panel-from: 100%; }
+
+/* ------------------------------------------------ cookie notice (site/_CookieNotice, site.js). Above the mobile bar on
+   phones, bottom start corner on larger screens (the assistant button sits at the end corner). */
+.consent { @apply fixed inset-x-3 bottom-[76px] z-[70] rounded-2xl bg-white p-4 ring-1 ring-slate-200 sm:inset-x-auto sm:start-6 sm:bottom-6 sm:w-[420px] dark:bg-night-900 dark:ring-white/10 print:hidden shadow-[0_24px_48px_rgb(10_42_79/.22)]; transition: opacity .3s ease, transform .38s cubic-bezier(.22, 1, .36, 1); }
+.consent:not(.is-open) { opacity: 0; transform: translateY(16px); pointer-events: none; transition-duration: .2s; }
+.consent:focus { outline: none; }
+.consent:focus-visible { @apply ring-2 ring-brand-500; }
 
 /* ------------------------------------------------ assistant demo (site/_Assistant, components/assistant.js) */
 .assistant-badge { @apply rounded-full bg-accent-400 px-2 py-0.5 text-xs font-bold; color: #2B1D00; }
@@ -441,3 +476,54 @@ select.field { @apply pe-10; }
 .az-letter { @apply grid h-9 min-w-9 place-items-center rounded-lg px-1.5 text-sm font-bold text-deep-900 transition hover:bg-brand-600 hover:text-white dark:text-white; }
 .az-letter.az-off { @apply pointer-events-none text-slate-400 dark:text-white/30; }
 .cols-card > .cols-cell { @apply rounded-[22px] border border-slate-200 bg-white p-6 sm:p-8 dark:border-white/10 dark:bg-night-900; }
+
+/* ------------------------------------------------ look customizer (site/_Customizer, components/customizer.js).
+   Reviewers only (Ehc:Customizer:Enabled). Look options are classes on <html>: look-{corners|shadows|density|buttons}-{value}. */
+.cz-trigger { @apply fixed start-0 top-1/2 z-[60] flex -translate-y-1/2 flex-col items-center gap-1 rounded-ee-xl rounded-se-xl bg-deep-900 px-2 py-3 text-[.68rem] font-semibold text-white shadow-soft transition hover:bg-deep-800 dark:bg-deep-950 dark:ring-1 dark:ring-white/15; }
+.cz-trigger .ico { @apply h-5 w-5; }
+.cz-group { @apply mb-5 min-w-0; }
+.cz-legend { @apply mb-2 text-[.72rem] font-bold uppercase tracking-wider text-slate-500 rtl:tracking-normal dark:text-slate-400; }
+.cz-opts { @apply flex flex-wrap gap-1.5; }
+/* the visually hidden radio must sit inside its label: otherwise it stays put while the form scrolls, and focusing it
+   scrolls the panel away from the pointer (a following click then misses) */
+.cz-opt, .cz-theme { position: relative; }
+/* a change is on its way (the page is being rebuilt with it) */
+[data-customizer][aria-busy="true"] { cursor: progress; }
+.cz-busy { @apply pointer-events-none absolute inset-x-0 top-0 h-[3px] overflow-hidden opacity-0 transition-opacity; }
+.cz-busy.is-on { opacity: 1; }
+.cz-busy::after { content: ""; @apply absolute inset-y-0 w-1/3 bg-accent-400; animation: cz-busy 1s ease-in-out infinite; }
+@keyframes cz-busy { from { inset-inline-start: -33%; } to { inset-inline-start: 100%; } }
+.cz-opt { @apply cursor-pointer rounded-full border border-slate-200 px-3 py-1.5 text-[.8rem] font-semibold text-deep-900 transition hover:border-brand-500 dark:border-white/15 dark:text-white; }
+.cz-opt:has(:checked) { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
+.cz-opt:has(:focus-visible), .cz-theme:has(:focus-visible) { @apply outline-2 outline-offset-2 outline-brand-500; }
+.cz-theme { @apply flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 p-2 text-[.78rem] font-semibold leading-tight text-deep-900 transition hover:border-brand-500 dark:border-white/10 dark:text-white; }
+.cz-theme:has(:checked) { @apply border-brand-600 ring-2 ring-brand-600 dark:border-brand-400 dark:ring-brand-400; }
+.cz-swatch { @apply flex h-7 w-7 shrink-0 overflow-hidden rounded-full ring-1 ring-black/10; }
+.cz-swatch i { flex: 1; }
+.cz-swatch i:nth-child(1) { background: var(--sw-a); }
+.cz-swatch i:nth-child(2) { background: var(--sw-b); }
+.cz-swatch i:nth-child(3) { background: var(--sw-c); }
+.cz-swatch-auto { background: conic-gradient(from 90deg, var(--brand-600), var(--deep-900), var(--accent-400), var(--brand-600)); }
+.cz-check { @apply flex cursor-pointer items-center gap-2.5 text-[.82rem] font-semibold text-deep-900 dark:text-white; }
+.cz-check input, .cz-section input { @apply h-4 w-4 shrink-0 accent-brand-600; }
+.cz-section { @apply flex items-center gap-1 rounded-xl border border-slate-200 py-1 pe-1 ps-3 text-[.8rem] font-semibold text-deep-900 dark:border-white/10 dark:text-white; }
+.cz-section:has(input:not(:checked)) > label { @apply text-slate-400 line-through; }
+.cz-section:first-child [data-move="-1"], .cz-section:last-child [data-move="1"] { visibility: hidden; }
+.cz-move { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-soft hover:text-deep-900 dark:hover:bg-white/10 dark:hover:text-white; }
+.cz-move .ico { @apply h-4 w-4; }
+@media print { .cz-trigger, #customizer { display: none !important; } }
+
+/* corners: Tailwind radius tokens + the fixed radii of cards and large surfaces */
+html.look-corners-square { --radius-md: 3px; --radius-lg: 4px; --radius-xl: 5px; --radius-2xl: 6px; --radius-3xl: 8px; }
+html.look-corners-square :is(.card, .flip-face, .lib-tile, .cols-cell, [class*="rounded-[2"], [class*="rounded-[3"], [class*="rounded-[4"]) { border-radius: 6px; }
+html.look-corners-round { --radius-lg: .75rem; --radius-xl: 1rem; --radius-2xl: 1.5rem; --radius-3xl: 2rem; }
+html.look-corners-round :is(.card, .flip-face, .lib-tile, .cols-cell, [class*="rounded-[2"], [class*="rounded-[3"]) { border-radius: 34px; }
+/* shadows */
+html.look-shadows-flat * { --tw-shadow: 0 0 #0000 !important; }
+html.look-shadows-deep :is(.card, .shadow-soft) { --tw-shadow: 0 6px 12px rgb(10 42 79 / .08), 0 28px 60px rgb(10 42 79 / .18); box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+html.look-shadows-deep.dark :is(.card, .shadow-soft) { --tw-shadow: 0 6px 12px rgb(0 0 0 / .25), 0 28px 60px rgb(0 0 0 / .45); }
+/* density: every Tailwind spacing step scales with --spacing */
+html.look-density-compact { --spacing: .215rem; }
+html.look-density-airy { --spacing: .285rem; }
+/* buttons */
+html.look-buttons-rounded :is(.btn, .cz-opt) { border-radius: var(--radius-xl); }

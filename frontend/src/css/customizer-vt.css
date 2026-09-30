@@ -1,0 +1,12 @@
+/* Look customizer only (linked in <head> while Ehc:Customizer:Enabled is on): a customizer change reloads the page,
+   and this crossfades old and new page instead of flashing. The open panel keeps its own layer so it stays still.
+   Browsers without cross-document view transitions simply reload. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .28s; }
+}
+html.a11y-still { view-transition-name: none; }
+#customizer .panel-sheet { view-transition-name: cz-panel; }
+::view-transition-group(cz-panel) { animation: none; }
+::view-transition-old(cz-panel) { display: none; }
+::view-transition-new(cz-panel) { animation: none; }

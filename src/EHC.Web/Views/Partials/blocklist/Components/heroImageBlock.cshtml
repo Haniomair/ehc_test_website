@@ -10,7 +10,7 @@
     var title = c.Value<string>("title");
     if (string.IsNullOrWhiteSpace(title)) { return; }
     var bg = MediaBackground.From(c);
-    var center = c.Value<string>("align") == "center";
+    var center = (EHC.Web.Site.Customizer.Current(Context)?.HeroAlign ?? c.Value<string>("align")) == "center";   // look customizer may override
     var highlight = c.Value<string>("titleHighlight");
     var primary = c.Value<Link>("primaryCta");
     var secondary = c.Value<Link>("secondaryCta");

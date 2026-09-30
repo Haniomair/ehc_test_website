@@ -1,5 +1,7 @@
 @* Renders every block through ONE wrapper that applies the shared blockSettings:
-   hide, showFrom/showUntil, variant, spacing, anchorId, themeOverride (a Theme node: its colours as inline CSS variables). Components never repeat this logic. *@
+   hide, showFrom/showUntil, variant, spacing, anchorId, themeOverride (a Theme node: its colours as inline CSS variables). Components never repeat this logic.
+   With the look customizer on (Site/Customizer.cs), a reviewer's hidden/reordered sections apply here and each section
+   carries data-block-key so the panel can list it. *@
 @using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
@@ -9,11 +11,15 @@
 @{
     if (Model is null || !Model.Any()) { return; }
     var now = Clock.GetUtcNow().UtcDateTime;
-    var embedded = HeroNavigator.Embedded(Model);   // care navigator shown inside the hero instead
+    var customizing = EHC.Web.Site.Customizer.IsOn(Context);
+    var custom = EHC.Web.Site.Customizer.Current(Context);
+    var embedded = HeroNavigator.Embedded(Model, custom?.HeroPanel);   // care navigator shown inside the hero instead
+    var blocks = custom is null ? Model.ToList() : custom.Arrange(Model.ToList(), b => b.ContentKey);
 }
-@foreach (var block in Model)
+@foreach (var block in blocks)
 {
     if (block?.Content is null) { continue; }
+    if (custom is not null && custom.IsHidden(block.ContentKey)) { continue; }
     var wrap = BlockSection.From(block.Settings, Fallback, now);
     if (!wrap.Visible) { continue; }
     if (embedded is not null && block.ContentKey == embedded.ContentKey) { continue; }
@@ -26,7 +32,7 @@
     var html = writer.ToString();
     if (string.IsNullOrWhiteSpace(html)) { continue; }
 
-    <section id="@wrap.AnchorId" data-block="@alias" class="@wrap.CssClass" style="@wrap.ThemeStyle">
+    <section id="@wrap.AnchorId" data-block="@alias"@HtmlAttributes.Data("block-key", customizing ? EHC.Web.Site.Customizer.ShortKey(block.ContentKey) : null) class="@wrap.CssClass" style="@wrap.ThemeStyle">
         @Html.Raw(html)
     </section>
 }

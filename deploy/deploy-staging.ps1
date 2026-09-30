@@ -51,7 +51,8 @@ if (-not ($server -and $site -and $user)) {
 }
 if ($env:EHC_DEPLOY_ALLOW_UNTRUSTED -eq 'true') { $AllowUntrusted = [switch]$true }
 if ($env:EHC_DEPLOY_SELF_CONTAINED -eq 'true') { $SelfContained = [switch]$true }
-$password = $env:EHC_DEPLOY_PASSWORD
+# a pasted secret often carries a trailing newline or space
+$password = "$env:EHC_DEPLOY_PASSWORD".Trim()
 if (-not $password) {
     if ($env:CI) { throw 'EHC_DEPLOY_PASSWORD is not set.' }
     $secure = Read-Host "Web Deploy password for $user" -AsSecureString

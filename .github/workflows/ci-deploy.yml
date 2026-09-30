@@ -71,8 +71,10 @@ jobs:
           path: src/EHC.Web/wwwroot/tiles
           key: map-tiles-${{ steps.tiles.outputs.month }}
 
+      # an outage at the map data host must not block a deploy: without new tiles the server keeps its current ones
       - name: Build map tiles
         if: steps.tiles-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
         working-directory: frontend
         run: npm run tiles
 

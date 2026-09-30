@@ -5,7 +5,7 @@
 // Needs the `pmtiles` CLI (https://github.com/protomaps/go-pmtiles); it is downloaded into frontend/.tools if missing.
 // Data: © OpenStreetMap contributors (ODbL) — keep the attribution on every map.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync, statSync, chmodSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, statSync, chmodSync, rmSync, renameSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { platform, arch } from 'node:os';
 
@@ -40,19 +40,39 @@ async function cli() {
   return local;
 }
 
-async function latestBuild() {
-  if (process.env.TILES_BUILD) return process.env.TILES_BUILD;
-  for (let i = 0; i < 10; i++) {
+// newest first; the newest daily build can still be in progress, so older ones are kept as fallbacks
+async function candidateBuilds(max = 3) {
+  if (process.env.TILES_BUILD) return [process.env.TILES_BUILD];
+  const builds = [];
+  for (let i = 0; i < 10 && builds.length < max; i++) {
     const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10).replace(/-/g, '');
     const r = await fetch(`https://build.protomaps.com/${d}.pmtiles`, { method: 'HEAD' });
-    if (r.ok) return d;
+    if (r.ok) builds.push(d);
   }
-  throw new Error('No Protomaps build found in the last 10 days — set TILES_BUILD=YYYYMMDD.');
+  if (!builds.length) throw new Error('No Protomaps build found in the last 10 days — set TILES_BUILD=YYYYMMDD.');
+  return builds;
 }
 
 const pmtiles = await cli();
-const build = await latestBuild();
 mkdirSync(dirname(out), { recursive: true });
-console.log(`extracting build ${build}, bbox ${bbox}, zoom 0–${maxzoom} -> ${out}`);
-execFileSync(pmtiles, ['extract', `https://build.protomaps.com/${build}.pmtiles`, out, `--bbox=${bbox}`, `--maxzoom=${maxzoom}`], { stdio: 'inherit' });
+// extract to a temporary file so a failed download never leaves a truncated tiles file behind
+const partial = `${out}.partial`;
+// the host sometimes answers a single range request with HTTP 500, so each build gets a second attempt
+let done = false;
+for (const build of await candidateBuilds()) {
+  for (let attempt = 1; attempt <= 2 && !done; attempt++) {
+    console.log(`extracting build ${build} (attempt ${attempt}), bbox ${bbox}, zoom 0–${maxzoom} -> ${out}`);
+    try {
+      execFileSync(pmtiles, ['extract', `https://build.protomaps.com/${build}.pmtiles`, partial, `--bbox=${bbox}`,
+        `--maxzoom=${maxzoom}`, '--download-threads=2'], { stdio: 'inherit' });
+      renameSync(partial, out);
+      done = true;
+    } catch {
+      rmSync(partial, { force: true });
+      console.warn(`build ${build} attempt ${attempt} failed`);
+    }
+  }
+  if (done) break;
+}
+if (!done) throw new Error('Could not extract map tiles from any recent Protomaps build.');
 console.log(`done: ${(statSync(out).size / 1048576).toFixed(1)} MB`);

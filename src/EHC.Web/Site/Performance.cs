@@ -24,8 +24,9 @@ public static class Performance
             o.Providers.Add<GzipCompressionProvider>();
             o.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["image/svg+xml", "application/xml", "text/xml"]);
         });
-        builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
-        builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+        // Optimal (Brotli quality 4): ~15% smaller HTML/CSS than Fastest for little CPU; assets are cached for a year anyway
+        builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Optimal);
+        builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Optimal);
 
         builder.Services.Configure<UmbracoPipelineOptions>(o => o.AddFilter(new UmbracoPipelineFilter("EhcPerformance")
         {

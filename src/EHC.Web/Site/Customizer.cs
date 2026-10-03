@@ -41,6 +41,33 @@ public static partial class Customizer
         ["buttons"] = ["pill", "rounded"],
     };
 
+    /// <summary>
+    /// Site settings › Look (lookCorners, lookShadows, lookDensity, lookButtons): the site-wide choice, e.g. "Square".
+    /// Values go through <see cref="Looks"/>; the first value of each is the default and adds no class.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> SiteLooks(Func<string, string?> setting)
+    {
+        var looks = new Dictionary<string, string>();
+        foreach (var (name, values) in Looks)
+        {
+            var v = setting("look" + char.ToUpperInvariant(name[0]) + name[1..])?.Trim().ToLowerInvariant();
+            if (v is not null && values.Contains(v) && v != values[0]) looks[name] = v;
+        }
+        return looks;
+    }
+
+    /// <summary>
+    /// Classes for &lt;html&gt;: the site's look (Site settings), with a reviewer's customizer choices on top (a reviewer may
+    /// also pick the default to undo a site choice). Default values add no class.
+    /// </summary>
+    public static string? HtmlClass(IReadOnlyDictionary<string, string> site, CustomizerState? reviewer)
+    {
+        var merged = new Dictionary<string, string>(site);
+        if (reviewer is not null) foreach (var (k, v) in reviewer.Looks) merged[k] = v;
+        var classes = Looks.Where(l => merged.TryGetValue(l.Key, out var v) && v != l.Value[0]).Select(l => $"look-{l.Key}-{merged[l.Key]}").ToList();
+        return classes.Count == 0 ? null : string.Join(" ", classes);
+    }
+
     [GeneratedRegex("^[0-9a-f]{8}$")]
     private static partial Regex BlockKey();
 
@@ -91,7 +118,7 @@ public static partial class Customizer
 
         var looks = new Dictionary<string, string>();
         foreach (var (name, values) in Looks)
-            if (Pick(name, values) is { } v && v != values[0]) looks[name] = v;
+            if (Pick(name, values) is { } v) looks[name] = v;   // defaults too: they can undo a site-wide look
 
         var state = new CustomizerState
         {
@@ -137,7 +164,7 @@ public sealed record CustomizerState
                            && HeroAlign is null && Pattern is null && Looks.Count == 0 && Hidden.Count == 0 && Order.Count == 0;
 
     /// <summary>Classes for &lt;html&gt;, e.g. "look-corners-square look-density-compact" (all from the allow-list).</summary>
-    public string? HtmlClass => Looks.Count == 0 ? null : string.Join(" ", Looks.Select(kv => $"look-{kv.Key}-{kv.Value}"));
+    public string? HtmlClass => Customizer.HtmlClass(new Dictionary<string, string>(), this);
 
     public bool IsHidden(Guid contentKey) => Hidden.Contains(Customizer.ShortKey(contentKey));
 

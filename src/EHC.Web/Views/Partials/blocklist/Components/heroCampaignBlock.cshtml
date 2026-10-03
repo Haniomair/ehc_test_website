@@ -1,40 +1,67 @@
-@* Block 1 "Campaign hero": rotating slides (nested `slides`) + optional right panel.
-   Set this block's spacing to "none" (it is full-bleed). Behaviour: frontend/src/js/components/hero-campaign.js
+@* Block 1 "Campaign hero": rotating slides (nested `slides`), each with its own background (photo / video / gradient),
+   right panel (Right panel blocks, else the hero's, else the old fixed settings; see Blocks/HeroCampaign.cs) and
+   spinning mark. Set this block's spacing to "none" (it is full-bleed). Behaviour: frontend/src/js/components/hero-campaign.js
    (tabs, auto-rotate with a pause button, stops under prefers-reduced-motion). *@
+@using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
 @{
     var c = Model.Content;
-    var slides = c.Value<BlockListModel>("slides")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("title"))).ToList() ?? [];
+    var slides = HeroCampaign.Slides(c);
     if (slides.Count == 0) { return; }
     var custom = EHC.Web.Site.Customizer.Current(Context);   // a reviewer's look-customizer choices (allow-listed)
     var seconds = c.Value<int>("autoRotateSeconds");
     if (seconds is <= 0 or > 60) { seconds = 7; }
-    var panel = custom?.HeroPanel ?? c.Value<string>("rightPanel") ?? "cards";
-    var cards = c.Value<BlockListModel>("floatingCards")?.Select(x => x.Content).ToList() ?? [];
-    var navigator = panel == "navigator" ? EHC.Web.Blocks.HeroNavigator.Embedded(Umbraco.AssignedContentItem.Value<BlockListModel>("blocks"), custom?.HeroPanel) : null;
-    var showPanel = panel != "none" && (cards.Count > 0 || panel == "art" || navigator is not null);
-    string Bg(IPublishedElement s) => s.Value<string>("backgroundPreset") switch { "1" => "hero-bg-1", "2" => "hero-bg-2", _ => "hero-bg-0" };   // allow-list
+    // right panels: one per distinct source, each listing its slides (a shared panel renders once)
+    var navigator = HeroNavigator.Embedded(Umbraco.AssignedContentItem.Value<BlockListModel>("blocks"), custom?.HeroPanel);
+    var sources = HeroCampaign.Sources(HeroCampaign.Hero(c), slides.Select(HeroCampaign.Slide).ToList(), custom?.HeroPanel, navigator is not null);
+    var layers = HeroCampaign.Layers(c, slides, sources, navigator);
+    // phones / tablets: a panel shows under the text only when every slide shares it (a navigator, a search…); a panel
+    // of some slides only would leave an empty band on the others and move the page when the slides change
+    bool OnPhones(PanelLayer l) => l.Interactive && l.Slides.Count == slides.Count;
+    var interactive = layers.Any(OnPhones);
+    var hideMark = c.Value<bool>("hideSpinningMark");
+    // poster slides: the picture carries the message (see "The picture is the message" on the slide)
+    var posters = slides.Select(HeroCampaign.IsPoster).ToList();
+    var marks = slides.Select((s, i) => HeroCampaign.ShowMark(hideMark, s.Value<string>("spinningMark")) && !posters[i]).ToList();
     var id = "hero-" + Model.ContentKey.ToString("N")[..8];
-    var media = slides.Select(EHC.Web.Blocks.MediaBackground.From).ToList();
+    var media = slides.Select(MediaBackground.From).ToList();
+    var grads = slides.Select(s => Gradients.For(s)).ToList();
     var anyMedia = media.Any(m => m.HasMedia);
-    var isFirst = EHC.Web.Blocks.Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey);
+    var isFirst = Heading.IsFirstBlock(Umbraco.AssignedContentItem, Model.ContentKey);
     const string titleCss = "mb-5 text-[clamp(2.4rem,5.6vw,4.6rem)] font-bold leading-[1.12] tracking-[-.01em] rtl:leading-[1.3] rtl:tracking-normal";
 }
 @* With photos/videos on any slide the hero becomes a media-hero; each slide's media layer is swapped by the script,
-   together with its overlay, strength and focal point. *@
-<div data-hero data-interval="@(seconds * 1000)"@EHC.Web.Blocks.HtmlAttributes.Data("autoplay", custom?.HeroRotate is false ? "false" : null) class="@(anyMedia ? "media-hero" : Bg(slides[0]) + " relative overflow-hidden transition-[background] duration-700") text-white" style="@(anyMedia ? media[0].FocalStyle : null)"@EHC.Web.Blocks.HtmlAttributes.Data("overlay", anyMedia ? media[0].Overlay : null)@EHC.Web.Blocks.HtmlAttributes.Data("strength", anyMedia ? media[0].Strength : null)>
+   together with its overlay, strength and focal point. Slides without media get a gradient layer (cross-faded). *@
+<div data-hero data-interval="@(seconds * 1000)"@HtmlAttributes.Data("autoplay", custom?.HeroRotate is false ? "false" : null)@HtmlAttributes.Data("hover-pause", c.Value<bool>("keepRotatingOnHover") ? "false" : null) data-transition="@HeroCampaign.Transition(c.Value<string>("transition"))" class="@(anyMedia ? "media-hero" : "relative isolate overflow-hidden") text-white" style="@(anyMedia ? media[0].FocalStyle : null)"@HtmlAttributes.Data("overlay", anyMedia ? (posters[0] ? "poster" : media[0].Overlay) : null)@HtmlAttributes.Data("strength", anyMedia ? media[0].Strength : null)>
+    <div class="hero-bgs" aria-hidden="true">
+        @for (var i = 0; i < slides.Count; i++)
+        {
+            if (media[i].HasMedia && !posters[i]) { continue; }
+            @* a poster slide uses its gradient on phones, where the poster sits in the slide instead *@
+            <div class="hero-swap @grads[i].Class @(i == 0 ? "" : "slide-off") @(posters[i] ? "lg:hidden" : "")" style="@grads[i].Style" data-slide-bg="@i"></div>
+        }
+    </div>
     @if (anyMedia)
     {
         for (var i = 0; i < media.Count; i++)
         {
             if (!media[i].HasMedia) { continue; }
-            <div class="@(i == 0 ? "contents" : "hidden")" data-slide-media="@i">@await Html.PartialAsync("site/_MediaBackground", media[i] with { ShowPattern = false })</div>
+            if (posters[i])
+            {
+                @* the whole poster on large screens (decorative here: the slide carries its description) *@
+                <div class="hero-swap max-lg:hidden @(i == 0 ? "" : "slide-off")" data-slide-media="@i" aria-hidden="true"><picture class="media-bg"><img src="@HeroCampaign.PosterUrl(slides[i], 2560)" alt="" fetchpriority="@(i == 0 ? "high" : null)" loading="@(i == 0 ? null : "lazy")" decoding="async"></picture></div>
+                continue;
+            }
+            <div class="hero-swap @(i == 0 ? "" : "slide-off")" data-slide-media="@i">@await Html.PartialAsync("site/_MediaBackground", media[i] with { ShowPattern = false })</div>
         }
     }
-    <div class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08]" aria-hidden="true"></div>
-    <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:pb-[120px] lg:pt-10 @(showPanel ? "lg:grid-cols-[1.05fr_.95fr]" : "")">
+    @if (marks.Any(m => m))
+    {
+        <div class="mark-bg mark-white anim-spin-slow hero-swap pointer-events-none absolute -end-[120px] top-[calc(50%-380px)] h-[760px] w-[760px] opacity-[.08] @(marks[0] ? "" : "slide-off")" data-hero-mark aria-hidden="true"></div>
+    }
+    <div class="wrap relative grid items-center gap-10 pb-[110px] pt-7 lg:min-h-[620px] lg:pb-[120px] lg:pt-10 @(layers.Count > 0 ? "lg:grid-cols-[1.05fr_.95fr]" : "")">
         <div>
             @* all slides share one grid cell, so the hero keeps the height of the tallest (no jump when slides change) *@
             <div class="hero-slides">
@@ -44,11 +71,14 @@
                 var primary = s.Value<Link>("primaryCta");
                 var secondary = s.Value<Link>("secondaryCta");
                 var highlight = s.Value<string>("titleHighlight");
-                <div class="slide anim-fadeup @(i == 0 ? "" : "slide-off")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-bg="@Bg(s)" data-overlay="@(media[i].HasMedia ? media[i].Overlay : "")" data-strength="@media[i].Strength" data-focal="@media[i].Focal">
+                var poster = posters[i];
+                <div class="slide @(i == 0 ? "" : "slide-off") @(poster ? "lg:flex lg:flex-col lg:justify-end" : "")" id="@id-s@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" data-overlay="@(poster ? "poster" : media[i].HasMedia ? media[i].Overlay : "")" data-strength="@media[i].Strength" data-focal="@media[i].Focal"@HtmlAttributes.Data("mark", marks[i] ? null : "off")>
+                    @* a poster shows its own message: the texts stay for screen readers and search engines *@
+                    <div class="@(poster ? "sr-only" : "")">
                     @if (!string.IsNullOrWhiteSpace(s.Value<string>("kicker")))
                     {
                         <span class="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-[.85rem] font-medium">
-                            @if (!string.IsNullOrWhiteSpace(s.Value<string>("badge"))) { <b class="rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900">@(s.Value<string>("badge"))</b> }
+                            @if (!string.IsNullOrWhiteSpace(s.Value<string>("badge"))) { <b class="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-0.5 text-xs text-deep-900">@(s.Value<string>("badge"))</b> }
                             <span>@(s.Value<string>("kicker"))</span>
                         </span>
                     }
@@ -62,6 +92,13 @@
                         <h2 class="@titleCss">@(s.Value<string>("title"))@if (!string.IsNullOrWhiteSpace(highlight)) {<br><em class="not-italic text-brand-300">@highlight</em>}</h2>
                     }
                     @if (!string.IsNullOrWhiteSpace(s.Value<string>("lead"))) { <p class="mb-8 max-w-[540px] text-[1.15rem] text-white/85">@(s.Value<string>("lead"))</p> }
+                    </div>
+                    @if (poster)
+                    {
+                        @* phones / tablets: the poster in the slide (its centre, around the focal point; a wide poster keeps its
+                           message in the middle), with its description *@
+                        <img class="mb-6 aspect-[4/5] w-full rounded-2xl object-cover shadow-[0_20px_50px_rgba(0,0,0,.3)] sm:aspect-[16/9] lg:hidden" style="object-position: @media[i].Focal" src="@HeroCampaign.PosterUrl(s, 2560)" alt="@media[i].Alt" loading="lazy" decoding="async">
+                    }
                     @if (primary is not null || secondary is not null)
                     {
                         <div class="flex flex-wrap gap-3">
@@ -69,7 +106,7 @@
                             @if (secondary is not null) { <a class="btn btn-outline btn-lg" href="@secondary.Url" target="@secondary.Target">@secondary.Name</a> }
                         </div>
                     }
-                    @if (!string.IsNullOrWhiteSpace(s.Value<string>("finePrint"))) { <div class="mt-4 text-[.8rem] text-white/65">@(s.Value<string>("finePrint"))</div> }
+                    @if (!string.IsNullOrWhiteSpace(s.Value<string>("finePrint"))) { <div class="mt-4 text-[.8rem] text-white/65 @(poster ? "sr-only" : "")">@(s.Value<string>("finePrint"))</div> }
                 </div>
             }
             </div>
@@ -94,33 +131,11 @@
                 </div>
             }
         </div>
-        @if (navigator is not null)
+        @if (layers.Count > 0)
         {
-            @await Html.PartialAsync("blocklist/Components/careNavigatorBlock", navigator, new ViewDataDictionary(ViewData) { ["inHero"] = true })
-        }
-        else if (showPanel)
-        {
-            <div class="relative hidden min-h-[380px] lg:block">
-                @if (panel == "art")
-                {
-                    <div class="absolute inset-0 grid place-items-center">
-                        <div class="relative h-[340px] w-[340px] rounded-full border border-white/15">
-                            <div class="absolute inset-[40px] rounded-full border border-dashed border-white/20 anim-spin-slow"></div>
-                            <div class="absolute inset-[110px] grid place-items-center rounded-full bg-white shadow-[0_30px_80px_rgba(0,0,0,.3)] dark:bg-night-900"><span class="mark-bg h-20 w-20"></span></div>
-                        </div>
-                    </div>
-                }
-                <div class="relative flex h-full flex-col justify-center gap-4 @(panel == "art" ? "items-end" : "")">
-                    @for (var i = 0; i < cards.Count; i++)
-                    {
-                        var card = cards[i];
-                        var icon = card.Value<string>("icon");
-                        <div class="flex w-fit max-w-[320px] items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 shadow-[0_20px_50px_rgba(0,0,0,.2)] backdrop-blur-xl @(i % 2 == 1 ? "ms-10" : "")">
-                            @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
-                            <span><b class="block leading-tight">@(card.Value<string>("title"))</b><span class="text-sm text-white/75">@(card.Value<string>("subtitle"))</span></span>
-                        </div>
-                    }
-                </div>
+            @* one slide with a panel keeps the two columns for all (no jump); stacked in one cell *@
+            <div class="hero-panels relative @(interactive ? "grid" : "hidden lg:grid") lg:min-h-[380px]">
+                @foreach (var layer in layers) { @await Html.PartialAsync("heroPanel/_Panel", layer, new ViewDataDictionary(ViewData) { ["phones"] = OnPhones(layer) }) }
             </div>
         }
     </div>

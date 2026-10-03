@@ -20,10 +20,12 @@
     zoomIn: attr('data-label-zoom-in', 'Zoom in'), zoomOut: attr('data-label-zoom-out', 'Zoom out'),
     showAll: attr('data-label-show-all', 'Show all'), details: attr('data-label-details', 'Details'),
     directions: attr('data-label-directions', 'Directions'),
-    twoFingers: attr('data-label-two-fingers', 'Use two fingers to move the map')
+    twoFingers: attr('data-label-two-fingers', 'Use two fingers to move the map'),
+    myLocation: attr('data-label-my-location', 'My location'),
+    locateFailed: attr('data-label-locate-failed', 'Your location could not be found')
   };
-  // touch screens: one finger scrolls the page, two fingers move / zoom the map (pinch also pans in Leaflet)
-  var touchOnly = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(hover: hover)').matches);
+  // geolocation only works on https (and localhost); the position never leaves the browser
+  var CAN_LOCATE = !!navigator.geolocation && window.isSecureContext !== false;
   var rtl = document.documentElement.dir === 'rtl';
 
   function svgIcon(name, cls) {
@@ -86,10 +88,24 @@
     }, { passive: true });
   }
 
+  // a short message over the map (e.g. location not available)
+  function flash(el, text) {
+    var box = el.querySelector('.ehc-map-msg');
+    if (!box) { box = document.createElement('div'); box.className = 'ehc-map-hint ehc-map-msg'; box.setAttribute('role', 'status'); el.appendChild(box); }
+    box.textContent = text; box.classList.add('is-on');
+    clearTimeout(box.__t); box.__t = setTimeout(function () { box.classList.remove('is-on'); }, 2600);
+  }
+
   function draw(el, points) {
     var L = window.L;
-    var map = L.map(el, { scrollWheelZoom: false, zoomControl: false, maxZoom: 18, dragging: !touchOnly });
-    if (touchOnly) twoFingerHint(el);
+    var map = L.map(el, { scrollWheelZoom: false, zoomControl: false, maxZoom: 18 });
+    // fingers and pens scroll the page over the map; two fingers move / zoom it (pinch also pans); a mouse drags it.
+    // Decided per press, not from media queries: Samsung devices report hover: hover on phones (S Pen / DeX).
+    // Runs before Leaflet's own pointerdown handler (capture), and CSS keeps touch-action: pan-x pan-y (ehc.css).
+    el.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse') map.dragging.enable(); else map.dragging.disable();
+    }, true);
+    twoFingerHint(el);
     var tiles = attr('data-tiles', '');
     if (tiles && window.protomapsL) {
       // one light style; dark mode recolours it in CSS, so switching theme needs no reload
@@ -134,21 +150,50 @@
     }
     fitAll();
 
-    // "show all" control under the zoom buttons (only useful with several points)
-    if (bounds.length > 1) {
-      var ShowAll = L.Control.extend({
+    // "my location": a "you are here" dot (with its accuracy circle) and the map centred on it. Announced to the page
+    // as map:located (detail: [lat, lng]); the facility finder sorts its list by distance from it.
+    var meDot = null, meArea = null, meBtn = null;
+    function locate() {
+      if (!CAN_LOCATE) return;
+      if (meBtn) { meBtn.classList.add('is-busy'); meBtn.setAttribute('aria-busy', 'true'); }
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var here = [pos.coords.latitude, pos.coords.longitude], acc = Math.min(pos.coords.accuracy || 0, 50000);
+        if (meBtn) { meBtn.classList.remove('is-busy'); meBtn.removeAttribute('aria-busy'); meBtn.classList.add('is-on'); }
+        if (!meDot) {
+          meArea = L.circle(here, { radius: acc, className: 'ehc-me-area', interactive: false }).addTo(map);
+          meDot = L.marker(here, { icon: L.divIcon({ className: 'ehc-me', html: '<span></span>', iconSize: [22, 22] }), title: T.myLocation, alt: T.myLocation, keyboard: false, zIndexOffset: 2000 }).addTo(map);
+        } else { meArea.setLatLng(here).setRadius(acc); meDot.setLatLng(here); }
+        // a rough fix (e.g. a desktop located by its network) shows its whole circle; a precise one zooms in
+        if (acc > 1500) map.fitBounds(meArea.getBounds(), { maxZoom: 13, padding: [20, 20] });
+        else map.setView(here, Math.max(map.getZoom(), 13));
+        el.dispatchEvent(new CustomEvent('map:located', { detail: here }));
+      }, function () {
+        if (meBtn) { meBtn.classList.remove('is-busy'); meBtn.removeAttribute('aria-busy'); }
+        flash(el, T.locateFailed);
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    }
+    el.__locate = CAN_LOCATE ? locate : null;
+
+    // under the zoom buttons: "my location", and "show all" when there are several points
+    if (CAN_LOCATE || bounds.length > 1) {
+      var Tools = L.Control.extend({
         options: { position: rtl ? 'topright' : 'topleft' },
         onAdd: function () {
           var bar = L.DomUtil.create('div', 'leaflet-bar ehc-map-fit');
-          var b = L.DomUtil.create('a', '', bar);
-          b.href = '#'; b.title = T.showAll; b.setAttribute('role', 'button'); b.setAttribute('aria-label', T.showAll);
-          b.appendChild(svgIcon('target', 'ico !h-[18px] !w-[18px]'));
-          L.DomEvent.on(b, 'click', function (e) { L.DomEvent.preventDefault(e); fitAll(); });
+          function button(label, icon, run) {
+            var b = L.DomUtil.create('a', '', bar);
+            b.href = '#'; b.title = label; b.setAttribute('role', 'button'); b.setAttribute('aria-label', label);
+            b.appendChild(svgIcon(icon, 'ico !h-[18px] !w-[18px]'));
+            L.DomEvent.on(b, 'click', function (e) { L.DomEvent.preventDefault(e); run(); });
+            return b;
+          }
+          if (CAN_LOCATE) meBtn = button(T.myLocation, 'locate', locate);
+          if (bounds.length > 1) button(T.showAll, 'target', fitAll);
           L.DomEvent.disableClickPropagation(bar);
           return bar;
         }
       });
-      map.addControl(new ShowAll());
+      map.addControl(new Tools());
     }
 
     // highlight a pin (or the cluster holding it) while its list card is hovered / focused
@@ -169,10 +214,13 @@
       card.addEventListener('blur', function () { light(null); });
     });
 
-    // filter from outside: el.dispatchEvent(new CustomEvent('map:filter', { detail: 'hospital' | 'emergency' | 'all' }))
+    // filter from outside: el.dispatchEvent(new CustomEvent('map:filter', { detail: 'hospital' | 'emergency' | 'all' | [ids] }))
     el.addEventListener('map:filter', function (e) {
       var f = e.detail || 'all';
-      var keep = markers.filter(function (x) { return f === 'all' || (f === 'emergency' ? x.er : x.type === f); }).map(function (x) { return x.marker; });
+      var keep = markers.filter(function (x) {
+        if (Array.isArray(f)) return f.indexOf(String(x.id)) >= 0;
+        return f === 'all' || (f === 'emergency' ? x.er : x.type === f);
+      }).map(function (x) { return x.marker; });
       layer.clearLayers();
       if (layer.addLayers) layer.addLayers(keep); else keep.forEach(function (m) { layer.addLayer(m); });
     });
@@ -189,7 +237,7 @@
       return {
         id: card ? card.getAttribute('data-facility') : '', name: name ? name.textContent.trim() : '', url: card ? card.getAttribute('href') : '',
         meta: meta ? meta.textContent.replace(/\s+/g, ' ').trim() : '',
-        lat: row.getAttribute('data-lat'), lng: row.getAttribute('data-lng'), type: row.getAttribute('data-type') || '', er: row.getAttribute('data-er') === '1'
+        lat: row.getAttribute('data-lat'), lng: row.getAttribute('data-lng'), type: row.getAttribute('data-type') || '', er: row.getAttribute('data-emergency') === '1'
       };
     }).filter(function (p) { return p.name && p.lat && p.lng; });
   }

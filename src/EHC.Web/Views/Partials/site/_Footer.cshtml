@@ -10,7 +10,7 @@
     <div class="wrap">
         <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-                <a href="@(Model.Home?.Url() ?? "/")" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")"><img class="h-14 brightness-0 invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")"></a>
+                <a href="@(Model.Home?.Url() ?? "/")" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")">@await Html.PartialAsync("site/_Logo", Model, new ViewDataDictionary(ViewData) { ["class"] = "h-14 w-auto", ["onDark"] = true })</a>
                 <div class="mt-5 grid gap-2.5">
                     <span class="flex items-center gap-2"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-pin" /></svg><span>@Umbraco.GetDictionaryValue("EHC.Footer.Address")</span></span>
                     @if (Model.UnifiedNumber is { } unified)
@@ -48,7 +48,7 @@
                     <a href="@l.Url" target="@l.Target" class="hover:text-white">@l.Name</a>
                     <text> · </text>
                 }
-                <button type="button" data-action="consent-open" aria-controls="consent" class="underline-offset-2 hover:text-white hover:underline">@Umbraco.GetDictionaryValue("EHC.Cookies.Settings")</button>
+                <button type="button" data-action="consent-open" aria-controls="consent" class="inline-flex min-h-6 items-center underline-offset-2 hover:text-white hover:underline">@Umbraco.GetDictionaryValue("EHC.Cookies.Settings")</button>
             </span>
         </div>
     </div>

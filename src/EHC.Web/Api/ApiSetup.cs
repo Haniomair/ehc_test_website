@@ -12,6 +12,7 @@ public static class ApiSetup
 {
     public const string Policy = "ehc-api";
     public const string FeedbackPolicy = "ehc-feedback";
+    public const string VitalsPolicy = "ehc-vitals";
     public const int ReadPermitsPerMinute = 600;
 
     public static void Add(IUmbracoBuilder builder)
@@ -31,6 +32,10 @@ public static class ApiSetup
             o.AddPolicy(FeedbackPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
+            // Core Web Vitals: one small report per page view; hospitals and offices share one public IP
+            o.AddPolicy(VitalsPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
         });
 
         services.Configure<ErWaitOptions>(builder.Config.GetSection("Ehc:ErWait"));

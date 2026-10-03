@@ -14,12 +14,14 @@
   function on(action, fn) { $$('[data-action="' + action + '"]').forEach(function (el) { el.addEventListener('click', function (e) { fn(el, e); }); }); }
   var focusable = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
 
-  // ---------- dark mode: explicit choice is remembered; otherwise follow the OS ----------
+  // ---------- dark mode: explicit choice is remembered; otherwise follow the OS (Samsung Internet: dark, see theme-init.js) ----------
+  var samsung = /SamsungBrowser/i.test(navigator.userAgent);
+  function osDark() { return samsung || !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
   function syncDarkButtons() { $$('[data-action="dark"]').forEach(function (b) { b.setAttribute('aria-pressed', html.classList.contains('dark')); }); }
   on('dark', function () { var dark = !html.classList.contains('dark'); html.classList.toggle('dark', dark); store.set('ehc-dark', dark ? '1' : '0'); syncDarkButtons(); });
   if (window.matchMedia) {
     var mq = window.matchMedia('(prefers-color-scheme: dark)');
-    var follow = function (e) { if (store.get('ehc-dark') === null) { html.classList.toggle('dark', e.matches); syncDarkButtons(); } };
+    var follow = function () { if (store.get('ehc-dark') === null) { html.classList.toggle('dark', osDark()); syncDarkButtons(); } };
     if (mq.addEventListener) mq.addEventListener('change', follow); else if (mq.addListener) mq.addListener(follow);
   }
   syncDarkButtons();
@@ -124,12 +126,18 @@
   syncA11y();
   on('a11y-open', function () { showModal(a11y); });
   on('a11y-close', hideModal);
+  // editor links to "#accessibility" (e.g. in the footer) open the panel
+  $$('a[href="#accessibility"]').forEach(function (a) {
+    if (!a11y) return;
+    a.setAttribute('aria-haspopup', 'dialog');
+    a.addEventListener('click', function (e) { e.preventDefault(); showModal(a11y); });
+  });
   on('a11y-reset', function () {
     a11yKeys.forEach(function (k) { html.classList.remove('a11y-' + k); });
     html.classList.remove('contrast'); store.set('ehc-contrast', '0'); syncContrast();
     size = 16; store.set('ehc-fs', '16'); applySize();
     try { localStorage.removeItem('ehc-dark'); } catch (e) { /* private mode */ }
-    html.classList.toggle('dark', !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)); syncDarkButtons();
+    html.classList.toggle('dark', osDark()); syncDarkButtons();
     syncA11y();
   });
 
@@ -168,6 +176,20 @@
     });
   }
 
+  // ---------- Samsung Internet: recommend another browser once (its "Dark sites" mode recolours the site; no opt-out).
+  // Shown on the first page opened there, after the cookie notice has been answered; remembered as "ehc-browser-tip". ----------
+  var browserTip = $('#browserTip');
+  if (browserTip && samsung && store.get('ehc-browser-tip') !== '1') {
+    var chrome = $('[data-open-chrome]', browserTip);
+    if (chrome) {
+      chrome.href = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
+    }
+    on('browser-tip-close', function () { conceal(browserTip); });
+    var showTip = function () { store.set('ehc-browser-tip', '1'); reveal(browserTip); };
+    if (!consent || html.hasAttribute('data-consent')) showTip();
+    else document.addEventListener('ehc:consent', function once() { document.removeEventListener('ehc:consent', once); setTimeout(showTip, 450); });
+  }
+
   // ---------- look customizer (reviewers only; the form itself is components/customizer.js) ----------
   var customizer = $('#customizer');
   on('customizer-open', function () { showModal(customizer); });
@@ -178,49 +200,182 @@
     returnTo = $('[data-action="customizer-open"]');
   }
 
-  // ---------- search palette ----------
+  // ---------- search palette (Views/Partials/site/_Search.cshtml) ----------
+  // A WAI-ARIA combobox: the input owns a listbox of results (aria-activedescendant); ↑ ↓ move, Enter opens.
+  // Everything from the server is added with DOM APIs (textContent), never as HTML.
   var search = $('#search'), sIn = $('#sIn');
-  on('search-open', function () { if (sIn) { sIn.value = ''; sIn.dispatchEvent(new Event('input')); } showModal(search, sIn); });
+  var sCfg = $('[data-s-config]');
+  var S = search && sIn && sCfg ? {
+    list: $('#sList'), results: $('[data-s-results]', search), start: $('[data-s-start]', search), msg: $('[data-s-message]', search),
+    scopes: $('[data-s-scopes]', search), busy: $('[data-s-busy]', search), clear: $('[data-s-clear]', search), status: $('[data-s-status]', search),
+    recent: $('[data-s-recent]', search), recentList: $('[data-s-recent-list]', search)
+  } : null;
+  var openSearch = function (q) {
+    if (!search) return;
+    if (openModal && openModal !== search) hideModal();
+    showModal(search, sIn);
+    if (sIn) { sIn.value = q || ''; sIn.dispatchEvent(new Event('input')); }
+  };
+  on('search-open', function () { openSearch(''); });
   on('search-close', hideModal);
-  // live results from /api/search (debounced; built with DOM APIs, never innerHTML with server text)
-  var sRes = $('#sRes');
-  if (sIn && sRes) {
-    var labels = {}; try { labels = JSON.parse(sRes.getAttribute('data-labels') || '{}'); } catch (e) { /* keep keys */ }
-    var timer = null, seq = 0;
-    var message = function (text) { sRes.textContent = ''; var p = document.createElement('p'); p.className = 'px-3 py-8 text-center text-slate-500'; p.textContent = text; sRes.appendChild(p); };
-    var render = function (groups) {
-      sRes.textContent = '';
-      if (!groups.length) { message(sRes.getAttribute('data-empty') || ''); return; }
+  if (S) {
+    var labels = {}; try { labels = JSON.parse(sCfg.getAttribute('data-labels') || '{}'); } catch (e) { /* keep keys */ }
+    var txt = function (k) { return sCfg.getAttribute('data-' + k) || ''; };
+    var lang = html.lang || 'ar', dateFmt = null;
+    try { dateFmt = new Intl.DateTimeFormat(lang + '-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { /* plain dates */ }
+    var groups = [], scope = 'all', active = -1, timer = null, seq = 0, query = '';
+    var RECENT = 'ehc-search-recent';
+
+    var show = function (el, on) { if (el) el.classList.toggle('hidden', !on); };
+    var icon = function (name, cls) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', cls || 'ico'); svg.setAttribute('aria-hidden', 'true');
+      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.appendChild(use); return svg;
+    };
+    // the title with each word of the query marked (case-insensitive), as text nodes and <mark> elements
+    var highlight = function (el, text) {
+      var words = query.toLowerCase().split(/\s+/).filter(function (w) { return w.length > 1; });
+      var low = text.toLowerCase(), i = 0;
+      while (i < text.length) {
+        var at = -1, len = 0;
+        words.forEach(function (w) { var k = low.indexOf(w, i); if (k >= 0 && (at < 0 || k < at)) { at = k; len = w.length; } });
+        if (at < 0) { el.appendChild(document.createTextNode(text.slice(i))); break; }
+        if (at > i) el.appendChild(document.createTextNode(text.slice(i, at)));
+        var m = document.createElement('mark'); m.textContent = text.slice(at, at + len); el.appendChild(m);
+        i = at + len;
+      }
+    };
+
+    // recent searches: this browser only, best effort
+    var recentGet = function () { try { return JSON.parse(localStorage.getItem(RECENT) || '[]').filter(function (x) { return typeof x === 'string'; }).slice(0, 6); } catch (e) { return []; } };
+    var recentSave = function (q) {
+      q = (q || '').trim(); if (q.length < 2) return;
+      try { localStorage.setItem(RECENT, JSON.stringify([q].concat(recentGet().filter(function (x) { return x !== q; })).slice(0, 6))); } catch (e) { /* storage off */ }
+    };
+    var renderRecent = function () {
+      if (!S.recent) return;
+      var items = recentGet();
+      S.recentList.textContent = '';
+      items.forEach(function (q) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'chip inline-flex items-center gap-1.5 hover:border-brand-500 hover:text-brand-600';
+        b.setAttribute('data-s-term', q); b.appendChild(icon('clock', 'ico !h-3.5 !w-3.5 text-slate-400')); b.appendChild(document.createTextNode(q));
+        S.recentList.appendChild(b);
+      });
+      show(S.recent, items.length > 0);
+    };
+
+    var options = function () { return [].slice.call(S.list.querySelectorAll('[role="option"]')); };
+    var setActive = function (i, scroll) {
+      var opts = options();
+      active = opts.length ? Math.max(-1, Math.min(i, opts.length - 1)) : -1;
+      opts.forEach(function (o, j) { o.setAttribute('aria-selected', j === active ? 'true' : 'false'); });
+      if (active >= 0) { sIn.setAttribute('aria-activedescendant', opts[active].id); if (scroll) opts[active].scrollIntoView({ block: 'nearest' }); }
+      else sIn.removeAttribute('aria-activedescendant');
+    };
+
+    var renderScopes = function () {
+      S.scopes.textContent = '';
+      var total = groups.reduce(function (n, g) { return n + g.items.length; }, 0);
+      var chip = function (key, label, count) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'chip inline-flex shrink-0 items-center gap-1.5';
+        b.setAttribute('aria-pressed', scope === key ? 'true' : 'false'); b.setAttribute('data-s-scope', key);
+        b.appendChild(document.createTextNode(label));
+        var c = document.createElement('span'); c.className = 'rounded-full bg-black/5 px-1.5 text-[.7rem] tabular-nums dark:bg-white/10'; c.textContent = String(count);
+        b.appendChild(c); S.scopes.appendChild(b);
+      };
+      chip('all', S.scopes.getAttribute('data-all') || 'All', total);
+      groups.forEach(function (g) { chip(g.key, labels[g.key] || g.key, g.items.length); });
+      S.scopes.classList.toggle('hidden', groups.length < 2);
+      S.scopes.classList.toggle('flex', groups.length >= 2);
+    };
+
+    var renderResults = function () {
+      S.list.textContent = '';
+      var n = 0;
       groups.forEach(function (g) {
-        var h = document.createElement('p');
-        h.className = 'px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal';
-        h.textContent = labels[g.key] || g.key;
-        sRes.appendChild(h);
+        if (scope !== 'all' && scope !== g.key) return;
+        var grp = document.createElement('div'); grp.setAttribute('role', 'group');
+        var h = document.createElement('p'); h.className = 's-head px-3 pt-3'; h.id = 'sG-' + g.key; h.textContent = labels[g.key] || g.key;
+        grp.setAttribute('aria-labelledby', h.id); grp.appendChild(h);
         g.items.forEach(function (it) {
           var a = document.createElement('a');
-          a.href = it.url;
-          a.className = 'flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-50 focus:bg-brand-50 dark:hover:bg-white/5 dark:focus:bg-white/5';
-          var ic = document.createElement('span'); ic.className = 'mega-ic !h-9 !w-9';
-          if (/^[a-z0-9-]+$/.test(it.icon || '')) {
-            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'ico'); svg.setAttribute('aria-hidden', 'true');
-            var use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + it.icon); svg.appendChild(use); ic.appendChild(svg);
-          }
-          var t = document.createElement('span'); t.className = 'flex-1'; t.textContent = it.title;
-          a.appendChild(ic); a.appendChild(t);
-          sRes.appendChild(a);
+          a.href = it.url; a.id = 'sO-' + (n++); a.className = 's-opt'; a.setAttribute('role', 'option'); a.setAttribute('aria-selected', 'false'); a.tabIndex = -1;
+          var ic = document.createElement('span'); ic.className = 's-opt-ic';
+          if (/^[a-z0-9-]+$/.test(it.icon || '')) ic.appendChild(icon(it.icon, 'ico !h-5 !w-5'));
+          var body = document.createElement('span'); body.className = 'min-w-0 flex-1';
+          var t = document.createElement('span'); t.className = 'block truncate font-semibold'; highlight(t, it.title || '');
+          body.appendChild(t);
+          var meta = [it.meta, it.date && dateFmt ? dateFmt.format(new Date(it.date + 'T12:00:00')) : it.date].filter(Boolean).join(' · ');
+          if (meta) { var m = document.createElement('span'); m.className = 'block truncate text-xs text-slate-500 dark:text-slate-400'; m.textContent = meta; body.appendChild(m); }
+          var go = icon('arrow', 'ico flip s-opt-go !h-4 !w-4');
+          a.appendChild(ic); a.appendChild(body); a.appendChild(go);
+          grp.appendChild(a);
         });
+        S.list.appendChild(grp);
       });
+      setActive(-1);
     };
+
+    var state = function (mode, text) {
+      // mode: start | results | empty | error
+      show(S.results, mode === 'results');
+      show(S.msg, mode === 'empty' || mode === 'error');
+      show(S.start, mode === 'start' || mode === 'empty');
+      if (S.msg && text) S.msg.textContent = text;
+      sIn.setAttribute('aria-expanded', mode === 'results' ? 'true' : 'false');
+      if (mode !== 'results') { groups = []; S.scopes.classList.add('hidden'); S.scopes.classList.remove('flex'); S.list.textContent = ''; setActive(-1); }
+      if (mode === 'start' || mode === 'empty') renderRecent();
+    };
+
     var run = function () {
-      var q = sIn.value.trim();
-      if (q.length < 2) { message(sRes.getAttribute('data-hint') || ''); return; }
+      query = sIn.value.trim();
+      show(S.clear, sIn.value.length > 0); S.clear && S.clear.classList.toggle('grid', sIn.value.length > 0);
+      if (query.length < 2) { show(S.busy, false); state('start'); if (S.status) S.status.textContent = ''; return; }
       var mine = ++seq;
-      fetch((sRes.getAttribute('data-api') || '/api/search') + '?q=' + encodeURIComponent(q) + '&culture=' + encodeURIComponent(html.lang || 'ar'), { headers: { 'Accept': 'application/json' } })
+      show(S.busy, true);
+      fetch((sCfg.getAttribute('data-api') || '/api/search') + '?q=' + encodeURIComponent(query) + '&culture=' + encodeURIComponent(lang), { headers: { 'Accept': 'application/json' } })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function (groups) { if (mine === seq) render(groups || []); })
-        .catch(function () { if (mine === seq) message(sRes.getAttribute('data-error') || ''); });
+        .then(function (data) {
+          if (mine !== seq) return;
+          show(S.busy, false);
+          groups = (data || []).filter(function (g) { return g && g.items && g.items.length; });
+          if (!groups.some(function (g) { return g.key === scope; })) scope = 'all';
+          var total = groups.reduce(function (n, g) { return n + g.items.length; }, 0);
+          if (S.status) S.status.textContent = total ? (txt('count') || '{0}').replace('{0}', total) : txt('empty');
+          if (!total) { state('empty', txt('empty')); return; }
+          state('results'); renderScopes(); renderResults();
+        })
+        .catch(function () { if (mine !== seq) return; show(S.busy, false); state('error', txt('error')); });
     };
-    sIn.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(run, 250); });
+    sIn.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(run, 220); });
+    sIn.addEventListener('keydown', function (e) {
+      var opts = options();
+      if (e.key === 'ArrowDown' && opts.length) { e.preventDefault(); setActive(active + 1 >= opts.length ? 0 : active + 1, true); }
+      else if (e.key === 'ArrowUp' && opts.length) { e.preventDefault(); setActive(active <= 0 ? opts.length - 1 : active - 1, true); }
+      else if (e.key === 'Enter') {
+        var pick = opts[active >= 0 ? active : 0];
+        if (pick) { e.preventDefault(); recentSave(query); location.href = pick.href; }
+      }
+    });
+    S.list.addEventListener('mousemove', function (e) {
+      var o = e.target.closest && e.target.closest('[role="option"]');
+      if (o) { var i = options().indexOf(o); if (i !== active) setActive(i, false); }
+    });
+    S.list.addEventListener('click', function (e) { if (e.target.closest('[role="option"]')) recentSave(query); });
+    S.scopes.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-s-scope]'); if (!b) return;
+      scope = b.getAttribute('data-s-scope');
+      [].forEach.call(S.scopes.querySelectorAll('[data-s-scope]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      renderResults(); sIn.focus();
+    });
+    // one-tap searches (specialties, recent)
+    search.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-s-term]'); if (!t) return;
+      sIn.value = t.getAttribute('data-s-term'); sIn.focus(); clearTimeout(timer); run();
+    });
+    if (S.clear) S.clear.addEventListener('click', function () { sIn.value = ''; sIn.focus(); run(); });
+    var rc = $('[data-s-recent-clear]', search);
+    if (rc) rc.addEventListener('click', function () { try { localStorage.removeItem(RECENT); } catch (e) { /* storage off */ } renderRecent(); sIn.focus(); });
+    renderRecent();
   }
 
   // search boxes in page sections (e.g. the search hero) hand their query to the palette
@@ -229,14 +384,13 @@
       if (!search) return;
       e.preventDefault();
       var q = form.querySelector('input[name="q"]');
-      showModal(search, sIn);
-      if (sIn && q) { sIn.value = q.value; sIn.dispatchEvent(new Event('input', { bubbles: true })); }
+      openSearch(q ? q.value : '');
     });
   });
   document.addEventListener('keydown', function (e) {
     if (!search || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return;
     e.preventDefault();
-    if (openModal === search) hideModal(); else { if (openModal) hideModal(); showModal(search, sIn); }
+    if (openModal === search) hideModal(); else openSearch('');
   });
 
   // ---------- mega menu ----------
@@ -286,12 +440,20 @@
     $$('.mega-panel a').forEach(function (a) { a.addEventListener('click', function () { closeMega(false); }); });
   }
 
+  // ---------- installable app: service worker for the offline page (sw.js; network first, nothing stale) ----------
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* not essential */ }); });
+  }
+
   // ---------- reveal-on-scroll for blocks that use .rv ----------
   var rv = $$('.rv');
   if (rv.length) {
     if ('IntersectionObserver' in window) {
+      // on screen at load: shown as is (no fade, so the page's main content isn't held back); the rest fades in on scroll
+      rv.forEach(function (e) { if (e.getBoundingClientRect().top < window.innerHeight) e.classList.add('in'); });
+      html.classList.add('rv-on');
       var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
-      rv.forEach(function (e) { io.observe(e); });
+      rv.forEach(function (e) { if (!e.classList.contains('in')) io.observe(e); });
     } else rv.forEach(function (e) { e.classList.add('in'); });
   }
 })();

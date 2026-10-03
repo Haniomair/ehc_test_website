@@ -21,7 +21,7 @@
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(D("EHC.News.Eyebrow"), c.Value<string>("heading"), null))
         @if (folder is not null) { <a class="link" href="@folder.Url()"><span>@D("EHC.News.All")</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
     </div>
-    <div class="grid gap-5 md:grid-cols-3">
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 sm:max-lg:[&>*:first-child:nth-last-child(odd)]:col-span-2">
         @foreach (var n in news) { <div class="rv">@await Html.PartialAsync("cards/_NewsCard", n)</div> }
     </div>
 </div>

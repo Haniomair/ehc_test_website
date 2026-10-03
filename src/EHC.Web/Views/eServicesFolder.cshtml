@@ -1,0 +1,38 @@
+﻿@* E-services: the e-service pages below, filtered by audience (patients, staff, suppliers, trainees, volunteers — only
+   audiences that have services), then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    var services = Model.Children().Where(c => c.ContentType.Alias == "eService").ToList();
+    var used = EServices.Audiences.Where(a => services.Any(s => EServices.Of(s).Contains(a.Key))).ToList();
+    string? audience = req.Query["audience"];
+    if (audience is not null && used.All(a => a.Key != audience)) { audience = null; }
+    var list = services.Where(s => audience is null || EServices.Of(s).Contains(audience)).ToList();
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+<div class="wrap py-10 lg:py-14">
+    @if (used.Count > 1)
+    {
+        <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.EServices.Audiences")">
+            <a class="chip" href="@ListingQuery.With(req, "audience", null)" aria-current="@(audience is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+            @foreach (var a in used)
+            {
+                <a class="chip" href="@ListingQuery.With(req, "audience", a.Key)" aria-current="@(audience == a.Key ? "true" : null)"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-@a.Icon" /></svg>@Umbraco.GetDictionaryValue("EHC.EServices.Audience." + a.Key)</a>
+            }
+        </nav>
+    }
+    @if (list.Count == 0)
+    {
+        <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
+    }
+    else
+    {
+        <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var s in list) { <li>@await Html.PartialAsync("cards/_EServiceCard", s)</li> }
+        </ul>
+    }
+</div>
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

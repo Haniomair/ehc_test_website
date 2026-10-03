@@ -1,0 +1,28 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Language copy",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "entityAction",
+      "kind": "default",
+      "alias": "Ehc.EntityAction.Document.FillArabic",
+      "name": "Fill empty Arabic from English",
+      "forEntityTypes": ["document"],
+      "api": "/App_Plugins/EhcTranslate/fill-language.js",
+      "weight": 120,
+      "meta": { "icon": "icon-globe", "label": "Fill empty Arabic from English", "from": "en-US", "to": "ar-SA", "fromName": "English", "toName": "Arabic" }
+    },
+    {
+      "type": "entityAction",
+      "kind": "default",
+      "alias": "Ehc.EntityAction.Document.FillEnglish",
+      "name": "Fill empty English from Arabic",
+      "forEntityTypes": ["document"],
+      "api": "/App_Plugins/EhcTranslate/fill-language.js",
+      "weight": 119,
+      "meta": { "icon": "icon-globe", "label": "Fill empty English from Arabic", "from": "ar-SA", "to": "en-US", "fromName": "Arabic", "toName": "English" }
+    }
+  ]
+}

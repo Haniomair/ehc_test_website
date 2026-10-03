@@ -1,4 +1,6 @@
-@* Block 8 "Life-stage journeys": tabs (stages) → intro card + timeline of steps. Colour per stage from an allow-list.
+@* Block 8 "Life-stage journeys": tabs (stages) → an intro banner (title, text, button) and the numbered steps (when,
+   title, optional short text and link) in one card: side by side on large screens, a vertical timeline on phones.
+   Colour per stage from an allow-list.
    Behaviour: frontend/src/js/components/tabs.js (WAI-ARIA tabs). *@
 @using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models
@@ -10,12 +12,12 @@
     if (stages.Count == 0) { return; }
     var id = "jr-" + Model.ContentKey.ToString("N")[..8];
     // allow-list: editor picks a colour key, never a class
-    (string Card, string Button, string Dot, string When) Palette(string? key) => key switch
+    (string Card, string Button, string Node, string Line, string When) Palette(string? key) => key switch
     {
-        "highlight" => ("from-highlight-500 to-highlight-800", "text-highlight-800", "bg-highlight-500", "text-highlight-800 dark:text-highlight-500"),
-        "accent" => ("from-accent-400 to-accent-500", "text-deep-900", "bg-accent-400", "text-deep-900 dark:text-accent-400"),
-        "support" => ("from-support-500 to-support-900", "text-support-900", "bg-support-500", "text-support-800 dark:text-support-300"),
-        _ => ("from-brand-500 to-deep-900", "text-deep-900", "bg-brand-500", "text-brand-600 dark:text-brand-300"),
+        "highlight" => ("from-highlight-500 to-highlight-800", "text-highlight-800", "bg-highlight-500 text-white", "bg-highlight-500/25", "text-highlight-800 dark:text-highlight-500"),
+        "accent" => ("from-accent-400 to-accent-500", "text-deep-900", "bg-accent-400 text-deep-900", "bg-accent-400/40", "text-deep-900 dark:text-accent-400"),
+        "support" => ("from-support-500 to-support-900", "text-support-900", "bg-support-500 text-white", "bg-support-500/25", "text-support-800 dark:text-support-300"),
+        _ => ("from-brand-500 to-deep-900", "text-deep-900", "bg-brand-600 text-white", "bg-brand-500/25", "text-brand-600 dark:text-brand-300"),
     };
     var disclaimer = c.Value<string>("disclaimer");
 }
@@ -41,23 +43,48 @@
         var s = stages[i];
         var p = Palette(s.Value<string>("color"));
         var cta = s.Value<Link>("cta");
-        var steps = s.Value<BlockListModel>("steps")?.Select(x => x.Content).ToList() ?? [];
-        <div id="@id-p@(i)" role="@(stages.Count > 1 ? "tabpanel" : null)" aria-labelledby="@(stages.Count > 1 ? $"{id}-t{i}" : null)" class="grid gap-6 lg:grid-cols-[.8fr_1.2fr] @(i == 0 ? "" : "hidden")">
-            <div class="relative overflow-hidden rounded-[22px] bg-linear-to-br @p.Card p-7 text-white">
-                <span class="mark-bg mark-white absolute -bottom-16 -end-16 h-64 w-64 opacity-[.15]" aria-hidden="true"></span>
-                <b class="relative block text-2xl leading-snug">@(s.Value<string>("cardTitle"))</b>
-                @if (!string.IsNullOrWhiteSpace(s.Value<string>("cardText"))) { <p class="relative mt-2 text-white/90">@(s.Value<string>("cardText"))</p> }
-                @if (cta is not null) { <a href="@cta.Url" target="@cta.Target" class="btn relative mt-6 bg-white @p.Button">@cta.Name</a> }
-            </div>
+        var steps = s.Value<BlockListModel>("steps")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? [];
+        var hasCard = !string.IsNullOrWhiteSpace(s.Value<string>("cardTitle")) || !string.IsNullOrWhiteSpace(s.Value<string>("cardText")) || cta is not null;
+        // steps side by side on large screens (up to 4 per row); a stage-coloured line leads to the next step in the row
+        var cols = Math.Min(steps.Count, 4);
+        var gridCols = cols switch { 4 => "lg:grid-cols-4", 3 => "lg:grid-cols-3", 2 => "lg:grid-cols-2", _ => "" };
+        <div id="@id-p@(i)" role="@(stages.Count > 1 ? "tabpanel" : null)" aria-labelledby="@(stages.Count > 1 ? $"{id}-t{i}" : null)" class="grid gap-5 @(i == 0 ? "" : "hidden")">
+            @if (hasCard)
+            {
+                @* intro banner: text at the start, button at the end *@
+                <div class="relative flex flex-col gap-6 overflow-hidden rounded-[22px] bg-linear-to-br @p.Card p-7 text-white sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+                    <span class="mark-bg mark-white absolute -bottom-24 end-24 h-56 w-56 opacity-[.12] max-lg:-end-16" aria-hidden="true"></span>
+                    <div class="relative max-w-2xl">
+                        <b class="block text-2xl leading-snug">@(s.Value<string>("cardTitle"))</b>
+                        @if (!string.IsNullOrWhiteSpace(s.Value<string>("cardText"))) { <p class="mt-2 leading-relaxed text-white/90">@(s.Value<string>("cardText"))</p> }
+                    </div>
+                    @if (cta is not null) { <a href="@cta.Url" target="@cta.Target" class="btn relative shrink-0 self-start bg-white lg:self-center @p.Button">@cta.Name</a> }
+                </div>
+            }
             @if (steps.Count > 0)
             {
-                <ol class="relative grid gap-3 border-s-2 border-dashed border-slate-200 ps-6 dark:border-white/10">
-                    @foreach (var step in steps)
+                @* numbered steps: a vertical timeline on phones, a row on large screens *@
+                <ol class="card grid p-2 sm:p-3 lg:gap-x-6 lg:gap-y-8 lg:p-7 @gridCols">
+                    @for (var j = 0; j < steps.Count; j++)
                     {
-                        <li class="card relative p-4">
-                            <span class="absolute -start-[33px] top-5 h-4 w-4 rounded-full border-4 border-white @p.Dot dark:border-night-950" aria-hidden="true"></span>
-                            <span class="text-xs font-bold @p.When">@(step.Value<string>("when"))</span>
-                            <b class="block">@(step.Value<string>("title"))</b>
+                        var step = steps[j];
+                        var when = step.Value<string>("when");
+                        var text = step.Value<string>("text");
+                        var link = step.Value<Link>("link");
+                        var last = j == steps.Count - 1;
+                        var rowEnd = cols > 0 && (j + 1) % cols == 0;
+                        <li class="relative flex gap-4 p-3 sm:p-4 lg:block lg:p-0">
+                            @if (!last) { <span class="absolute start-[29px] top-[54px] -bottom-[6px] w-0.5 rounded-full @p.Line sm:start-[33px] sm:top-[58px] sm:-bottom-[10px] lg:hidden" aria-hidden="true"></span> }
+                            <div class="lg:mb-4 lg:flex lg:items-center lg:gap-3">
+                                <span class="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold @p.Node" aria-hidden="true">@(j + 1)</span>
+                                @if (!last && !rowEnd) { <span class="hidden h-0.5 flex-1 rounded-full @p.Line lg:block" aria-hidden="true"></span> }
+                            </div>
+                            <div class="min-w-0 flex-1 pt-0.5 lg:pt-0">
+                                @if (!string.IsNullOrWhiteSpace(when)) { <span class="block text-xs font-bold @p.When">@when</span> }
+                                <b class="mt-0.5 block text-[1.02rem] leading-snug text-deep-900 dark:text-white">@(step.Value<string>("title"))</b>
+                                @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">@text</p> }
+                                @if (link is not null && !string.IsNullOrWhiteSpace(link.Url)) { <a class="link mt-2 text-sm" href="@link.Url" target="@link.Target"><span>@link.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+                            </div>
                         </li>
                     }
                 </ol>

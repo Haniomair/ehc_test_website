@@ -1,0 +1,33 @@
+@* Right panel item "Doctor card": a picked doctor (photo or initial, name, title, specialty) with an optional label
+   above and an optional button. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var d = c.Value<IPublishedContent>("doctor");
+    if (d is null) { return; }
+    var name = d.Value<string>("fullName");
+    if (string.IsNullOrWhiteSpace(name)) { name = d.Name; }
+    var photo = d.Value<MediaWithCrops>("photo");
+    var specialty = d.Value<IPublishedContent>("specialty");
+    var initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Replace("د.", "").Replace("Dr", "").TrimStart('.', ' ').FirstOrDefault().ToString();
+    var label = c.Value<string>("label");
+    var button = c.Value<Link>("link");
+}
+<div class="ms-auto w-full max-w-[400px]">
+    @if (!string.IsNullOrWhiteSpace(label)) { <p class="mb-2 text-sm font-semibold text-white/80">@label</p> }
+    <div class="card flex items-center gap-4 p-4 text-deep-950 dark:text-white">
+        <span class="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-linear-to-br from-brand-100 to-brand-50 text-2xl font-bold text-brand-400 dark:from-deep-800 dark:to-deep-900">
+            @if (photo is not null) { <img src="@photo.GetCropUrl(128, 128, furtherOptions: "format=webp&quality=80")" alt="" class="h-full w-full object-cover" loading="lazy"> }
+            else { <span aria-hidden="true">@initial</span> }
+        </span>
+        <span class="min-w-0 flex-1">
+            <a href="@d.Url()" class="block font-bold leading-snug text-deep-900 hover:underline dark:text-white">@name</a>
+            @if (!string.IsNullOrWhiteSpace(d.Value<string>("title"))) { <span class="block text-sm text-slate-500 dark:text-slate-400">@(d.Value<string>("title"))</span> }
+            @if (specialty is not null) { <span class="block text-sm font-semibold text-brand-600 dark:text-brand-300">@specialty.Name</span> }
+        </span>
+    </div>
+    @if (button is not null) { <a href="@button.Url" target="@button.Target" class="btn btn-sand mt-3 w-full">@button.Name</a> }
+</div>

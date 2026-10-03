@@ -1,12 +1,15 @@
 @* Block 2 "Care navigator": two questions (who? what do you need?) → recommended next step.
    Options come from the block (whoOptions / needOptions) as JSON in data-options; frontend/src/js/components/care-navigator.js
-   updates the result. Urgent needs are shown in emergency red. Rendered inside the campaign hero when its right panel is
-   "navigator" (ViewData["inHero"] = true), otherwise as a standalone section. *@
+   updates the result. Urgent needs are shown in emergency red. Inside a hero right panel (ViewData["inHero"] = true) it is
+   the glass panel alone; as a section it is a two-column band: heading, intro, how it works and the emergency number
+   (Site settings) beside the panel, on the block's gradient. *@
 @using System.Text.Json
 @using EHC.Web.Blocks
+@using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject ISiteContext Site
 @{
     var c = Model.Content;
     var who = c.Value<BlockListModel>("whoOptions")?.Select(b => b.Content)
@@ -36,9 +39,12 @@
     const string pill = "nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900";
 }
 @{
-    void Panel()
+    @* inHero: its own glass card (it sits on photos / gradients); as a section the questions sit directly on the band *@
+    void Panel(bool header)
     {
-        <div class="relative rounded-[28px] border border-white/20 bg-white/10 p-6 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" data-navigator data-options="@json">
+        <div class="relative text-white @(header ? "rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" : "")" data-navigator data-options="@json">
+            @if (header)
+            {
             <div class="mb-5 flex items-center gap-3">
                 <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-compass" /></svg></span>
                 <div>
@@ -46,6 +52,7 @@
                     @if (!string.IsNullOrWhiteSpace(intro)) { <span class="text-sm text-white/75">@intro</span> }
                 </div>
             </div>
+            }
             @if (who.Count > 1)
             {
                 <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
@@ -77,14 +84,51 @@
 {
     <div class="relative">
         <div class="mark-bg mark-white pointer-events-none absolute -end-10 -top-10 h-44 w-44 opacity-10" aria-hidden="true"></div>
-        @{ Panel(); }
+        @{ Panel(true); }
     </div>
 }
 else
 {
+    var bg = Gradients.For(c);
+    var emergency = Site.Get(Umbraco.AssignedContentItem).Emergency;
+    string N(string key) => Umbraco.GetDictionaryValue("EHC.Navigator." + key) ?? "";
+    var title = string.IsNullOrWhiteSpace(heading) ? N("Heading") : Text.Plain(heading);
+    var steps = new[] { N("Step1"), N("Step2"), N("Step3") }.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
     <div class="wrap">
-        <div class="hero-bg-0 relative overflow-hidden rounded-[28px] p-6 sm:p-10">
-            <div class="mx-auto max-w-[640px]">@{ Panel(); }</div>
+        <div class="rv relative isolate overflow-hidden rounded-[32px] text-white @bg.Class" style="@bg.Style">
+            <div class="mark-bg mark-white pointer-events-none absolute -bottom-40 -start-40 h-[520px] w-[520px] opacity-[.07]" aria-hidden="true"></div>
+            <div class="relative grid gap-10 p-6 sm:p-10 lg:grid-cols-[.85fr_1.15fr] lg:items-start lg:gap-16 lg:p-14">
+                <div>
+                    @if (!string.Equals(title.Trim(), N("Title").Trim(), StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <span class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 py-1.5 pe-4 ps-1.5 text-sm font-semibold">
+                            <span class="grid h-7 w-7 place-items-center rounded-full bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-compass" /></svg></span>@N("Title")
+                        </span>
+                    }
+                    <h2 class="text-[clamp(1.8rem,3.4vw,2.6rem)] font-bold leading-tight rtl:leading-snug">@title</h2>
+                    @if (!string.IsNullOrWhiteSpace(intro)) { <p class="mt-3 max-w-[480px] text-lg text-on-deep">@intro</p> }
+                    @if (steps.Count > 0)
+                    {
+                        <ol class="mt-8 grid gap-4">
+                            @for (var n = 0; n < steps.Count; n++)
+                            {
+                                <li class="flex items-center gap-4">
+                                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/30 bg-white/10 font-bold" aria-hidden="true">@(n + 1)</span>
+                                    <span class="text-white/90">@steps[n]</span>
+                                </li>
+                            }
+                        </ol>
+                    }
+                    @if (emergency is not null)
+                    {
+                        <a href="tel:@emergency.Dial" class="mt-8 flex w-fit items-center gap-4 rounded-2xl bg-emerg-600 py-3 pe-6 ps-4 transition hover:bg-emerg-600/90">
+                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/15" aria-hidden="true"><svg class="ico"><use href="#i-er" /></svg></span>
+                            <span><span class="block text-sm text-white/90">@N("Emergency")</span><b class="block text-2xl font-extrabold leading-none" dir="ltr">@emergency.Number</b></span>
+                        </a>
+                    }
+                </div>
+                <div>@{ Panel(false); }</div>
+            </div>
         </div>
     </div>
 }

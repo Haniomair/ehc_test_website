@@ -8,18 +8,21 @@
     "watch": "tailwindcss -i src/css/ehc.css -o dist/css/ehc.css --watch",
     "publish:umbraco": "cross-env EHC_WWWROOT=../src/EHC.Web/wwwroot/assets npm run build",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "tiles": "node scripts/fetch-tiles.mjs"
+    "tiles": "node scripts/fetch-tiles.mjs",
+    "thumbnails": "node scripts/block-thumbnails.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
     "cross-env": "^10.1.0",
+    "puppeteer-core": "^23.11.1",
     "tailwindcss": "^4.3.3"
   },
   "dependencies": {
     "@fontsource-variable/cairo": "^5.3.0",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
-    "protomaps-leaflet": "^5.1.0"
+    "protomaps-leaflet": "^5.1.0",
+    "web-vitals": "^4.2.4"
   },
   "private": true,
   "type": "module"

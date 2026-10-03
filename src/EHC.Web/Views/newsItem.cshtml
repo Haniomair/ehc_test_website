@@ -17,7 +17,8 @@
         {
             if (newsroom is not null) { <a href="@newsroom.Url()?category=@Uri.EscapeDataString(c)" class="chip">@c</a> } else { <span class="chip">@c</span> }
         }
+        @if (!string.IsNullOrWhiteSpace(body)) { @await Html.PartialAsync("site/_Listen", "#article-body") }
     </div>
-    @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+    @if (!string.IsNullOrWhiteSpace(body)) { <div id="article-body" class="rte max-w-[760px]">@Html.Raw(body)</div> }
     @if (newsroom is not null) { <a href="@newsroom.Url()" class="link mt-12"><svg class="ico rotate-180 rtl:rotate-0 !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg>@newsroom.Name</a> }
 </article>

@@ -1,0 +1,67 @@
+@* E-services section: the site's e-services with a tab per audience (patients first; WAI-ARIA tabs via
+   components/tabs.js, all panels shown in order without JS). Services: the picked ones, else every published
+   e-service. Audiences: the ticked ones, else every audience that has services. Link to the E-services page.
+   Optional: the app (name + store links from Site settings) at the end of the Patients tab. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject ISiteContext Site
+@{
+    var c = Model.Content;
+    var picked = c.Value<IEnumerable<IPublishedContent>>("services")?.ToList() ?? [];
+    var services = picked.Count > 0 ? picked : EServices.All(Umbraco.AssignedContentItem);
+    var wanted = EServices.Keys(c.Value<IEnumerable<string>>("audiences"));
+    var tabs = EServices.Audiences
+        .Where(a => wanted.Count == 0 || wanted.Contains(a.Key))
+        .Select(a => (Audience: a, Items: services.Where(s => EServices.Of(s).Contains(a.Key)).ToList()))
+        .Where(t => t.Items.Count > 0)
+        .ToList();
+    if (tabs.Count == 0) { return; }
+    var folder = EServices.Folder(Umbraco.AssignedContentItem);
+    var id = "es-" + Model.ContentKey.ToString("N")[..8];
+    string E(string k) => Umbraco.GetDictionaryValue("EHC.EServices." + k) ?? "";
+    // optional app strip in the Patients tab: most patient e-services live in the app (store links from Site settings)
+    var stores = c.Value<bool>("showApp") ? Site.Get(Umbraco.AssignedContentItem).AppLinks : [];
+}
+<div class="wrap" data-tabs>
+    <div class="rv sec-head-row">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), Id: id + "-h"))
+        @if (folder is not null) { <a href="@folder.Url()" class="link shrink-0"><span>@E("All")</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+    @if (tabs.Count > 1)
+    {
+        <div role="tablist" aria-labelledby="@id-h" class="mb-8 flex w-fit max-w-full gap-1.5 overflow-x-auto rounded-full bg-soft p-1.5 dark:bg-night-900">
+            @for (var i = 0; i < tabs.Count; i++)
+            {
+                <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")"
+                        class="flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold text-slate-600 transition aria-selected:bg-deep-900 aria-selected:text-white dark:text-slate-400 dark:aria-selected:bg-brand-600">
+                    <svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-@tabs[i].Audience.Icon" /></svg><span>@E("Audience." + tabs[i].Audience.Key)</span>
+                </button>
+            }
+        </div>
+    }
+    @for (var i = 0; i < tabs.Count; i++)
+    {
+        <div id="@id-p@(i)" role="@(tabs.Count > 1 ? "tabpanel" : null)" aria-labelledby="@(tabs.Count > 1 ? $"{id}-t{i}" : null)" class="@(i == 0 ? "" : "hidden")">
+            <ul class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach (var s in tabs[i].Items.Take(8)) { <li class="rv">@await Html.PartialAsync("cards/_EServiceCard", s)</li> }
+            </ul>
+            @if (stores.Count > 0 && tabs[i].Audience.Key == "patients")
+            {
+                <div class="rv mt-5 flex flex-col gap-4 rounded-[22px] bg-linear-to-br from-brand-600 to-deep-900 p-5 text-white sm:flex-row sm:items-center sm:p-6">
+                    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15" aria-hidden="true"><svg class="ico"><use href="#i-app" /></svg></span>
+                    <div class="min-w-0 flex-1">
+                        <b class="block text-lg leading-snug">@string.Format(E("AppTitle"), Umbraco.GetDictionaryValue("EHC.App.Name"))</b>
+                        <span class="text-sm text-white/85">@E("AppText")</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (var st in stores) { <a class="rounded-xl bg-night-950 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/15 hover:bg-night-900" href="@st.Url" target="@st.Target">@st.Name</a> }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+@if (tabs.Count > 1) { <script src="~/assets/js/components/tabs.js" asp-append-version="true" defer></script> }

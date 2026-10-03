@@ -1,0 +1,13 @@
+@* Right panel item "Facility card": a picked facility as a card, with an optional label above it. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var facility = Model.Content.Value<IPublishedContent>("facility");
+    if (facility is null) { return; }
+    var label = Model.Content.Value<string>("label");
+}
+<div class="ms-auto w-full max-w-[400px]">
+    @if (!string.IsNullOrWhiteSpace(label)) { <p class="mb-2 text-sm font-semibold text-white/80">@label</p> }
+    <div class="text-deep-950 dark:text-white">@await Html.PartialAsync("cards/_FacilityCard", facility)</div>
+</div>

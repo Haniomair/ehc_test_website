@@ -55,7 +55,7 @@
     void Look(string name, string legend)
     {
         var values = Customizer.Looks[name];
-        Options(name, legend, values.Select(v => (v, D(char.ToUpperInvariant(name[0]) + name[1..] + char.ToUpperInvariant(v[0]) + v[1..]))), state.Looks.GetValueOrDefault(name) ?? values[0]);
+        Options(name, legend, values.Select(v => (v, D(char.ToUpperInvariant(name[0]) + name[1..] + char.ToUpperInvariant(v[0]) + v[1..]))), state.Looks.GetValueOrDefault(name) ?? Model.Looks.GetValueOrDefault(name) ?? values[0]);
     }
 
     <button type="button" data-action="customizer-open" aria-controls="customizer" aria-expanded="@(reopened ? "true" : "false")" aria-haspopup="dialog" class="cz-trigger print:hidden">
@@ -72,7 +72,7 @@
             </div>
 
             @* autocomplete off: the browser must not restore old radio states on reload, the server's state is the truth *@
-            <form class="flex-1 overflow-y-auto overscroll-contain p-4" data-customizer novalidate autocomplete="off">
+            <form class="flex-1 overflow-y-auto overscroll-contain p-4" data-customizer data-site-looks="@System.Text.Json.JsonSerializer.Serialize(Model.Looks)" novalidate autocomplete="off">
                 <p class="mb-4 flex gap-2 rounded-xl bg-soft px-3 py-2.5 text-[.78rem] leading-relaxed text-slate-600 dark:bg-white/5 dark:text-slate-300"><svg class="ico mt-0.5 !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-eye" /></svg><span>@D("Intro")</span></p>
 
                 @if (themes.Count > 0)

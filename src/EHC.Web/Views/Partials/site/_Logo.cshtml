@@ -1,0 +1,46 @@
+@* Site logo for the header, drawer and footer. ViewData: "class" (size classes), "onDark" (true = always on a dark
+   surface, e.g. the footer; otherwise it follows dark mode). Dark surfaces use the white logo file; the CSS filter
+   (brightness-0 invert) is only a fallback for editor/theme logos without one, because Samsung Internet's
+   "Dark sites" mode renders filtered images almost black. Built-in logos have a WebP next to the PNG (served via
+   <picture>); paths carry a file version so /assets can cache them for a year. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Versions
+@{
+    var size = ViewData["class"] as string ?? "";
+    var onDark = ViewData["onDark"] is true;
+    var alt = Umbraco.GetDictionaryValue("EHC.Header.LogoAlt");
+    var white = Model.LogoWhiteUrl;
+    string V(string path) => Versions.AddFileVersionToPath(Context.Request.PathBase, path);
+    string? Webp(string path)
+    {
+        if (!path.StartsWith("/assets/", StringComparison.Ordinal) || !path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) { return null; }
+        var webp = path[..^4] + ".webp";
+        return Env.WebRootFileProvider.GetFileInfo(webp).Exists ? V(webp) : null;
+    }
+    void Img(string src, string cls)
+    {
+        var webp = Webp(src);
+        if (webp is null)
+        {
+            <img class="@cls" src="@V(src)" alt="@alt">
+        }
+        else
+        {
+            <picture class="contents"><source srcset="@webp" type="image/webp"><img class="@cls" src="@V(src)" alt="@alt"></picture>
+        }
+    }
+}
+@if (white is null)
+{
+    Img(Model.LogoUrl, $"block {size} {(onDark ? "brightness-0 invert" : "dark:brightness-0 dark:invert")}");
+}
+else if (onDark)
+{
+    Img(white, $"block {size}");
+}
+else
+{
+    Img(Model.LogoUrl, $"block {size} dark:hidden");
+    Img(white, $"hidden {size} dark:block");
+}

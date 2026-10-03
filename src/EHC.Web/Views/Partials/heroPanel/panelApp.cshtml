@@ -1,0 +1,33 @@
+@* Right panel item "App promo": title (default: the app's name), text, store links from Site settings and an
+   optional QR code image (with its description as alt text). *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject ISiteContext Site
+@{
+    var c = Model.Content;
+    var stores = Site.Get(Umbraco.AssignedContentItem).AppLinks;
+    var qr = c.Value<MediaWithCrops>("qrCode");
+    if (stores.Count == 0 && qr is null) { return; }
+    var title = c.Value<string>("title");
+    if (string.IsNullOrWhiteSpace(title)) { title = Umbraco.GetDictionaryValue("EHC.App.Name"); }
+    var qrAlt = c.Value<string>("qrAlt");
+    if (string.IsNullOrWhiteSpace(qrAlt)) { qrAlt = title; }
+}
+<div class="flex items-center gap-4 rounded-[28px] border border-white/20 bg-white/10 p-5 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl">
+    <div class="min-w-0 flex-1">
+        <b class="flex items-center gap-2 text-lg leading-tight"><span class="grid h-9 w-9 place-items-center rounded-xl bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-app" /></svg></span>@title</b>
+        @if (!string.IsNullOrWhiteSpace(c.Value<string>("text"))) { <p class="mt-2 text-sm text-white/85">@(c.Value<string>("text"))</p> }
+        @if (stores.Count > 0)
+        {
+            <div class="mt-3 flex flex-wrap gap-2">
+                @foreach (var s in stores) { <a class="rounded-xl bg-night-950 px-3.5 py-2 text-sm font-bold text-white ring-1 ring-white/15 hover:bg-night-900" href="@s.Url" target="@s.Target">@s.Name</a> }
+            </div>
+        }
+    </div>
+    @if (qr is not null)
+    {
+        <img src="@qr.GetCropUrl(240, 240, furtherOptions: "format=webp&quality=90")" alt="@qrAlt" width="112" height="112" class="hidden h-28 w-28 shrink-0 rounded-xl bg-white p-1.5 sm:block" loading="lazy">
+    }
+</div>

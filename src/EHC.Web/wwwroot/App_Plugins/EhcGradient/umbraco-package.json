@@ -1,0 +1,21 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Gradient editor",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "propertyEditorUi",
+      "alias": "Ehc.PropertyEditorUi.Gradient",
+      "name": "EHC gradient editor",
+      "element": "/App_Plugins/EhcGradient/gradient-editor.js",
+      "meta": {
+        "label": "EHC gradient editor",
+        "icon": "icon-palette",
+        "group": "pickers",
+        "propertyEditorSchemaAlias": "Umbraco.Plain.Json",
+        "supportsReadOnly": true
+      }
+    }
+  ]
+}

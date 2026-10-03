@@ -39,6 +39,16 @@ first boot of an empty database. Media *files* (`wwwroot/media`) are not in sour
 upload the images in `frontend/src/img/placeholder` again to the "Placeholders" media folder (same names), or pick
 new images in the hero sections.
 
+Backoffice "Add block" thumbnails live in `src/EHC.Web/wwwroot/App_Plugins/EhcBlockRows/thumbs`. After a section's
+design changes, or for a new section type, publish it on the home page (or the component library), start the site and
+run `npm run thumbnails` in `frontend` (uses Microsoft Edge). The script also sets the thumbnails in the
+"EHC - Page blocks" data type, which the running site picks up by itself (see below).
+
+Locally (Development), the site imports the uSync Settings group (document, element and data types, templates,
+languages, dictionary) after start-up and whenever a file under `src/EHC.Web/uSync` changes, e.g. after a `git pull`
+or a schema change made in the files; no uSync > Settings > Import needed. Content is never imported automatically.
+Switch it off with `Ehc:USync:AutoImport: false` in `appsettings.Development.json`.
+
 ## Publish
 `src/EHC.Web/wwwroot/assets` is generated, so build the frontend first:
 ```bash
@@ -62,18 +72,20 @@ One-time setup:
    site URL and a new `HMACSecretKey`. For SQL Server instead of SQLite, replace the connection string. The file
    holds secrets: it is never committed or published and is only sent with `-Settings`.
 4. First deploy, with the local database and media (stop the local site first):
-   `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1 -Settings -SeedData`
+   `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1 -Code -Settings -SeedData`
 
 Later deploys: `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1`. The server's database, media,
 logs and settings file are skipped, so content edited on the test server is kept. `-WhatIf` lists the changes
 without making them. After `-SeedData`, content on the server is replaced by the local copy.
+`-Settings`, `-SeedData` and `-Media` upload only that; add `-Code` to build and deploy the local code as well
+(normally code reaches the test server through CI, so uncommitted local changes are not shipped by accident).
 
 Moving content from a local machine to the test server without replacing it:
 1. Content: deploy as usual (the `src/EHC.Web/uSync/Content` files are part of the site), then on the test server open
    Settings > uSync and import Content. Pages that exist only on the server are kept.
 2. Media files (uSync carries the media items, not the files):
-   `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1 -NoCode -Media` uploads new and changed files
-   in `wwwroot/media` and never deletes files on the server. `-NoCode` skips the build and code deploy.
+   `powershell -ExecutionPolicy Bypass -File deploy/deploy-staging.ps1 -Media` uploads new and changed files
+   in `wwwroot/media` and never deletes files on the server (no code is deployed).
 
 ### Continuous deployment
 Branches: work on `develop`, open a pull request `develop` -> `test`; merging it deploys to the test server.

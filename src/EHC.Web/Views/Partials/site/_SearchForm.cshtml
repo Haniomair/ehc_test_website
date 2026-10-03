@@ -1,0 +1,25 @@
+@* Search box with optional scope tabs (search hero, hero right panel). Submitting is handled by site.js
+   ([data-search-form]). Model: a unique id prefix and the scope tabs to show. *@
+@inherits UmbracoViewPage<(string Id, IReadOnlyList<string> Tabs)>
+<form class="max-w-2xl rounded-2xl bg-white p-2 text-deep-950 shadow-[0_20px_50px_rgba(0,0,0,.25)] dark:bg-night-900 dark:text-white" role="search" data-search-form>
+    @if (Model.Tabs.Count > 0)
+    {
+        <fieldset class="flex flex-wrap gap-1 px-1 pb-2 pt-1 text-sm font-semibold">
+            <legend class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Scope")</legend>
+            @for (var i = 0; i < Model.Tabs.Count; i++)
+            {
+                <label class="cursor-pointer rounded-lg px-3 py-1.5 text-slate-500 dark:text-slate-400 has-checked:bg-brand-50 has-checked:text-brand-700 dark:has-checked:bg-brand-500/15 dark:has-checked:text-brand-300">
+                    <input type="radio" name="scope" value="@Model.Tabs[i]" class="sr-only" checked="@(i == 0)">@Umbraco.GetDictionaryValue("EHC.Search.Scope." + Model.Tabs[i])
+                </label>
+            }
+        </fieldset>
+    }
+    <div class="flex flex-col gap-2 sm:flex-row">
+        <label class="flex flex-1 items-center gap-2.5 rounded-xl border border-slate-200 px-3.5 text-slate-400 focus-within:border-brand-500 dark:border-white/15" for="@Model.Id-q">
+            <svg class="ico" aria-hidden="true"><use href="#i-search" /></svg>
+            <span class="sr-only">@Umbraco.GetDictionaryValue("EHC.Search.Title")</span>
+            <input id="@Model.Id-q" name="q" type="search" class="h-12 min-w-0 flex-1 bg-transparent text-deep-950 outline-hidden dark:text-white" placeholder="@Umbraco.GetDictionaryValue("EHC.Search.Placeholder")" autocomplete="off">
+        </label>
+        <button type="submit" class="btn btn-primary">@Umbraco.GetDictionaryValue("EHC.Search.Button")</button>
+    </div>
+</form>

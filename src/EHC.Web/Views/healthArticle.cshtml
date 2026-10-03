@@ -27,6 +27,7 @@
     <article class="min-w-0">
         <p class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
             <span class="inline-flex items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-clock" /></svg>@string.Format(D("ReadingTime"), HealthArticles.ReadingMinutes(body))</span>
+            @await Html.PartialAsync("site/_Listen", "#article-body")
             @if (reviewed is not null)
             {
                 <span class="inline-flex flex-wrap items-center gap-1.5"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-shield" /></svg>@D("Reviewed") @Dates.Html(reviewed.Value)@if (!string.IsNullOrWhiteSpace(reviewer)) {<span>· @reviewer</span>}</span>
@@ -36,7 +37,7 @@
         {
             <img src="@image.GetCropUrl(1200, 675, furtherOptions: "format=webp&quality=80")" alt="@alt" class="mb-8 aspect-video w-full rounded-[22px] object-cover" fetchpriority="high">
         }
-        @if (!string.IsNullOrWhiteSpace(body)) { <div class="rte max-w-[760px]">@Html.Raw(body)</div> }
+        @if (!string.IsNullOrWhiteSpace(body)) { <div id="article-body" class="rte max-w-[760px]">@Html.Raw(body)</div> }
         @if (sources.Count > 0)
         {
             <section class="mt-10 max-w-[760px] border-t border-slate-200 pt-6 dark:border-white/10" aria-labelledby="art-sources">

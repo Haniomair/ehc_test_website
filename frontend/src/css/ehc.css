@@ -10,6 +10,7 @@
 @source "../../../src/EHC.Web/Views";
 @source "../../preview";
 @source "../js";
+@source "../../../src/EHC.Web/wwwroot/offline.html";
 
 /* Class-based dark mode (toggled by the header button / system setting) */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -27,8 +28,8 @@
      on a descendant lets auto-dark back in for that subtree. */
   html:not(.dark) { color-scheme: only light; }
   html.dark { color-scheme: dark; }
-  /* Samsung Internet ignores the above and force-darkens any site whose CSS has no prefers-color-scheme query:
-     this query is how it detects that the site has its own dark theme. Keep it. */
+  /* Samsung Internet ignores all of this by default and darkens every site while its "Dark sites" mode is on (no site
+     opt-out exists). With Labs › "Use website dark theme" on, it looks for a prefers-color-scheme query like this one. */
   @media (prefers-color-scheme: dark) {
     html:not(.dark) { color-scheme: only light; }
     html.dark { color-scheme: dark; }
@@ -73,6 +74,29 @@
   .chip { @apply rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600 transition dark:border-white/15 dark:bg-white/5 dark:text-slate-300; }
   .chip[aria-pressed="true"] { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
   .chip[aria-current="true"], .chip[aria-current="page"] { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
+  /* search palette (site/_Search.cshtml) */
+  .s-head { @apply mb-2.5 text-xs font-bold uppercase tracking-[.12em] text-slate-500 rtl:tracking-normal dark:text-slate-400; }
+  .s-opt { @apply flex items-center gap-3 rounded-2xl px-3 py-2.5 text-deep-900 transition-colors dark:text-slate-100; }
+  .s-opt[aria-selected="true"] { @apply bg-brand-50 dark:bg-white/5; }
+  .s-opt mark { @apply bg-transparent text-brand-600 dark:text-brand-300; }
+  .s-opt-ic { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300; }
+  .s-opt[aria-selected="true"] .s-opt-ic { @apply bg-white dark:bg-white/10; }
+  .s-opt-go { @apply shrink-0 text-slate-300 opacity-0 transition dark:text-slate-500; }
+  .s-opt[aria-selected="true"] .s-opt-go { @apply text-brand-500 opacity-100; }
+  .s-spin { @apply h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-brand-100 border-t-brand-500 dark:border-white/10 dark:border-t-brand-300; }
+  /* the bar is the field: no ring around the input inside it; a brand line under the bar shows the focus */
+  .s-bar #sIn:focus-visible { outline: none; box-shadow: none; }
+  .s-bar:focus-within { box-shadow: inset 0 -2px 0 var(--brand-500); }
+  .kbd { @apply inline-grid min-w-6 place-items-center rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-sans text-[.7rem] font-semibold text-slate-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-300; }
+  /* segmented control: one rounded track, the chosen option raised (toolbars, e.g. the facility finder) */
+  .seg { @apply inline-flex shrink-0 items-center gap-0.5 rounded-full bg-soft p-1 dark:bg-white/5; }
+  .seg > button { @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-600 transition hover:text-deep-900 dark:text-slate-300 dark:hover:text-white; }
+  .seg > button[aria-pressed="true"] { @apply bg-white font-semibold text-deep-900 shadow-[0_1px_3px_rgba(10,42,79,.12)] dark:bg-brand-600 dark:text-white; }
+  /* compact pill dropdown for toolbars (an icon sits at the end, see facilityFinderBlock) */
+  .field-select { @apply h-10 max-w-[16rem] cursor-pointer appearance-none truncate rounded-full border border-slate-200 bg-white ps-4 pe-9 text-sm font-medium text-deep-900 transition hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-white/15 dark:bg-white/5 dark:text-white; }
+  .field-select:has(option:checked:not([value="all"])) { @apply border-deep-900 bg-deep-900 text-white dark:border-brand-400 dark:bg-brand-600; }
+  .field-select:has(option:checked:not([value="all"])) + svg { @apply text-white; }
+  .field-select option { @apply bg-white text-deep-900 dark:bg-night-900 dark:text-white; }
 
   .mega-link { @apply flex gap-3 rounded-2xl p-3 transition hover:bg-brand-50 dark:hover:bg-white/5; }
   .mega-link b { @apply block text-[.93rem] font-semibold text-deep-900 dark:text-white; }
@@ -103,6 +127,14 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 :lang(ar).dark .text-stroke, :lang(ar) .dark .text-stroke { color: color-mix(in srgb, var(--brand-300) 22%, transparent); }
 /* two padded sections on the page background in a row: the gap is one section's spacing, not both added together */
 .sec-plain + .sec-plain { padding-top: 0; }
+/* quick actions overlapping the hero: the part of the bar below the hero sits on the next section's background
+   (no white strip in between), and that section starts closer, the bar already separates it from the hero */
+section[data-block="quickActionsBlock"]:has(+ section.bg-soft) { background-color: var(--color-soft); }
+.dark section[data-block="quickActionsBlock"]:has(+ section.bg-soft) { background-color: color-mix(in srgb, var(--color-night-900) 60%, transparent); }
+section[data-block="quickActionsBlock"]:has(+ section.bg-deep-900) { background-color: var(--color-deep-900); }
+.dark section[data-block="quickActionsBlock"]:has(+ section.bg-deep-900) { background-color: var(--color-deep-950); }
+section[data-block="quickActionsBlock"]:has(+ section.bg-brand-500) { background-color: var(--color-brand-500); }
+section[data-block="quickActionsBlock"] + section:is(.py-16, .py-24) { padding-top: 3.5rem; }
 .mask-x { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
 .scrollbar-thin { scrollbar-width: thin; }
 /* rails with their own prev/next buttons: still scrollable by swipe, trackpad and keyboard */
@@ -114,6 +146,9 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 .hero-bg-1 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-1-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-1-from) 0%, var(--hero-1-via) 45%, var(--hero-1-to) 100%); }
 .hero-bg-2 { background: radial-gradient(900px 600px at 80% 20%, var(--hero-2-glow) 0%, transparent 60%), linear-gradient(135deg, var(--hero-2-from) 0%, var(--hero-2-via) 45%, var(--hero-2-to) 100%); }
 .dark .hero-bg-0 { background: radial-gradient(900px 600px at 80% 20%, color-mix(in srgb, var(--hero-0-glow) 55%, transparent) 0%, transparent 60%), linear-gradient(135deg, var(--deep-950) 0%, var(--hero-0-from) 55%, var(--brand-700) 100%); }
+/* a gradient picked from Site settings › Gradients: Blocks/Gradients.cs writes the whole background into --g-bg from
+   validated parts (theme colours as var(--role), so occasion themes recolour them) */
+.g-bg { background: var(--g-bg); }
 
 /* motion */
 .anim-spin-slow { animation: ehc-spin 120s linear infinite; }
@@ -128,8 +163,95 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .hero-slides { display: grid; }
 .hero-slides > .slide { grid-area: 1 / 1; }
 .slide-off { visibility: hidden; opacity: 0; pointer-events: none; }
-.rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
-.rv.in { opacity: 1; transform: none; }
+/* per-slide gradients, right panels and the spinning mark: swapped with the slide by hero-campaign.js (fade; none under reduced motion) */
+.hero-panels > * { grid-area: 1 / 1; }
+.hero-bgs > * { position: absolute; inset: 0; z-index: -1; }   /* per-slide gradients, under the content */
+.hero-swap { transition: opacity .5s ease, visibility .5s ease; }
+/* campaign hero slide transitions (hero setting "Transition" → data-transition): hero-campaign.js adds .hero-out to the
+   leaving slide and .hero-in to the arriving one; both animations overlap, so there is never a blank moment. data-dir
+   (next / prev) and the page direction set which way "Slide" moves. Backgrounds, photos and panels cross-fade. */
+[data-hero] { --hero-dir: 1; --hero-rtl: 1; --hero-shift: calc(64px * var(--hero-dir) * var(--hero-rtl));
+  --hero-in: hero-fade-in; --hero-out: hero-fade-out; }
+[dir="rtl"] [data-hero] { --hero-rtl: -1; }
+[data-hero][data-dir="prev"] { --hero-dir: -1; }
+[data-hero][data-transition="slide"] { --hero-in: hero-slide-in; --hero-out: hero-slide-out; }
+[data-hero][data-transition="rise"] { --hero-in: none; --hero-out: hero-rise-out; }
+[data-hero][data-transition="zoom"] { --hero-in: hero-zoom-in; --hero-out: hero-zoom-out; }
+[data-hero][data-transition="blur"] { --hero-in: hero-blur-in; --hero-out: hero-blur-out; }
+.hero-slides > .slide.hero-out { visibility: visible; pointer-events: none; animation: var(--hero-out) .45s ease-in both; }
+.hero-slides > .slide.hero-in { animation: var(--hero-in) .8s cubic-bezier(.2, .7, .2, 1) .12s both; }
+[data-transition="rise"] .hero-slides > .slide.hero-in > * { animation: hero-rise-in .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: .18s; }
+[data-transition="rise"] .hero-slides > .slide.hero-in > :nth-child(2) { animation-delay: .26s; }
+[data-transition="rise"] .hero-slides > .slide.hero-in > :nth-child(3) { animation-delay: .34s; }
+[data-transition="rise"] .hero-slides > .slide.hero-in > :nth-child(n+4) { animation-delay: .42s; }
+.hero-bgs > .hero-swap, [data-slide-media].hero-swap { transition-duration: .9s; }
+/* a slide's photo / video layer sits under the theme overlay (z -2) and the gradient layers (z -1); duotone blends
+   against its own dark backing because the layer is isolated */
+[data-slide-media] { position: absolute; inset: 0; z-index: -3; }
+.media-hero[data-overlay="duotone"] > [data-slide-media] { background: var(--deep-950); }
+[data-transition="zoom"] .hero-bgs > :not(.slide-off), [data-transition="zoom"] [data-slide-media]:not(.slide-off) { animation: hero-kenburns 1.8s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes hero-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hero-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes hero-slide-in { from { opacity: 0; transform: translateX(var(--hero-shift)); } to { opacity: 1; transform: none; } }
+@keyframes hero-slide-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(calc(var(--hero-shift) * -1)); } }
+@keyframes hero-rise-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes hero-rise-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-18px); } }
+@keyframes hero-zoom-in { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes hero-zoom-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(1.04); } }
+@keyframes hero-blur-in { from { opacity: 0; filter: blur(14px); } to { opacity: 1; filter: none; } }
+@keyframes hero-blur-out { from { opacity: 1; filter: none; } to { opacity: 0; filter: blur(10px); } }
+@keyframes hero-kenburns { from { transform: scale(1.08); } to { transform: none; } }
+/* floating cards in a hero Right panel (Blocks/FloatingCards.cs): style, motion, entrance, layout, hover — all chosen
+   from allow-listed dropdowns. Entrance runs on .fc and motion on .fc-move so they never fight over transform; --i
+   staggers them. The global reduced-motion / .a11y-still rules switch every animation off (cards then simply show). */
+.fc-list { flex-direction: column; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.fc-card { display: flex; align-items: center; gap: .75rem; width: fit-content; max-width: 320px; padding: 1rem; border-radius: 1rem; color: #fff;
+  border: 1px solid transparent; transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease; }
+.fc-icon { display: grid; place-items: center; flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: .75rem; background: #fff; color: var(--brand-500); }
+.dark .fc-icon { background: var(--night-900); color: var(--brand-300); }
+.fc-sub { display: block; font-size: .875rem; color: rgb(255 255 255 / .78); }
+.fc-glass .fc-card { background: linear-gradient(135deg, rgb(255 255 255 / .22), rgb(255 255 255 / .05)); border-color: rgb(255 255 255 / .28);
+  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), 0 20px 50px rgb(0 0 0 / .18); }
+.fc-clear .fc-card { background: rgb(255 255 255 / .06); border-color: rgb(255 255 255 / .38);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 1px 0 rgb(255 255 255 / .25); }
+.fc-tinted .fc-card { background: linear-gradient(135deg, color-mix(in srgb, var(--brand-300) 38%, transparent), color-mix(in srgb, var(--brand-600) 18%, transparent));
+  border-color: color-mix(in srgb, var(--brand-200) 50%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .3), 0 20px 50px rgb(0 0 0 / .18); }
+.fc-solid .fc-card { background: #fff; color: var(--deep-950); box-shadow: 0 20px 50px rgb(0 0 0 / .2); }
+.fc-solid .fc-icon { background: var(--brand-50); }
+.fc-solid .fc-sub { color: #475569; }
+.dark .fc-solid .fc-card { background: var(--night-900); color: #fff; }
+.dark .fc-solid .fc-sub { color: #94a3b8; }
+.fc-hover .fc-card:hover { border-color: rgb(255 255 255 / .6);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), 0 24px 60px rgb(0 0 0 / .25), 0 0 36px color-mix(in srgb, var(--brand-300) 50%, transparent); }
+/* layout */
+.fc-layout-stacked .fc:nth-child(even) { margin-inline-start: 2.5rem; }
+.fc-layout-scattered { position: absolute; inset: 0; }
+.fc-layout-scattered .fc { position: absolute; }
+.fc-layout-scattered .fc:nth-child(1) { top: 2%; inset-inline-end: 6%; }
+.fc-layout-scattered .fc:nth-child(2) { top: 34%; inset-inline-start: 0; }
+.fc-layout-scattered .fc:nth-child(3) { top: 60%; inset-inline-end: 0; }
+.fc-layout-scattered .fc:nth-child(n+4) { bottom: 2%; inset-inline-start: 12%; }
+/* motion (endless, out of step) */
+.fc-motion-float .fc-move { animation: fc-float 6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -1.7s); }
+.fc-motion-drift .fc-move { animation: fc-drift 14s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -4.3s); }
+.fc-motion-sway .fc-move { animation: fc-sway 7s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -2.1s); transform-origin: 50% 0; }
+/* entrance: replayed by hero-campaign.js each time the panel's slide shows (.is-shown) */
+.fc-list { --fc-from: 48px; }
+[dir="rtl"] .fc-list { --fc-from: -48px; }
+.is-shown .fc-enter-rise .fc { animation: fc-rise .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 120ms + 150ms); }
+.is-shown .fc-enter-slide .fc { animation: fc-slide .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 120ms + 150ms); }
+@keyframes fc-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes fc-drift { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(8px, -9px); } 50% { transform: translate(-6px, -4px); } 75% { transform: translate(5px, 7px); } }
+@keyframes fc-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
+@keyframes fc-rise { from { opacity: 0; transform: translateY(26px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes fc-slide { from { opacity: 0; transform: translateX(var(--fc-from)); } to { opacity: 1; transform: none; } }
+/* reveal-on-scroll: visible by default; site.js marks what is already on screen as .in, then sets html.rv-on so only
+   content further down starts hidden (on-screen content never waits for the script, and nothing hides without JS) */
+.rv { transition: opacity .7s ease, transform .7s ease; }
+html.rv-on .rv:not(.in) { opacity: 0; transform: translateY(24px); }
 
 /* Leaflet maps ([data-map]): its panes and controls use z-index 400–1000; keep them inside the map so the sticky header stays on top */
 [data-map] { isolation: isolate; }
@@ -137,6 +259,8 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
    Tiles are greyscale and partly transparent over a theme colour: a calm, tinted map that follows the active theme
    and lets the brand pins stand out. (Blend modes don't work here: Leaflet's transformed panes isolate the tiles.) */
 [data-map].leaflet-container { background: var(--brand-200); font: inherit; }
+/* touch: the browser scrolls the page over the map and leaves pinches to Leaflet; outranks leaflet.css (loads later) */
+[data-map].leaflet-container, [data-map].leaflet-container.leaflet-touch-drag, [data-map].leaflet-container.leaflet-touch-drag.leaflet-touch-zoom { touch-action: pan-x pan-y; }
 /* touch screens: "use two fingers" hint over the map when one finger drags (components/map.js) */
 .ehc-map-hint { @apply pointer-events-none absolute inset-0 z-[1000] grid place-items-center bg-deep-950/55 p-6 text-center text-base font-semibold text-white opacity-0 transition-opacity duration-300; }
 .ehc-map-hint.is-on { opacity: 1; }
@@ -151,6 +275,17 @@ html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 [data-map] .leaflet-bar a:last-child { border-bottom: 0; }
 [data-map] .leaflet-bar a.leaflet-disabled { @apply bg-white text-slate-300 dark:bg-night-900 dark:text-white/25; }
 [data-map] .leaflet-control-zoom-in, [data-map] .leaflet-control-zoom-out { font-weight: 500 !important; text-indent: 0 !important; }
+/* "my location" button: brand while showing the position, pulsing while the browser looks it up */
+[data-map] .leaflet-bar a.is-on { @apply text-brand-600 dark:text-brand-300; }
+[data-map] .leaflet-bar a.is-busy .ico { animation: ehc-locating 1s ease-in-out infinite; }
+@keyframes ehc-locating { 50% { opacity: .3; } }
+/* "you are here": a brand dot with a white ring and a soft pulse, over a light accuracy circle */
+.ehc-me { background: none; border: 0; }
+.ehc-me > span { @apply relative block h-full w-full rounded-full border-[3px] border-white bg-brand-600; box-shadow: 0 2px 6px rgb(10 42 79 / .35); }
+.ehc-me > span::after { content: ""; @apply absolute -inset-[3px] rounded-full; box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-500) 55%, transparent); animation: ehc-me-pulse 2s ease-out infinite; }
+@keyframes ehc-me-pulse { to { box-shadow: 0 0 0 16px color-mix(in srgb, var(--brand-500) 0%, transparent); } }
+[data-map] path.ehc-me-area { fill: var(--brand-500); fill-opacity: .12; stroke: var(--brand-500); stroke-opacity: .4; stroke-width: 1; }
+@media (prefers-reduced-motion: reduce) { .ehc-me > span::after, [data-map] .leaflet-bar a.is-busy .ico { animation: none; } }
 /* pins: teardrop with the facility-type icon, tip on the coordinate */
 .ehc-pin { background: none; border: 0; }
 .ehc-pin-body { @apply grid h-8 w-8 place-items-center border-2 border-white bg-brand-600 text-white shadow-soft transition; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); transform-origin: 50% 50%; }
@@ -179,6 +314,24 @@ html:not([dir="rtl"]) [data-map] a.leaflet-popup-close-button { right: .5rem; }
 [data-map] .ehc-popup-btn.is-primary { @apply border-brand-600 bg-brand-600 text-white hover:bg-brand-700 hover:text-white dark:hover:text-white; }
 /* list card whose pin was just clicked */
 [data-facility].is-map-active { @apply ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-night-950; }
+.finder-row.is-map-active { @apply bg-brand-50 ring-0 ring-offset-0 dark:bg-brand-500/15; }
+
+/* Saudi Model of Care (careModelBlock): a slowly turning orbit; each system's arc is faint until its system is chosen */
+.care-orbit { transform-origin: 50% 50%; animation: care-spin 90s linear infinite; }
+@keyframes care-spin { to { transform: rotate(360deg); } }
+.care-arc { opacity: .28; transition: opacity .35s ease, stroke-width .35s ease; }
+[data-care]:has([data-care-tab="0"][aria-selected="true"]) [data-care-arc="0"], [data-care]:has([data-care-tab="1"][aria-selected="true"]) [data-care-arc="1"], [data-care]:has([data-care-tab="2"][aria-selected="true"]) [data-care-arc="2"], [data-care]:has([data-care-tab="3"][aria-selected="true"]) [data-care-arc="3"], [data-care]:has([data-care-tab="4"][aria-selected="true"]) [data-care-arc="4"], [data-care]:has([data-care-tab="5"][aria-selected="true"]) [data-care-arc="5"], [data-care]:has([data-care-tab="6"][aria-selected="true"]) [data-care-arc="6"], [data-care]:has([data-care-tab="7"][aria-selected="true"]) [data-care-arc="7"] { opacity: 1; stroke-width: 3.4; }
+/* automatic change (care-model.js): the chosen arc fills over the interval; paused with the timer */
+.care-progress { opacity: 0; stroke-dasharray: 100; stroke-dashoffset: 100; }
+.care-auto .care-progress.is-on { opacity: 1; animation: care-fill var(--care-ms, 8s) linear forwards; }
+.care-auto.care-paused .care-progress.is-on { animation-play-state: paused; }
+@keyframes care-fill { to { stroke-dashoffset: 0; } }
+.care-auto .care-arc { opacity: .28 !important; stroke-width: 2.4 !important; }
+.care-node:focus-visible { outline: none; }
+.care-node:focus-visible > span:first-child { @apply outline-2 outline-offset-4 outline-brand-500; }
+.care-panel:not(.hidden) { animation: care-in .35s ease both; }
+@keyframes care-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .care-orbit, .care-panel:not(.hidden) { animation: none; } .care-arc { transition: none; } }
 
 /* map pins, mega menu */
 .pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; transition: opacity .25s, transform .25s; }
@@ -196,7 +349,7 @@ html:not([dir="rtl"]) [data-map] a.leaflet-popup-close-button { right: .5rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-  .rv { opacity: 1; transform: none; }
+  .rv, html.rv-on .rv:not(.in) { opacity: 1; transform: none; }
 }
 
 /* ---------------------------------------------------------------------
@@ -219,6 +372,9 @@ html[dir="rtl"] .media-hero { --overlay-dir: 270deg; }
 .media-hero[data-overlay="duotone"] > [data-slide-media] > .media-bg { filter: grayscale(1) contrast(1.15) brightness(1.05); mix-blend-mode: multiply; }
 .media-frame > picture > img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, 50% 50%); }
 .media-hero::before, .media-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+/* poster slides: the picture as it is; only a light shade at the bottom, behind the buttons and slide tabs */
+.media-hero[data-overlay="poster"]::before { background: none; }
+.media-hero[data-overlay="poster"]::after { z-index: -2; background: linear-gradient(to top, color-mix(in srgb, var(--deep-950) 55%, transparent), transparent 28%); }
 
 /* tint — photo keeps its colours, washed by the theme gradient (stronger on the text side) */
 .media-hero[data-overlay="tint"]::before {
@@ -259,9 +415,17 @@ html[dir="rtl"] .media-hero[data-overlay="shade"]::after { background: radial-gr
 .rv.in .progress-ring-fill { stroke-dasharray: var(--p) 100; }
 
 /* logo strip: slow scroll, paused on hover / keyboard focus; wraps into a static grid under reduced motion */
-.logo-track { animation: ehc-mq 50s linear infinite; }
+.logo-track { animation: ehc-mq var(--mq-dur, 50s) linear infinite; }
 html[dir="rtl"] .logo-track { animation-name: ehc-mqr; }
-.logo-strip:hover .logo-track, .logo-strip:focus-within .logo-track { animation-play-state: paused; }
+.logo-strip:hover .logo-track, .logo-strip:focus-within .logo-track, .logo-strip.is-paused .logo-track { animation-play-state: paused; }
+/* "Why EHC" ending with the accreditation strip: a shorter bottom padding, so the strip sits midway between the divider
+   above it and the next section (the full section padding plus the pause row left a large gap) */
+section[data-block="statementStatsBlock"]:has(.logo-strip):is(.py-16, .py-24) { padding-bottom: 3rem; }
+/* reduced motion: the strip stands still and scrolls by hand; the copies and the pause button are not needed */
+@media (prefers-reduced-motion: reduce) {
+  .logo-strip { overflow-x: auto; scrollbar-width: thin; }
+  .logo-track > [aria-hidden="true"], [data-strip-pause] { display: none; }
+}
 
 /* before / after: stacked panes with a clip once components/before-after.js is ready */
 .compare-tag { @apply absolute top-3 rounded-full bg-deep-950/75 px-3 py-1 text-xs font-bold text-white; }
@@ -389,7 +553,7 @@ html.a11y-spacing:not(:lang(ar)) :is(p, li, dd, dt, blockquote, td, th, label, f
 .a11y-spacing .rte > * + * { margin-top: 1.6em; }
 .a11y-still *, .a11y-still ::before, .a11y-still ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 html.a11y-still { scroll-behavior: auto; }
-.a11y-still .rv { opacity: 1; transform: none; }
+.a11y-still .rv, html.a11y-still.rv-on .rv:not(.in) { opacity: 1; transform: none; }
 .a11y-still .progress-bar-fill { width: calc(var(--p) * 1%); }
 .a11y-still .progress-ring-fill { stroke-dasharray: var(--p) 100; }
 .a11y-still .logo-track { width: auto; flex-wrap: wrap; justify-content: center; }
@@ -529,10 +693,14 @@ html.look-corners-round { --radius-lg: .75rem; --radius-xl: 1rem; --radius-2xl: 
 html.look-corners-round :is(.card, .flip-face, .lib-tile, .cols-cell, [class*="rounded-[2"], [class*="rounded-[3"]) { border-radius: 34px; }
 /* shadows */
 html.look-shadows-flat * { --tw-shadow: 0 0 #0000 !important; }
-html.look-shadows-deep :is(.card, .shadow-soft) { --tw-shadow: 0 6px 12px rgb(10 42 79 / .08), 0 28px 60px rgb(10 42 79 / .18); box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
-html.look-shadows-deep.dark :is(.card, .shadow-soft) { --tw-shadow: 0 6px 12px rgb(0 0 0 / .25), 0 28px 60px rgb(0 0 0 / .45); }
+html.look-shadows-deep :is(.card, .shadow-soft, .shadow-subtle) { --tw-shadow: 0 6px 12px rgb(10 42 79 / .08), 0 28px 60px rgb(10 42 79 / .18); box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+html.look-shadows-deep.dark :is(.card, .shadow-soft, .shadow-subtle) { --tw-shadow: 0 6px 12px rgb(0 0 0 / .25), 0 28px 60px rgb(0 0 0 / .45); }
 /* density: every Tailwind spacing step scales with --spacing */
 html.look-density-compact { --spacing: .215rem; }
 html.look-density-airy { --spacing: .285rem; }
 /* buttons */
-html.look-buttons-rounded :is(.btn, .cz-opt) { border-radius: var(--radius-xl); }
+/* header icon buttons follow the button shape, so they match the booking button beside them */
+html.look-buttons-rounded :is(.btn, .cz-opt, .hdr-ic) { border-radius: var(--radius-xl); }
+
+/* "Listen" (components/listen.js): the paragraph being read aloud */
+.rte .is-reading { background: color-mix(in srgb, var(--accent-400) 24%, transparent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-400) 24%, transparent); border-radius: 4px; transition: background-color .2s ease; }

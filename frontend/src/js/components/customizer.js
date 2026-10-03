@@ -10,7 +10,11 @@
   if (!form) return;
   var html = document.documentElement;
   var COOKIE = 'ehc-customize', OPEN = 'ehc-customize-open', REOPEN = 'ehc-customize-reopen';
-  var LOOKS = { corners: 'soft', shadows: 'soft', density: 'normal', buttons: 'pill' };   // name: default value
+  var BASE = { corners: 'soft', shadows: 'soft', density: 'normal', buttons: 'pill' };   // name: default value (no class)
+  // the site's own look (Site settings › Look): a reviewer's choice is saved only when it differs from it
+  var LOOKS = {}, site = {};
+  try { site = JSON.parse(form.getAttribute('data-site-looks') || '{}') || {}; } catch (e) { /* none */ }
+  Object.keys(BASE).forEach(function (n) { LOOKS[n] = /^[a-z]+$/.test(site[n] || '') ? site[n] : BASE[n]; });
   var list = form.querySelector('[data-cz-sections]');
   var session = {
     get: function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
@@ -44,7 +48,7 @@
     Object.keys(LOOKS).forEach(function (n) {
       [].slice.call(html.classList).forEach(function (c) { if (c.indexOf('look-' + n + '-') === 0) html.classList.remove(c); });
       var v = value(n);
-      if (v && v !== LOOKS[n] && /^[a-z]+$/.test(v)) html.classList.add('look-' + n + '-' + v);
+      if (v && v !== BASE[n] && /^[a-z]+$/.test(v)) html.classList.add('look-' + n + '-' + v);
     });
   }
   function reload(focus) {

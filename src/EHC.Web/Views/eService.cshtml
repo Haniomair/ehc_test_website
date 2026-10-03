@@ -1,0 +1,50 @@
+﻿@* E-service page: header (audiences as eyebrow), a start panel (Start service → the external system in a new tab,
+   provider, sign-in note), the page's own sections (how to use it, requirements, FAQ), then other e-services for the
+   same audience. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    string E(string k) => Umbraco.GetDictionaryValue("EHC.EServices." + k) ?? "";
+    var audiences = EServices.Of(Model);
+    if (audiences.Count > 0) { ViewData["eyebrow"] = string.Join(" · ", audiences.Select(a => E("Audience." + a))); }
+    var start = Model.Value<Link>("startLink");
+    var provider = Model.Value<string>("provider");
+    var signIn = Model.Value<bool>("requiresSignIn");
+    var icon = Model.Value<string>("icon");
+    if (string.IsNullOrWhiteSpace(icon)) { icon = "globe"; }
+    var others = (Model.Parent<IPublishedContent>()?.Children() ?? [])
+        .Where(c => c.ContentType.Alias == "eService" && c.Key != Model.Key)
+        .OrderByDescending(c => EServices.Of(c).Intersect(audiences).Any())
+        .Take(3).ToList();
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@if (start is not null && !string.IsNullOrWhiteSpace(start.Url))
+{
+    <div class="wrap pt-10 lg:pt-14">
+        <div class="card flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
+            <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white"><svg class="ico !h-7 !w-7" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+            <div class="min-w-0 flex-1">
+                @if (!string.IsNullOrWhiteSpace(provider)) { <p class="font-semibold text-deep-900 dark:text-white">@E("ProvidedBy") @provider</p> }
+                <p class="text-sm text-slate-600 dark:text-slate-400">@E("Leaving")@if (signIn) {<text> · <span class="inline-flex items-center gap-1"><svg class="ico !h-3.5 !w-3.5" aria-hidden="true"><use href="#i-shield" /></svg>@E("SignIn")</span></text>}</p>
+            </div>
+            <a href="@start.Url" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+                <span>@E("Start")</span><svg class="ico" aria-hidden="true"><use href="#i-link" /></svg><span class="sr-only"> (@E("NewTab"))</span>
+            </a>
+        </div>
+    </div>
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))
+@if (others.Count > 0)
+{
+    <section class="mt-14 bg-soft py-14 dark:bg-night-900/60" aria-labelledby="more-eservices">
+        <div class="wrap">
+            <h2 id="more-eservices" class="mb-8 text-2xl font-bold text-deep-900 dark:text-white">@E("More")</h2>
+            <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (var s in others) { <li>@await Html.PartialAsync("cards/_EServiceCard", s)</li> }
+            </ul>
+        </div>
+    </section>
+}

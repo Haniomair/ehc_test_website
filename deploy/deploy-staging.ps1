@@ -10,10 +10,11 @@
   umbraco/mediacache, wwwroot/media, logs and appsettings.*.local.json are skipped in both directions.
 
 .EXAMPLE
-  ./deploy/deploy-staging.ps1                    # build + deploy code
-  ./deploy/deploy-staging.ps1 -Settings          # also upload src/EHC.Web/appsettings.Staging.local.json
-  ./deploy/deploy-staging.ps1 -SeedData          # also REPLACE the server database and media with the local ones
-  ./deploy/deploy-staging.ps1 -NoCode -Media     # only upload new/changed media files (nothing is deleted)
+  ./deploy/deploy-staging.ps1                    # build + deploy code (what CI runs)
+  ./deploy/deploy-staging.ps1 -Settings          # only upload src/EHC.Web/appsettings.Staging.local.json
+  ./deploy/deploy-staging.ps1 -SeedData          # only REPLACE the server database and media with the local ones
+  ./deploy/deploy-staging.ps1 -Media             # only upload new/changed media files (nothing is deleted)
+  ./deploy/deploy-staging.ps1 -Code -SeedData    # first deploy: code, then database and media
   ./deploy/deploy-staging.ps1 -WhatIf            # show what would change, change nothing
 #>
 [CmdletBinding()]
@@ -24,7 +25,8 @@ param(
     [switch]$SeedData,       # overwrite the server's umbraco/Data and wwwroot/media with the local copies
     [string]$DataFrom,       # with -SeedData: folder to upload as umbraco/Data (e.g. a snapshot of a running site)
     [switch]$Media,          # upload new and changed files in wwwroot/media; never deletes files on the server
-    [switch]$NoCode,         # skip the build and code deploy (for -Settings, -SeedData or -Media on their own)
+    [switch]$Code,           # with -Settings, -SeedData or -Media: also build and deploy the code (otherwise skipped)
+    [switch]$NoCode,         # skip the build and code deploy (kept for old command lines; now the default with data switches)
     [switch]$AllowUntrusted, # accept a self-signed certificate on the Web Deploy endpoint
     [switch]$WhatIf
 )
@@ -78,7 +80,11 @@ function Invoke-MsDeploy([string[]]$arguments) {
     if ($p.ExitCode) { throw "msdeploy failed (exit code $($p.ExitCode))" }
 }
 
-if (-not $NoCode) {
+# code goes to staging through CI (push to test); a data/settings/media upload from a local folder must not
+# also ship that folder's uncommitted code unless asked with -Code
+$deployCode = -not $NoCode -and ($Code -or -not ($Settings -or $SeedData -or $Media))
+if (-not $deployCode) { Write-Host 'Code is not deployed (add -Code to build and deploy it too).' }
+if ($deployCode) {
     # --- build -------------------------------------------------------------------------------------------------
     if (-not $SkipFrontend) {
         Push-Location (Join-Path $root 'frontend')
@@ -139,29 +145,51 @@ if ($SeedData) {
         $DataFrom = Join-Path $web 'umbraco\Data'
         Write-Host 'Stop the local site first so the SQLite database is complete on disk.'
     }
+    # the AppOffline rule drops app_offline.htm at the root of the synced path (here umbraco/Data), which does not
+    # stop the site; put it in the site root ourselves so the server releases the database, and always remove it
+    $offline = Join-Path ([IO.Path]::GetTempPath()) 'app_offline.htm'
+    Set-Content -Path $offline -Value '<!doctype html><title>Updating</title><p>The site is being updated. Please try again in a few minutes.</p>' -Encoding utf8
+    Write-Host 'Taking the staging site offline ...'
     Invoke-MsDeploy (@(
         '-verb:sync',
-        "-source:contentPath=`"$DataFrom`"",
-        "-dest:contentPath=`"$site/umbraco/Data`",$dest",
-        '-skip:Directory="\\TEMP$"'
-    ) + $common)
-    $media = Join-Path $web 'wwwroot\media'
-    if (Test-Path $media) {
+        "-source:contentPath=`"$offline`"",
+        "-dest:contentPath=`"$site/app_offline.htm`",$dest"
+    ) + $retry)
+    try {
+        if (-not $WhatIf) { Start-Sleep -Seconds 15 }   # give the site time to shut down and close the database
+        Write-Host 'Uploading database ...'
         Invoke-MsDeploy (@(
             '-verb:sync',
-            "-source:contentPath=`"$media`"",
-            "-dest:contentPath=`"$site/wwwroot/media`",$dest"
-        ) + $common)
+            "-source:contentPath=`"$DataFrom`"",
+            "-dest:contentPath=`"$site/umbraco/Data`",$dest",
+            '-skip:Directory="\\TEMP$"'
+        ) + $retry)
+        $mediaPath = Join-Path $web 'wwwroot\media'
+        if (Test-Path $mediaPath) {
+            Write-Host 'Uploading media ...'
+            Invoke-MsDeploy (@(
+                '-verb:sync',
+                "-source:contentPath=`"$mediaPath`"",
+                "-dest:contentPath=`"$site/wwwroot/media`",$dest"
+            ) + $retry)
+        }
+    } finally {
+        Write-Host 'Bringing the staging site back online ...'
+        Invoke-MsDeploy (@(
+            '-verb:delete',
+            "-dest:contentPath=`"$site/app_offline.htm`",$dest"
+        ) + $retry)
+        Remove-Item $offline -ErrorAction SilentlyContinue
     }
 }
 
 if ($Media -and -not $SeedData) {
-    $media = Join-Path $web 'wwwroot\media'
-    if (-not (Test-Path $media)) { throw "No local media folder: $media" }
+    $mediaPath = Join-Path $web 'wwwroot\media'
+    if (-not (Test-Path $mediaPath)) { throw "No local media folder: $mediaPath" }
     Write-Host 'Uploading new and changed media files (nothing is deleted on the server) ...'
     Invoke-MsDeploy (@(
         '-verb:sync',
-        "-source:contentPath=`"$media`"",
+        "-source:contentPath=`"$mediaPath`"",
         "-dest:contentPath=`"$site/wwwroot/media`",$dest",
         '-enableRule:DoNotDeleteRule'
     ) + $retry)

@@ -10,7 +10,7 @@
     <div class="panel-backdrop absolute inset-0 bg-deep-950/50" data-action="drawer-close"></div>
     <div class="panel-sheet absolute inset-y-0 end-0 flex w-[min(380px,100%)] flex-col overflow-y-auto bg-white p-5 dark:bg-night-900">
         <div class="mb-4 flex items-center justify-between">
-            <img class="h-9 dark:brightness-0 dark:invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")">
+            @await Html.PartialAsync("site/_Logo", Model, new ViewDataDictionary(ViewData) { ["class"] = "h-9 w-auto" })
             <button type="button" data-action="drawer-close" class="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-white/15" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.CloseMenu")"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg></button>
         </div>
         @if (Model.HeaderCta is { } cta)

@@ -5,7 +5,7 @@ public class CustomizerTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    [InlineData("panel=sideways&corners=soft")]                  // unknown value, default value: nothing left
+    [InlineData("panel=sideways&corners=bogus")]                 // unknown values: nothing left
     [InlineData("theme=not-a-guid&rotate=maybe&hide=XYZ")]
     public void Nothing_valid_means_no_state(string? cookie) => Assert.Null(Customizer.Parse(cookie));
 
@@ -65,5 +65,23 @@ public class CustomizerTests
     {
         Assert.Equal("eid-fitr", Customizer.Parse("pattern=eid-fitr")!.Pattern);
         Assert.Null(Customizer.Parse("pattern=url(x)"));
+    }
+
+    [Fact]
+    public void A_default_choice_is_kept_so_it_can_undo_a_site_look()
+    {
+        var s = Customizer.Parse("corners=soft")!;
+        Assert.Equal("soft", s.Looks["corners"]);
+        Assert.Null(s.HtmlClass);
+    }
+
+    [Fact]
+    public void Site_look_with_reviewer_choices_on_top()
+    {
+        var site = Customizer.SiteLooks(a => a switch { "lookCorners" => "Square", "lookButtons" => "Rounded", "lookDensity" => "Normal", "lookShadows" => "Glowing", _ => null });
+        Assert.Equal(new Dictionary<string, string> { ["corners"] = "square", ["buttons"] = "rounded" }, site);
+        Assert.Equal("look-corners-square look-buttons-rounded", Customizer.HtmlClass(site, null));
+        Assert.Equal("look-density-airy look-buttons-rounded", Customizer.HtmlClass(site, Customizer.Parse("corners=soft&density=airy")));
+        Assert.Null(Customizer.HtmlClass(new Dictionary<string, string>(), null));
     }
 }

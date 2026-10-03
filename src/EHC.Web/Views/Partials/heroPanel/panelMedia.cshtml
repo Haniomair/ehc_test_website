@@ -1,0 +1,35 @@
+@* Right panel item "Image or video" (desktop only): a picture with alt text; with a video file, a player that only
+   plays when the visitor presses play (the picture is its poster). Optional caption and link. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var image = c.Value<MediaWithCrops>("image");
+    var video = c.Value<MediaWithCrops>("video");
+    if (image is null && video is null) { return; }
+    var src = image?.GetCropUrl(width: 800, height: 520, furtherOptions: "format=webp&quality=80");
+    var videoUrl = video?.MediaUrl();
+    var type = System.IO.Path.GetExtension(videoUrl ?? "").ToLowerInvariant() == ".webm" ? "video/webm" : "video/mp4";
+    var caption = c.Value<string>("caption");
+    var link = c.Value<Link>("link");
+}
+<figure class="ms-auto w-full max-w-[420px] overflow-hidden rounded-[22px] border border-white/20 bg-white/10 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl">
+    @if (videoUrl is not null)
+    {
+        <video class="aspect-[16/10.4] w-full bg-night-950 object-cover" controls preload="none" playsinline poster="@src" aria-label="@(c.Value<string>("videoTitle"))">
+            <source src="@videoUrl" type="@type">
+        </video>
+    }
+    else
+    {
+        <img src="@src" alt="@(c.Value<string>("alt"))" width="800" height="520" class="aspect-[16/10.4] w-full object-cover" loading="lazy">
+    }
+    @if (!string.IsNullOrWhiteSpace(caption) || link is not null)
+    {
+        <figcaption class="flex items-center justify-between gap-3 p-4 text-sm">
+            @if (!string.IsNullOrWhiteSpace(caption)) { <span>@caption</span> }
+            @if (link is not null) { <a href="@link.Url" target="@link.Target" class="inline-flex shrink-0 items-center gap-1 font-bold underline underline-offset-4">@link.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+        </figcaption>
+    }
+</figure>

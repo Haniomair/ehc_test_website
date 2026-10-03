@@ -1,10 +1,13 @@
 /* Load synchronously in <head> (no defer) so dark mode, text size, contrast and the accessibility options apply before first paint.
-   A choice made with the header/utility buttons is remembered (site.js); otherwise dark mode follows the OS. */
+   A choice made with the header/utility buttons is remembered (site.js); otherwise dark mode follows the OS.
+   Samsung Internet starts dark: it always reports "light" to sites and, in its "Dark sites" mode, recolours light pages
+   (no site opt-out); our dark design comes through almost unchanged. Keep in step with osDark() in site.js. */
 (function () {
   var html = document.documentElement;
+  var osDark = /SamsungBrowser/i.test(navigator.userAgent) || !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   try {
     var dark = localStorage.getItem('ehc-dark');
-    if (dark === '1' || (dark === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (dark === '1' || (dark === null && osDark)) {
       html.classList.add('dark');
     }
     var fs = parseInt(localStorage.getItem('ehc-fs') || '', 10);
@@ -14,6 +17,6 @@
       if (/^(links|spacing|still|cursor|guide)$/.test(k)) html.classList.add('a11y-' + k);
     });
   } catch (e) {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) html.classList.add('dark');
+    if (osDark) html.classList.add('dark');
   }
 })();

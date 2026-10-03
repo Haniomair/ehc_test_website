@@ -1,0 +1,17 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Core Web Vitals",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.CoreWebVitals",
+      "name": "Core Web Vitals",
+      "element": "/App_Plugins/EhcVitals/vitals-dashboard.js",
+      "weight": -21,
+      "meta": { "label": "Core Web Vitals", "pathname": "core-web-vitals" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

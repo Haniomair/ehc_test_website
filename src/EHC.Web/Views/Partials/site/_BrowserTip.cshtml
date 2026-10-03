@@ -1,0 +1,21 @@
+@* One-time browser recommendation for Samsung Internet: its "Dark sites" mode recolours every page (no site opt-out),
+   so on the first page a visitor opens there, site.js shows this after the cookie notice. "Open in Chrome" gets an
+   Android intent link from site.js (falls back to this page when Chrome is missing); "Continue here" just closes it.
+   Always rendered (hidden) so pages stay cacheable; site.js decides. Styled like the cookie notice. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.BrowserTip." + k) ?? "";
+}
+<section id="browserTip" class="consent hidden" role="status" aria-labelledby="browserTip-title">
+    <div class="flex items-start gap-3">
+        <span class="mega-ic !h-10 !w-10 shrink-0" aria-hidden="true"><svg class="ico"><use href="#i-globe" /></svg></span>
+        <div class="min-w-0">
+            <h2 id="browserTip-title" class="text-[.95rem] font-bold text-deep-900 dark:text-white">@D("Title")</h2>
+            <p class="mt-1 text-[.8rem] leading-relaxed text-slate-600 dark:text-slate-300">@D("Text")</p>
+        </div>
+    </div>
+    <div class="mt-3.5 grid grid-cols-2 gap-2">
+        <a href="#" data-open-chrome data-action="browser-tip-close" class="btn btn-primary btn-sm">@D("OpenChrome")</a>
+        <button type="button" data-action="browser-tip-close" class="btn btn-ghost btn-sm">@D("Close")</button>
+    </div>
+</section>

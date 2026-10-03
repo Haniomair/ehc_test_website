@@ -1,0 +1,42 @@
+@* E-service card: icon, name, one line, provider and sign-in note, then "Start service" (the external system, new tab,
+   announced as such) and "Details" (the service page). *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var s = Model;
+    var title = s.Value<string>("pageTitle");
+    if (string.IsNullOrWhiteSpace(title)) { title = s.Name; }
+    var icon = s.Value<string>("icon");
+    if (string.IsNullOrWhiteSpace(icon)) { icon = "globe"; }
+    var start = s.Value<Link>("startLink");
+    var provider = s.Value<string>("provider");
+    var signIn = s.Value<bool>("requiresSignIn");
+    string E(string k) => Umbraco.GetDictionaryValue("EHC.EServices." + k) ?? "";
+}
+<article class="card group relative flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
+    <div class="flex items-start gap-4">
+        <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+        <div class="min-w-0 flex-1">
+            <h3 class="font-bold leading-snug text-deep-900 dark:text-white"><a href="@s.Url()" class="after:absolute after:inset-0">@title</a></h3>
+            @if (!string.IsNullOrWhiteSpace(s.Value<string>("summary"))) { <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">@(s.Value<string>("summary"))</p> }
+        </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(provider) || signIn)
+    {
+        <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+            @if (!string.IsNullOrWhiteSpace(provider)) { <span>@E("ProvidedBy") @provider</span> }
+            @if (signIn) { <span class="inline-flex items-center gap-1"><svg class="ico !h-3.5 !w-3.5" aria-hidden="true"><use href="#i-shield" /></svg>@E("SignIn")</span> }
+        </p>
+    }
+    <div class="relative z-[1] mt-auto flex flex-wrap gap-2 pt-5">
+        @if (start is not null && !string.IsNullOrWhiteSpace(start.Url))
+        {
+            <a href="@start.Url" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                <span>@E("Start")</span><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-link" /></svg><span class="sr-only"> (@E("NewTab"))</span>
+            </a>
+        }
+        <a href="@s.Url()" class="btn btn-ghost btn-sm" tabindex="-1">@E("Details")</a>
+    </div>
+</article>

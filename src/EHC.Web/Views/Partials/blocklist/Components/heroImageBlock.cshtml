@@ -10,13 +10,14 @@
     var title = c.Value<string>("title");
     if (string.IsNullOrWhiteSpace(title)) { return; }
     var bg = MediaBackground.From(c);
+    var grad = Gradients.For(c);   // no photo/video: the picked gradient
     var center = (EHC.Web.Site.Customizer.Current(Context)?.HeroAlign ?? c.Value<string>("align")) == "center";   // look customizer may override
     var highlight = c.Value<string>("titleHighlight");
     var primary = c.Value<Link>("primaryCta");
     var secondary = c.Value<Link>("secondaryCta");
     var kicker = c.Value<string>("kicker");
 }
-<div class="@(bg.HasMedia ? "media-hero" : "hero-bg-0 relative overflow-hidden") text-white" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+<div class="@(bg.HasMedia ? "media-hero" : grad.Class + " relative overflow-hidden") text-white" style="@(bg.HasMedia ? bg.FocalStyle : grad.Style)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
     @await Html.PartialAsync("site/_MediaBackground", bg)
     <div class="wrap relative flex min-h-[520px] flex-col justify-center py-20 @(center ? "items-center text-center" : "")">
         @if (!string.IsNullOrWhiteSpace(kicker)) { <span class="mb-5 text-sm font-bold uppercase tracking-[.2em] text-brand-100 rtl:tracking-normal">@kicker</span> }

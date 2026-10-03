@@ -1,0 +1,41 @@
+@* Right panel item "Countdown": days · hours · minutes · seconds to a date (Riyadh), updated by components/countdown.js.
+   The numbers are hidden from screen readers; the date is stated in text. A [data-countdown-done] element is always
+   rendered: without it the script would hide the nearest section, which here is the whole hero. *@
+@using EHC.Web.Site
+@using EHC.Web.Themes
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject TimeProvider Clock
+@{
+    var c = Model.Content;
+    var target = ThemeResolver.ToUtc(c.Value("targetDate"));
+    var title = c.Value<string>("title");
+    if (target is null || string.IsNullOrWhiteSpace(title)) { return; }
+    var now = Clock.GetUtcNow().UtcDateTime;
+    var finished = c.Value<string>("finishedText");
+    var done = target <= now;
+    if (done && string.IsNullOrWhiteSpace(finished)) { return; }
+    var left = done ? TimeSpan.Zero : target.Value - now;
+    var local = new DateTimeOffset(target.Value).ToOffset(Dates.SaudiOffset);
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
+    var when = Dates.Gregorian(DateOnly.FromDateTime(local.DateTime), culture) + " · " + local.ToString("HH:mm", culture);
+    var link = c.Value<Link>("link");
+    var units = new[] { ("d", (int)left.TotalDays, "EHC.Countdown.Days"), ("h", left.Hours, "EHC.Countdown.Hours"), ("m", left.Minutes, "EHC.Countdown.Minutes"), ("s", left.Seconds, "EHC.Countdown.Seconds") };
+}
+<div class="rounded-[28px] border border-white/20 bg-white/10 p-5 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" data-countdown="@target.Value.ToString("o")">
+    <b class="block text-lg leading-tight">@title</b>
+    <p class="mt-1 text-sm text-white/80"><svg class="ico me-1 inline !h-4 !w-4 align-[-3px]" aria-hidden="true"><use href="#i-cal" /></svg><time datetime="@target.Value.ToString("o")">@when</time></p>
+    <div class="mt-3 grid grid-cols-4 gap-2 @(done ? "hidden" : "")" data-countdown-units aria-hidden="true">
+        @foreach (var (key, value, label) in units)
+        {
+            <div class="rounded-xl bg-white/10 px-1 py-2.5 text-center ring-1 ring-white/15">
+                <span class="block text-2xl font-extrabold leading-none tabular-nums" dir="ltr" data-unit="@key">@value.ToString("00")</span>
+                <span class="mt-1 block text-[.7rem] text-white/80">@Umbraco.GetDictionaryValue(label)</span>
+            </div>
+        }
+    </div>
+    <p class="mt-3 font-bold @(done ? "" : "hidden")" data-countdown-done>@finished</p>
+    @if (link is not null) { <a href="@link.Url" target="@link.Target" class="btn btn-sand mt-3 w-full">@link.Name</a> }
+</div>
+<script src="~/assets/js/components/countdown.js" asp-append-version="true" defer></script>

@@ -30,6 +30,7 @@
         badge.className = 'whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold ' + lv.badge;
         badge.textContent = labels[d.level] || d.level;
         var bar = q('[data-er-bar]', card);
+        if (!bar) return;  // compact rows (facility finder): no bar
         bar.className = 'block h-full rounded-full transition-all duration-700 ' + lv.bar;
         bar.style.width = Math.min(100, d.minutes / 90 * 100) + '%';
       });
@@ -46,6 +47,7 @@
     load();
     setInterval(function () { if (!document.hidden) load(); }, 60000);
   }
-  function all() { [].forEach.call(document.querySelectorAll('[data-er]'), init); }
+  // [data-api] too: facility-finder rows also carry data-er ("0"/"1" = has an emergency department)
+  function all() { [].forEach.call(document.querySelectorAll('[data-er][data-api]'), init); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', all); else all();
 })();

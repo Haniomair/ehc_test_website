@@ -18,6 +18,8 @@ public sealed class EhcComposer : IComposer
     public void Compose(IUmbracoBuilder builder)
     {
         builder.Services.TryAddSingleton(TimeProvider.System);
+        // Arabic page names keep their diacritics; URLs drop them instead of turning each one into a hyphen
+        builder.UrlSegmentProviders().Insert<ArabicUrlSegmentProvider>();
 
         // Arabic-first site: don't turn every non-Latin character into an &#x…; entity. HTML-sensitive
         // characters (< > & " ') are still encoded.
@@ -37,6 +39,7 @@ public sealed class EhcComposer : IComposer
 
         EHC.Web.Api.ApiSetup.Add(builder);
         EHC.Web.Feedback.FeedbackSetup.Add(builder);
+        EHC.Web.Vitals.VitalsSetup.Add(builder);
         Performance.Add(builder);
         MapTiles.Add(builder);
         ThemePreview.Add(builder);
@@ -46,6 +49,15 @@ public sealed class EhcComposer : IComposer
         builder.Services.Configure<EmbedOptions>(builder.Config.GetSection("Ehc:Embed"));
         builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, LanguageSeeder>();
         builder.AddNotificationHandler<ContentSavingNotification, ThemeContrastGuard>();
+        builder.AddNotificationHandler<ContentSavingNotification, GradientContrastGuard>();
+        builder.AddNotificationHandler<ContentPublishingNotification, LanguageGapWarning>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, GradientSeeder>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, HeroSettingsMigration>();   // after the seeder: uses Teal / Rose
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, EServicesSeeder>();
+        // development: uSync Settings import whenever a uSync file changes (Ehc:USync:AutoImport)
+        builder.Services.AddSingleton<USyncAutoImport>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, USyncAutoImportHandler>();
+        builder.AddNotificationHandler<UmbracoApplicationStoppingNotification, USyncAutoImportHandler>();
 
         // "/" has no content of its own: send visitors to the default (Arabic) site.
         builder.Services.Configure<UmbracoPipelineOptions>(o => o.AddFilter(new UmbracoPipelineFilter("EhcRootRedirect")

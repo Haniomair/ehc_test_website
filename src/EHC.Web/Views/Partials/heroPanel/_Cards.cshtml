@@ -1,0 +1,24 @@
+@* Floating cards in a campaign hero panel (desktop only), with the editor's style, motion, entrance and layout
+   (Blocks/FloatingCards.cs → .fc-* in ehc.css). Entrance and motion sit on separate wrappers so they never fight over
+   transform; --i staggers them. No motion under reduced motion / "pause animations". *@
+@using EHC.Web.Blocks
+@model FloatingCards
+@if (Model.Cards.Count > 0)
+{
+    <ul class="hidden lg:flex @Model.ListClass">
+        @for (var i = 0; i < Model.Cards.Count; i++)
+        {
+            var card = Model.Cards[i];
+            var icon = card.Value<string>("icon");
+            var subtitle = card.Value<string>("subtitle");
+            <li class="fc" style="--i:@i">
+                <div class="fc-move">
+                    <div class="fc-card">
+                        @if (!string.IsNullOrWhiteSpace(icon)) { <span class="fc-icon"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
+                        <span><b class="block leading-tight">@(card.Value<string>("title"))</b>@if (!string.IsNullOrWhiteSpace(subtitle)) {<span class="fc-sub">@subtitle</span>}</span>
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+}

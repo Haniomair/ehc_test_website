@@ -1,4 +1,5 @@
-@* Campaign poster card: colour from the campaign's allow-listed colour key, tag, title, dates. *@
+@* Campaign poster card: colour from the campaign's allow-listed colour key, tag, title, dates.
+   ViewData["ended"] = true adds an "ended" label (lists that show recent campaigns next to current ones). *@
 @using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
 @{
@@ -15,11 +16,15 @@
     var icon = c.Value<string>("icon");
     var start = c.Value<DateOnly?>("startDate");
     var end = c.Value<DateOnly?>("endDate");
+    var ended = ViewData["ended"] is true;
 }
 <a href="@c.Url()" class="group relative flex min-h-[300px] flex-col overflow-hidden rounded-[22px] bg-linear-to-br @gradient p-7 text-white transition hover:-translate-y-1">
     <span class="mark-bg mark-white absolute -bottom-16 -end-16 h-56 w-56 opacity-[.15] transition duration-700 group-hover:rotate-45" aria-hidden="true"></span>
     <span class="relative flex items-center justify-between gap-3">
-        @if (!string.IsNullOrWhiteSpace(c.Value<string>("tag"))) { <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">@(c.Value<string>("tag"))</span> }
+        <span class="flex flex-wrap gap-2">
+            @if (!string.IsNullOrWhiteSpace(c.Value<string>("tag"))) { <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">@(c.Value<string>("tag"))</span> }
+            @if (ended) { <span class="rounded-full bg-deep-950/40 px-3 py-1 text-xs font-bold">@Umbraco.GetDictionaryValue("EHC.Campaigns.Ended")</span> }
+        </span>
         @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white/20"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
     </span>
     <b class="relative mt-auto text-[1.5rem] leading-tight">@title</b>

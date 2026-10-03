@@ -1,0 +1,157 @@
+@* "Saudi Model of Care": a person-centred orbit. The visitor sits in the centre, the systems of care around them (one
+   coloured arc each); choosing a system (WAI-ARIA tabs, components/tabs.js) shows its panel: summary, text, what it
+   means for you, link; under it, the settings care is delivered in. The choice moves on by itself (components/care-model.js:
+   "Change automatically", default every 8 s) while the arc of the chosen system fills; it pauses on keyboard focus, off
+   screen (and, unless "Keep changing on mouse hover" is on, under the mouse), with the pause button, and never runs
+   with reduced motion. Colours come from an allow-list (Palette).
+   Positions: each system at an angle from the top, clockwise in LTR; inset-inline-start mirrors them in RTL, and the
+   arcs (SVG) are mirrored with them. *@
+@using System.Globalization
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var systems = c.Value<BlockListModel>("systems")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).Take(8).ToList() ?? [];
+    if (systems.Count == 0) { return; }
+    var id = "cm-" + Model.ContentKey.ToString("N")[..8];
+    var n = systems.Count;
+    var layers = (c.Value<string>("layers") ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var cta = c.Value<Link>("cta");
+    var centerLabel = c.Value<string>("centerLabel");
+    var centerText = c.Value<string>("centerText");
+    var rotation = c.Value<string>("rotation");
+    var seconds = rotation == "off" ? 0 : int.TryParse(rotation, out var sec) && sec is >= 4 and <= 30 ? sec : 8;
+    string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+
+    // allow-list: the editor picks a key, never a class. Solid = panel icon, Soft = circle, Chosen = the chosen circle,
+    // Dot = list bullets, Text = accents in the panel, Stroke = the arc
+    (string Solid, string Soft, string Chosen, string Dot, string Text, string Stroke) Palette(string? key) => key switch
+    {
+        "support" => ("bg-support-500 text-white", "bg-support-50 text-support-800 dark:bg-support-500/15 dark:text-support-300", "group-aria-selected:!bg-support-500 group-aria-selected:!text-white", "bg-support-500", "text-support-800 dark:text-support-300", "stroke-support-500"),
+        "highlight" => ("bg-highlight-500 text-white", "bg-highlight-500/10 text-highlight-800 dark:bg-highlight-500/15 dark:text-highlight-300", "group-aria-selected:!bg-highlight-500 group-aria-selected:!text-white", "bg-highlight-500", "text-highlight-800 dark:text-highlight-300", "stroke-highlight-500"),
+        "accent" => ("bg-accent-400 text-deep-900", "bg-accent-400/20 text-deep-900 dark:bg-accent-400/15 dark:text-accent-400", "group-aria-selected:!bg-accent-400 group-aria-selected:!text-deep-900", "bg-accent-400", "text-deep-900 dark:text-accent-400", "stroke-accent-400"),
+        "deep" => ("bg-deep-900 text-white dark:bg-deep-700", "bg-deep-900/5 text-deep-900 dark:bg-white/10 dark:text-white", "group-aria-selected:!bg-deep-900 group-aria-selected:!text-white dark:group-aria-selected:!bg-deep-700", "bg-deep-900 dark:bg-slate-300", "text-deep-900 dark:text-white", "stroke-deep-800 dark:stroke-slate-300"),
+        "emergency" => ("bg-emerg-600 text-white", "bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300", "group-aria-selected:!bg-emerg-600 group-aria-selected:!text-white", "bg-emerg-600", "text-emerg-600 dark:text-red-300", "stroke-emerg-500"),
+        _ => ("bg-brand-600 text-white", "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300", "group-aria-selected:!bg-brand-600 group-aria-selected:!text-white", "bg-brand-600", "text-brand-600 dark:text-brand-300", "stroke-brand-500"),
+    };
+    // geometry in a 100 x 100 box: systems on a circle (r 37), arcs on an inner ring (r 23)
+    double Rad(double deg) => deg * Math.PI / 180;
+    double Angle(int i) => -90 + i * 360.0 / n;
+    string Arc(int i)
+    {
+        const double r = 23, gap = 7;
+        var half = 180.0 / n - gap;
+        double a0 = Rad(Angle(i) - half), a1 = Rad(Angle(i) + half);
+        return $"M {F(50 + r * Math.Cos(a0))} {F(50 + r * Math.Sin(a0))} A {F(r)} {F(r)} 0 0 1 {F(50 + r * Math.Cos(a1))} {F(50 + r * Math.Sin(a1))}";
+    }
+}
+<div class="wrap" data-tabs data-care data-interval="@(seconds * 1000)"@HtmlAttributes.Data("hover-pause", c.Value<bool>("keepRotatingOnHover") ? "false" : null)>
+    <div class="rv sec-head">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro"), Id: id + "-h"))
+    </div>
+    <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+        @* the orbit *@
+        <div class="rv relative mx-auto aspect-square w-full max-w-[480px]">
+            <svg viewBox="0 0 100 100" class="absolute inset-0 h-full w-full overflow-visible rtl:-scale-x-100" aria-hidden="true">
+                <circle cx="50" cy="50" r="37" class="care-orbit fill-none stroke-slate-300 dark:stroke-white/15" stroke-width=".35" stroke-dasharray="1.2 1.8" />
+                <circle cx="50" cy="50" r="29.5" class="fill-none stroke-slate-200/70 dark:stroke-white/5" stroke-width=".35" />
+                @for (var i = 0; i < n; i++)
+                {
+                    var stroke = Palette(systems[i].Value<string>("color")).Stroke;
+                    <path d="@Arc(i)" data-care-arc="@i" class="care-arc fill-none @stroke" stroke-width="2.4" stroke-linecap="round" />
+                    @* fills while the chosen system is shown (time until the next one) *@
+                    <path d="@Arc(i)" data-care-progress="@i" pathLength="100" class="care-progress fill-none @stroke" stroke-width="3.4" stroke-linecap="round" />
+                }
+            </svg>
+            @* centre: the person *@
+            <div class="absolute inset-[33%] grid place-items-center rounded-full bg-white text-center shadow-soft ring-1 ring-slate-200 dark:bg-night-900 dark:ring-white/10">
+                <div class="px-2">
+                    <svg class="ico mx-auto !h-7 !w-7 text-brand-500 dark:text-brand-300" aria-hidden="true"><use href="#i-users" /></svg>
+                    @if (!string.IsNullOrWhiteSpace(centerLabel)) { <b class="mt-1 block text-xl leading-tight text-deep-900 sm:text-2xl dark:text-white">@centerLabel</b> }
+                    @if (!string.IsNullOrWhiteSpace(centerText)) { <span class="mt-0.5 block text-[.7rem] leading-snug text-slate-500 sm:text-xs dark:text-slate-400">@centerText</span> }
+                </div>
+            </div>
+            @* the systems: tabs on the circle *@
+            <div role="tablist" aria-labelledby="@id-h">
+                @for (var i = 0; i < n; i++)
+                {
+                    var s = systems[i];
+                    var p = Palette(s.Value<string>("color"));
+                    var icon = s.Value<string>("icon");
+                    if (string.IsNullOrWhiteSpace(icon)) { icon = "heart"; }
+                    var x = 50 + 37 * Math.Cos(Rad(Angle(i)));
+                    var y = 50 + 37 * Math.Sin(Rad(Angle(i)));
+                    <button type="button" role="tab" id="@id-t@(i)" aria-controls="@id-p@(i)" aria-selected="@(i == 0 ? "true" : "false")" tabindex="@(i == 0 ? "0" : "-1")" data-care-tab="@i"
+                            class="care-node group absolute flex w-24 -translate-y-1/2 flex-col items-center gap-2.5 ltr:-translate-x-1/2 rtl:translate-x-1/2 sm:w-28" style="inset-inline-start:@F(x)%;top:@F(y)%">
+                        @* solid base, so the orbit line never shows through the tinted circle *@
+                        <span class="relative h-12 w-12 rounded-full bg-white ring-4 ring-white transition duration-300 group-hover:scale-105 group-aria-selected:scale-110 group-aria-selected:shadow-soft sm:h-16 sm:w-16 dark:bg-night-950 dark:ring-night-950">
+                            <span class="absolute inset-0 grid place-items-center rounded-full transition-colors duration-300 @p.Soft @p.Chosen">
+                                <svg class="ico !h-5 !w-5 sm:!h-6 sm:!w-6" aria-hidden="true"><use href="#i-@icon" /></svg>
+                            </span>
+                        </span>
+                        <span class="rounded-md bg-white/90 px-1.5 py-0.5 text-center text-[.7rem] font-semibold leading-tight text-slate-600 group-aria-selected:text-deep-900 sm:text-[.8rem] dark:bg-night-950/90 dark:text-slate-400 dark:group-aria-selected:text-white">@(s.Value<string>("title"))</span>
+                    </button>
+                }
+            </div>
+            @if (seconds > 0 && n > 1)
+            {
+                <button type="button" data-care-pause class="absolute bottom-0 end-0 hidden h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-deep-900 transition hover:border-brand-500 hover:text-brand-600 dark:border-white/15 dark:bg-night-900 dark:text-white" aria-pressed="false" aria-label="@Umbraco.GetDictionaryValue("EHC.Hero.Pause")">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon="pause"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                    <svg class="hidden h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-icon="play"><path d="M8 5v14l11-7z" /></svg>
+                </button>
+            }
+        </div>
+        @* the chosen system, then where care is delivered *@
+        <div class="rv flex flex-col gap-8">
+        <div class="lg:min-h-[23rem]">
+            @for (var i = 0; i < n; i++)
+            {
+                var s = systems[i];
+                var p = Palette(s.Value<string>("color"));
+                var icon = s.Value<string>("icon");
+                if (string.IsNullOrWhiteSpace(icon)) { icon = "heart"; }
+                var summary = s.Value<string>("summary");
+                var text = s.Value<string>("text");
+                var points = (s.Value<string>("points") ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var link = s.Value<Link>("link");
+                <div id="@id-p@(i)" role="tabpanel" aria-labelledby="@id-t@(i)" tabindex="0" class="care-panel @(i == 0 ? "" : "hidden")">
+                    <div class="flex items-center gap-3">
+                        <span class="grid h-12 w-12 place-items-center rounded-2xl @p.Solid"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+                        <span class="text-sm font-bold tabular-nums @p.Text" dir="ltr">@((i + 1).ToString("00")) / @(n.ToString("00"))</span>
+                    </div>
+                    <h3 class="mt-5 text-2xl font-bold leading-snug text-deep-900 sm:text-3xl dark:text-white">@(s.Value<string>("title"))</h3>
+                    @if (!string.IsNullOrWhiteSpace(summary)) { <p class="mt-1.5 font-semibold @p.Text">@summary</p> }
+                    @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-4 leading-relaxed text-slate-600 dark:text-slate-400">@text</p> }
+                    @if (points.Length > 0)
+                    {
+                        <ul class="mt-5 grid gap-2.5">
+                            @foreach (var pt in points)
+                            {
+                                <li class="flex items-start gap-3 text-deep-900 dark:text-slate-200"><span class="mt-2 h-2 w-2 shrink-0 rounded-full @p.Dot" aria-hidden="true"></span><span>@pt</span></li>
+                            }
+                        </ul>
+                    }
+                    @if (link is not null && !string.IsNullOrWhiteSpace(link.Url)) { <a class="link mt-6" href="@link.Url" target="@link.Target"><span>@link.Name</span><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+                </div>
+            }
+        </div>
+        @if (layers.Length > 0 || (cta is not null && !string.IsNullOrWhiteSpace(cta.Url)))
+        {
+            <div class="rounded-2xl bg-soft p-4 sm:p-5 dark:bg-white/5">
+                @if (!string.IsNullOrWhiteSpace(c.Value<string>("layersHeading"))) { <p class="mb-3 text-xs font-bold text-slate-500 dark:text-slate-400">@(c.Value<string>("layersHeading"))</p> }
+                @if (layers.Length > 0)
+                {
+                    <ul class="flex flex-wrap gap-2">
+                        @foreach (var l in layers) { <li class="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-deep-900 ring-1 ring-slate-200 dark:bg-night-900 dark:text-slate-200 dark:ring-white/10">@l</li> }
+                    </ul>
+                }
+                @if (cta is not null && !string.IsNullOrWhiteSpace(cta.Url)) { <a class="link mt-4 text-sm" href="@cta.Url" target="@cta.Target"><span>@cta.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+            </div>
+        }
+        </div>
+    </div>
+</div>
+<script src="~/assets/js/components/tabs.js" asp-append-version="true" defer></script>
+@if (seconds > 0 && n > 1) { <script src="~/assets/js/components/care-model.js" asp-append-version="true" defer></script> }

@@ -7,12 +7,12 @@
 @{
     var items = Model.MegaMenu?.ToList() ?? [];
     const string trigger = "mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300";
-    const string iconButton = "grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-300";
+    const string iconButton = "hdr-ic grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-300";
 }
 <header id="hdr" class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-night-950/85">
     <div class="wrap flex h-[66px] items-center gap-5 lg:h-20">
         <a href="@(Model.Home?.Url() ?? "/")" class="shrink-0" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")">
-            <img class="block h-9 w-auto lg:h-[52px] dark:brightness-0 dark:invert" src="@Model.LogoUrl" alt="@Umbraco.GetDictionaryValue("EHC.Header.LogoAlt")">
+            @await Html.PartialAsync("site/_Logo", Model, new ViewDataDictionary(ViewData) { ["class"] = "h-9 w-auto lg:h-[52px]" })
         </a>
         @if (items.Count > 0)
         {
@@ -40,7 +40,7 @@
             <button type="button" data-action="dark" class="@iconButton dark:text-accent-400" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.DarkMode")" aria-pressed="false"><svg class="ico dark:hidden" aria-hidden="true"><use href="#i-moon" /></svg><svg class="ico hidden dark:block" aria-hidden="true"><use href="#i-sun" /></svg></button>
             @if (Model.HeaderCta is { } cta)
             {
-                <a class="btn btn-primary hidden sm:inline-flex" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
+                <a class="btn btn-primary hidden h-11 py-0 shadow-none sm:inline-flex" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
             }
             <button type="button" data-action="drawer-open" class="@iconButton xl:hidden" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.OpenMenu")" aria-haspopup="dialog" aria-controls="drawer"><svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg></button>
         </div>

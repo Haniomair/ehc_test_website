@@ -1,0 +1,13 @@
+@* Right panel item "Campaign card": a picked campaign as its poster card, with an optional label above. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var campaign = Model.Content.Value<IPublishedContent>("campaign");
+    if (campaign is null) { return; }
+    var label = Model.Content.Value<string>("label");
+}
+<div class="ms-auto w-full max-w-[400px]">
+    @if (!string.IsNullOrWhiteSpace(label)) { <p class="mb-2 text-sm font-semibold text-white/80">@label</p> }
+    @await Html.PartialAsync("cards/_CampaignCard", campaign)
+</div>

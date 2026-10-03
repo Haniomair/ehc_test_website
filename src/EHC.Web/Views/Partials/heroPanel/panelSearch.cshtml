@@ -1,0 +1,22 @@
+@* Right panel item "Search box": optional heading, the site search box (with scope tabs) and popular links. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var heading = c.Value<string>("heading");
+    IReadOnlyList<string> tabs = c.Value<IEnumerable<string>>("searchTabs")?.ToList() ?? [];
+    var popular = c.Value<IEnumerable<Link>>("popularLinks")?.ToList() ?? [];
+    var id = "ps-" + Model.ContentKey.ToString("N")[..8];
+}
+<div class="rounded-[28px] border border-white/20 bg-white/10 p-6 text-white shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl">
+    @if (!string.IsNullOrWhiteSpace(heading)) { <b class="mb-4 block text-lg leading-tight">@heading</b> }
+    @await Html.PartialAsync("site/_SearchForm", (id, tabs))
+    @if (popular.Count > 0)
+    {
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <span class="text-white/75">@Umbraco.GetDictionaryValue("EHC.Search.Popular")</span>
+            @foreach (var l in popular) { <a href="@l.Url" target="@l.Target" class="rounded-full border border-white/25 px-3 py-1 hover:bg-white/10">@l.Name</a> }
+        </div>
+    }
+</div>

@@ -1,0 +1,43 @@
+@* One right panel of the campaign hero (see Blocks/HeroCampaign.cs). Panels are stacked in one cell (.hero-panels);
+   hero-campaign.js shows the one whose data-slide-panel lists the active slide. Logo art sits behind the items;
+   art and floating cards are desktop only; below desktop a panel shows only when every slide shares it (ViewData
+   "phones", set by the hero). *@
+@using EHC.Web.Blocks
+@using Umbraco.Cms.Core.Models.Blocks
+@model PanelLayer
+@{ var phones = ViewData["phones"] as bool? ?? Model.Interactive; }
+<div class="hero-swap relative @(Model.Slides.Contains(0) ? "is-shown" : "slide-off") @(phones ? "" : "hidden lg:block")" data-slide-panel="@string.Join(" ", Model.Slides)">
+    @if (Model.Art)
+    {
+        <div class="absolute inset-0 hidden place-items-center lg:grid" aria-hidden="true">
+            <div class="relative h-[340px] w-[340px] rounded-full border border-white/15">
+                <div class="absolute inset-[40px] rounded-full border border-dashed border-white/20 anim-spin-slow"></div>
+                <div class="absolute inset-[110px] grid place-items-center rounded-full bg-white shadow-[0_30px_80px_rgba(0,0,0,.3)] dark:bg-night-900"><span class="mark-bg h-20 w-20"></span></div>
+            </div>
+        </div>
+    }
+    <div class="relative flex h-full flex-col justify-center gap-4 @(Model.Art ? "items-end" : "")">
+        @if (Model.Navigator is not null)
+        {
+            <div class="w-full">@await Html.PartialAsync("blocklist/Components/careNavigatorBlock", Model.Navigator, new ViewDataDictionary(ViewData) { ["inHero"] = true })</div>
+        }
+        @foreach (var block in Model.Blocks)
+        {
+            switch (block.Content.ContentType.Alias)
+            {
+                case "panelCards":
+                    @await Html.PartialAsync("heroPanel/_Cards", FloatingCards.From(block.Content))
+                    break;
+                case "careNavigatorBlock":
+                    <div class="w-full">@await Html.PartialAsync("blocklist/Components/careNavigatorBlock", block, new ViewDataDictionary(ViewData) { ["inHero"] = true })</div>
+                    break;
+                default:
+                    if (HeroCampaign.PanelItems.Contains(block.Content.ContentType.Alias))
+                    {
+                        <div class="w-full @(HeroCampaign.DesktopOnly.Contains(block.Content.ContentType.Alias) ? "hidden lg:block" : "")">@await Html.PartialAsync("heroPanel/" + block.Content.ContentType.Alias, block)</div>
+                    }
+                    break;
+            }
+        }
+    </div>
+</div>

@@ -11,11 +11,12 @@
     var title = c.Value<string>("title");
     if (string.IsNullOrWhiteSpace(title)) { return; }
     var bg = MediaBackground.From(c);
+    var grad = Gradients.For(c);   // no photo/video: the picked gradient
     var highlight = c.Value<string>("titleHighlight");
     var film = c.Value<Link>("fullFilmLink");
     var kicker = c.Value<string>("kicker");
 }
-<div class="@(bg.HasMedia ? "media-hero" : "hero-bg-0 relative overflow-hidden") text-white" style="@(bg.HasMedia ? bg.FocalStyle : null)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
+<div class="@(bg.HasMedia ? "media-hero" : grad.Class + " relative overflow-hidden") text-white" style="@(bg.HasMedia ? bg.FocalStyle : grad.Style)"@HtmlAttributes.Data("overlay", bg.HasMedia ? bg.Overlay : null)@HtmlAttributes.Data("strength", bg.HasMedia ? bg.Strength : null)>
     @await Html.PartialAsync("site/_MediaBackground", bg)
     <div class="wrap relative flex min-h-[560px] flex-col justify-end pb-14 pt-24">
         @if (!string.IsNullOrWhiteSpace(kicker)) { <span class="mb-4 w-fit rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">@kicker</span> }

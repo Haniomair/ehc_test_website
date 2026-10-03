@@ -3,6 +3,7 @@
 @using EHC.Web.Site
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @inject ISiteContext Site
+@inject Microsoft.Extensions.Options.IOptions<EHC.Web.Vitals.VitalsOptions> Vitals
 @{
     Layout = null;
     var site = Site.Get(Model);                           // culture comes from the hostname (/ar, /en)
@@ -26,13 +27,19 @@
 }
 <!DOCTYPE html>
 @* The active theme's colours arrive as CSS variables in the style attribute (Razor drops it when there is no theme). *@
-@* class: look-customizer choices of a reviewer (allow-listed, Site/Customizer.cs); dropped when there are none. *@
-<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" class="@Customizer.Current(Context)?.HtmlClass" style="@theme.InlineStyle">
+@* class: the site's look (Site settings › Look) with a reviewer's customizer choices on top (allow-listed,
+   Site/Customizer.cs); dropped when everything is default. *@
+<html lang="@site.Language" dir="@(site.IsRtl ? "rtl" : "ltr")" class="@Customizer.HtmlClass(site.Looks, Customizer.Current(Context))" style="@theme.InlineStyle">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @* the site draws both schemes itself: stops mobile browsers (Chrome auto-dark, Samsung Internet) force-darkening it *@
     <meta name="color-scheme" content="light dark">
+    @* installable app (sw.js registered in site.js; offline page with emergency numbers) *@
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#060F1E" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/assets/img/icons/apple-touch-icon.png">
     <title>@metaTitle</title>
     @if (!string.IsNullOrWhiteSpace(metaDescription))
     {
@@ -58,7 +65,9 @@
     @foreach (var alt in site.Alternates.Where(a => a.Culture != site.Culture.Name)) { <meta property="og:locale:alternate" content="@alt.Culture.Replace('-', '_')"> }
     <meta name="twitter:card" content="summary_large_image">
     <script src="~/assets/js/theme-init.js" asp-append-version="true"></script>  @* sets .dark before paint; no inline script (CSP) *@
+    @* both subsets: Arabic pages also use the Latin one for digits and punctuation in the hero headline *@
     <link rel="preload" href="~/assets/fonts/cairo-arabic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="~/assets/fonts/cairo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="~/assets/css/ehc.css" asp-append-version="true">
     @if (Customizer.IsOn(Context))
     {
@@ -71,6 +80,7 @@
     @await Html.PartialAsync("site/_Icons")
     <a href="#main" class="absolute start-3 -top-16 z-[100] rounded-lg bg-deep-900 px-3.5 py-2.5 text-white focus:top-3">@Umbraco.GetDictionaryValue("EHC.Common.SkipToContent")</a>
     @await Html.PartialAsync("site/_CookieNotice", site)  @* early in the tab order; shown fixed at the bottom *@
+    @await Html.PartialAsync("site/_BrowserTip")
 
     @await Html.PartialAsync("site/_StagingRibbon", site)
     @await Html.PartialAsync("site/_Ribbon", theme)
@@ -90,5 +100,11 @@
     @await Html.PartialAsync("site/_Assistant", site)
     @await Html.PartialAsync("site/_Customizer", site)
     <script src="~/assets/js/site.js" asp-append-version="true" defer></script>
+    @if (Vitals.Value.Enabled)
+    {
+        @* real-visitor Core Web Vitals: loads and sends nothing until the visitor accepts optional cookies *@
+        <script src="~/assets/js/components/vitals.js" asp-append-version="true" defer data-page="@Model.Key" data-culture="@site.Culture.Name"
+                data-lib="@Url.Content("~/assets/vendor/web-vitals/web-vitals.iife.js")" data-sample="@Vitals.Value.SampleRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"></script>
+    }
 </body>
 </html>

@@ -45,9 +45,11 @@ public static class ComponentCatalog
         new("quickActionsBlock", "services", "grid", "إجراءات سريعة", "Quick actions", "شريط أيقونات لأكثر الخدمات طلبًا.", "Icon strip for the most-used services."),
         new("linkCardsBlock", "services", "app", "بطاقات الروابط", "Link cards", "خدمات إلكترونية وروابط بشارات.", "E-services and links with badges."),
         new("journeysBlock", "services", "users", "رحلات المستفيد", "Patient journeys", "مراحل الحياة وخطوات الرعاية.", "Life stages and care steps."),
-        new("healthToolsBlock", "services", "scal", "أدوات صحية", "Health tools", "حاسبة كتلة الجسم وأدوات تفاعلية.", "BMI calculator and interactive tools."),
+        new("careModelBlock", "services", "heart", "نموذج الرعاية الصحية السعودي", "Saudi Model of Care", "أنظمة الرعاية حول المستفيد، مع لوحة لكل نظام.", "The systems of care around the person, with a panel for each."),
+        new("healthToolsBlock", "services", "scal", "أدوات صحية", "Health tools", "نظرة عامة على الأدوات الصحية حسب الفئة، مع حاسبة كتلة الجسم اختياريًا.", "Overview of the site's health tools by category, optionally with the BMI calculator."),
         new("healthToolBlock", "services", "scal", "أداة صحية", "Health tool", "إحدى الأدوات الثماني: كتلة الجسم، الوزن المثالي، السعرات، الإباضة، موعد الولادة، النظر، السكري، الربو.", "One of eight tools: BMI, ideal weight, calories, ovulation, due date, vision, prediabetes, asthma."),
         new("azIndexBlock", "services", "menu", "فهرس أبجدي", "A–Z index", "التخصصات أو المنشآت أو الأدوات أو المقالات مرتبة أبجديًا مع بحث.", "Specialties, facilities, tools or articles by letter, with a filter."),
+        new("eServicesBlock", "services", "globe", "الخدمات الإلكترونية", "E-services", "خدمات إلكترونية مع تبويب لكل فئة (المرضى أولاً)، وشريط اختياري لتطبيق الجوال.", "Online services with a tab per audience (patients first), and an optional mobile app strip."),
         // text & layout
         new("sectionHeadingBlock", "text", "doc", "عنوان قسم", "Section heading", "عنوان وتمهيد وأزرار.", "Heading, intro and buttons."),
         new("richTextBlock", "text", "doc", "نص منسق", "Rich text", "محتوى نصي حر بتنسيق محدود.", "Free text with safe formatting."),
@@ -77,7 +79,7 @@ public static class ComponentCatalog
         new("hotspotsBlock", "features", "pin", "نقاط على صورة", "Image hotspots", "نقاط مرقمة على صورة مرتبطة بقائمة.", "Numbered points on an image linked to a list."),
         // numbers
         new("statsBandBlock", "numbers", "target", "شريط أرقام", "Stats band", "أرقام تعدّ عند الظهور.", "Numbers that count up on scroll."),
-        new("statementStatsBlock", "numbers", "flag", "بيان وأرقام", "Statement + stats", "رسالة رئيسية مع أرقام.", "Key message with figures."),
+        new("statementStatsBlock", "numbers", "flag", "بيان وأرقام", "Statement + stats", "رسالة رئيسية مع أرقام، وصف اختياري لشعارات الاعتماد.", "Key message with figures, and an optional row of accreditation logos."),
         new("progressBarsBlock", "numbers", "target", "مؤشرات", "Progress / indicators", "أشرطة أو حلقات نسب مئوية.", "Percentage bars or rings."),
         new("countdownBlock", "numbers", "clock", "عدّ تنازلي", "Countdown", "عدّ حتى موعد بتوقيت الرياض.", "Counts down to a Riyadh date and time."),
         // media
@@ -97,7 +99,7 @@ public static class ComponentCatalog
         new("leaderMessageBlock", "people", "chat", "كلمة القيادة", "Leader message", "صورة واقتباس واسم ومنصب وتوقيع.", "Portrait, quote, name, role and signature."),
         // live data & directories
         new("erWaitBlock", "data", "er", "انتظار الطوارئ", "ER wait times", "أوقات الانتظار من الخادم.", "Wait times from the server feed."),
-        new("facilityFinderBlock", "data", "locate", "دليل المنشآت", "Facility finder", "خريطة وفلترة للمنشآت.", "Map and filters for facilities."),
+        new("facilityFinderBlock", "data", "locate", "دليل المنشآت", "Facility finder", "خريطة وفلترة للمنشآت، مع اختيار الشبكة الصحية وأوقات انتظار الطوارئ (اختياري).", "Map and filters for facilities, with optional health-network chips and ER wait times."),
         new("networksBlock", "data", "hosp", "الشبكات الصحية", "Health networks", "بطاقة لكل شبكة مع عدد المستشفيات والمراكز.", "A card per network with its hospital and centre counts."),
         new("visitorGuideBlock", "data", "clock", "دليل الزوار", "Visitor guide", "أوقات الزيارة والتعليمات وما يجب إحضاره.", "Visiting hours, guidelines and what to bring."),
         new("healthLibraryBlock", "data", "book", "المكتبة الصحية", "Health library", "أحدث المقالات التثقيفية، لموضوع واحد أو للجميع.", "Latest patient-education articles, one topic or all."),

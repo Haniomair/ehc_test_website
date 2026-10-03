@@ -1,28 +1,53 @@
-@* Block 11 "Health tools" (Know your numbers): BMI calculator + reference cards + disclaimer.
-   Medical wording (BMI categories/tips in the dictionary, reference values here) must be approved by the clinical team.
+@* Block 11 "Health tools": an overview of the site's health tools. The tools come from the Health tools pages (any
+   tool page added there appears here, grouped by category: weight, pregnancy, screening), each with its type
+   (calculator / self-check) and about how long it takes. Optional: the live BMI calculator as "Try it now", and a
+   disclaimer. Medical wording (BMI categories/tips in the dictionary) must be approved by the clinical team.
    Calculator: Views/Partials/tools/_BmiSlider.cshtml (also used on the BMI tool page). *@
 @using EHC.Web.Blocks
 @using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
 @{
     var c = Model.Content;
     var showBmi = c.Value<bool>("showBmi");
-    var cards = c.Value<BlockListModel>("referenceCards")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("value"))).ToList() ?? [];
-    if (!showBmi && cards.Count == 0) { return; }
+    var folder = Umbraco.AssignedContentItem.Root()?.DescendantsOfType("healthToolsFolder").FirstOrDefault();
+    var tools = folder?.Children()
+        .Select(p => (Page: p, Tool: HealthTools.Find(p.Value<string>("tool"))))
+        .Where(t => t.Tool is not null)
+        .Select(t => (t.Page, Tool: t.Tool!))
+        .ToList() ?? [];
+    if (!showBmi && tools.Count == 0) { return; }
+    var groups = HealthTools.Categories
+        .Select(k => (Key: k, Items: tools.Where(t => t.Tool.Category == k).ToList()))
+        .Where(g => g.Items.Count > 0).ToList();
     var ctas = c.Value<IEnumerable<Link>>("bmiCtas")?.ToList() ?? [];
     var disclaimer = c.Value<string>("disclaimer");
     var id = "bmi-" + Model.ContentKey.ToString("N")[..8];
+    string T(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
+    var minMinutes = tools.Count > 0 ? tools.Min(t => t.Tool.Minutes) : 0;
+    var maxMinutes = tools.Count > 0 ? tools.Max(t => t.Tool.Minutes) : 0;
+    var groupCols = groups.Count switch { 1 => "", 2 => "md:grid-cols-2", _ => showBmi ? "md:grid-cols-2 xl:grid-cols-3 md:max-xl:[&>*:last-child:nth-child(odd)]:col-span-2" : "md:grid-cols-2 lg:grid-cols-3 md:max-lg:[&>*:last-child:nth-child(odd)]:col-span-2" };
 }
 <div class="wrap">
-    <div class="rv sec-head">
+    <div class="rv sec-head-row">
         @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        @if (tools.Count > 0)
+        {
+            <ul class="flex flex-wrap gap-2 text-sm">
+                <li class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3.5 py-1.5 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-grid" /></svg>@string.Format(T("CountFormat"), tools.Count)</li>
+                <li class="inline-flex items-center gap-2 rounded-full bg-soft px-3.5 py-1.5 text-slate-700 dark:bg-night-900 dark:text-slate-300"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-clock" /></svg>@string.Format(T("MinutesFormat"), minMinutes == maxMinutes ? $"{minMinutes}" : $"{minMinutes}–{maxMinutes}")</li>
+                <li class="inline-flex items-center gap-2 rounded-full bg-soft px-3.5 py-1.5 text-slate-700 dark:bg-night-900 dark:text-slate-300"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-shield" /></svg>@T("NoSignUp")</li>
+            </ul>
+        }
     </div>
-    <div class="grid gap-5 @(showBmi && cards.Count > 0 ? "lg:grid-cols-[1.25fr_.75fr]" : "")">
+
+    <div class="grid gap-6 @(showBmi && groups.Count > 0 ? "lg:grid-cols-[.9fr_2.1fr]" : "")">
         @if (showBmi)
         {
-            <div class="rv card p-6 sm:p-8">
+            <div class="rv card relative min-w-0 overflow-hidden p-6 sm:p-8">
+                <span class="mb-5 inline-flex items-center gap-2 rounded-full bg-accent-400/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-deep-900 rtl:tracking-normal dark:text-accent-400"><span class="h-1.5 w-1.5 rounded-full bg-accent-500" aria-hidden="true"></span>@T("TryNow")</span>
                 @await Html.PartialAsync("tools/_BmiSlider", new BmiSlider(id, ShowTitle: true))
                 @if (ctas.Count > 0)
                 {
@@ -30,26 +55,50 @@
                         @for (var i = 0; i < ctas.Count; i++) { <a href="@ctas[i].Url" target="@ctas[i].Target" class="btn @(i == 0 ? "btn-primary" : "btn-ghost") btn-sm">@ctas[i].Name</a> }
                     </div>
                 }
+                <p class="mt-5 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400"><svg class="ico mt-px !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-shield" /></svg>@T("Privacy")</p>
             </div>
         }
-        @if (cards.Count > 0)
+        @if (groups.Count > 0)
         {
-            <div class="grid content-start gap-5">
-                @for (var i = 0; i < cards.Count; i++)
+            <div class="grid min-w-0 content-start gap-5 @groupCols">
+                @foreach (var (key, items) in groups)
                 {
-                    var r = cards[i];
-                    var link = r.Value<Link>("link");
-                    var dark = i == 0;
-                    <div class="rv rounded-[22px] p-6 @(dark ? "bg-deep-900 text-white dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20" : "bg-soft dark:bg-night-900 dark:ring-1 dark:ring-white/10")">
-                        <span class="text-xs font-bold uppercase tracking-widest rtl:tracking-normal @(dark ? "text-brand-300" : "text-support-800 dark:text-support-300")">@(r.Value<string>("label"))</span>
-                        <b class="mt-2 block text-[2.4rem] font-extrabold leading-none @(dark ? "" : "text-deep-900 dark:text-white")" dir="ltr">@(r.Value<string>("value"))</b>
-                        @if (!string.IsNullOrWhiteSpace(r.Value<string>("unit"))) { <span class="mt-1 block text-sm @(dark ? "text-brand-100" : "text-slate-600 dark:text-slate-400")">@(r.Value<string>("unit"))</span> }
-                        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="mt-3 inline-flex items-center gap-1.5 py-1 text-sm font-semibold @(dark ? "text-brand-300" : "link")"><span>@link.Name</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
-                    </div>
+                    <section class="rv card flex flex-col p-5" aria-labelledby="@id-@key">
+                        <div class="mb-4 flex items-center gap-3">
+                            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-linear-to-br from-brand-500 to-deep-800 text-white"><svg class="ico" aria-hidden="true"><use href="#i-@HealthTools.CategoryIcon(key)" /></svg></span>
+                            <div>
+                                <h3 class="font-bold leading-tight text-deep-900 dark:text-white" id="@id-@key">@T("Category." + key)</h3>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">@string.Format(T("CountFormat"), items.Count)</span>
+                            </div>
+                        </div>
+                        <ul class="grid gap-1">
+                            @foreach (var (toolPage, tool) in items)
+                            {
+                                <li>
+                                    <a href="@toolPage.Url()" class="group flex items-center gap-3 rounded-2xl p-2.5 transition hover:bg-brand-50 dark:hover:bg-white/5">
+                                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-@tool.Icon" /></svg></span>
+                                        <span class="min-w-0 flex-1">
+                                            <b class="block text-sm leading-snug text-deep-900 dark:text-white">@toolPage.Name</b>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400">@T("Kind." + tool.Kind) · @string.Format(T("MinutesFormat"), tool.Minutes)</span>
+                                        </span>
+                                        <svg class="ico flip !h-4 !w-4 shrink-0 text-slate-400 transition group-hover:text-brand-600 dark:group-hover:text-brand-300" aria-hidden="true"><use href="#i-arrow" /></svg>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </section>
                 }
-                @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="text-xs text-slate-500 dark:text-slate-400">@disclaimer</p> }
+                @if (folder is not null)
+                {
+                    <a href="@folder.Url()" class="rv group flex items-center justify-between gap-4 rounded-[22px] bg-deep-900 p-5 text-white transition hover:bg-deep-800 dark:bg-brand-500/15 dark:ring-1 dark:ring-brand-400/20 @(groups.Count > 1 ? "md:col-span-full" : "")">
+                        <span><b class="block">@T("AllTools")</b><span class="text-sm text-on-deep">@T("Privacy")</span></span>
+                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 transition group-hover:bg-white/20"><svg class="ico flip" aria-hidden="true"><use href="#i-arrow" /></svg></span>
+                    </a>
+                }
             </div>
         }
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(disclaimer)) { <p class="mt-6 text-xs text-slate-500 dark:text-slate-400">@disclaimer</p> }
 </div>
 @if (showBmi) { <script src="~/assets/js/components/bmi.js" asp-append-version="true" defer></script> }

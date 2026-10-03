@@ -1,30 +1,102 @@
-@* Search palette (Ctrl+K / search button / search hero). Results from GET /api/search, grouped; labels from the dictionary. *@
+@* Search palette (Ctrl+K / search button / search hero). WAI-ARIA combobox: the input lists results (role=listbox) from
+   GET /api/search, grouped, with filter chips per group; ↑ ↓ move, Enter opens, Esc closes (site.js).
+   Before typing: recent searches (this browser only), quick access to the main sections and the emergency number,
+   and the specialties as one-tap searches. Phones: a full-screen sheet. Labels from the dictionary. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@inject ISiteContext Site
 @{
     string D(string k) => Umbraco.GetDictionaryValue(k) ?? k;
-    var labels = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>
-    {
-        ["specialties"] = D("EHC.Search.Group.specialties"),
-        ["doctors"] = D("EHC.Search.Group.doctors"),
-        ["facilities"] = D("EHC.Search.Group.facilities"),
-        ["campaigns"] = D("EHC.Search.Group.campaigns"),
-        ["news"] = D("EHC.Search.Group.news"),
-        ["pages"] = D("EHC.Search.Group.pages"),
-    });
+    string[] groupKeys = ["doctors", "specialties", "facilities", "services", "tools", "articles", "campaigns", "news", "pages"];
+    var labels = System.Text.Json.JsonSerializer.Serialize(groupKeys.ToDictionary(k => k, k => D("EHC.Search.Group." + k)));
+    var home = Umbraco.AssignedContentItem?.AncestorOrSelf("home");
+    // quick access: the main sections that exist on this site, in this order
+    (string Type, string Icon)[] sections = [("doctorFolder", "doc"), ("facilityFolder", "pin"), ("eServicesFolder", "globe"), ("healthToolsFolder", "scal"), ("healthLibrary", "book"), ("campaignFolder", "flag")];
+    var quick = sections
+        .Select(s => (Target: home?.Children().FirstOrDefault(x => x.ContentType.Alias == s.Type && x.IsVisible()), s.Icon))
+        .SelectMany(x => x.Target is { } t ? [(Url: t.Url(), Title: t.Value<string>("pageTitle") is { Length: > 0 } pt ? pt : t.Name, x.Icon)] : Array.Empty<(string Url, string Title, string Icon)>())
+        .ToList();
+    var emergency = home is null ? null : Site.Get(home).Emergency;
+    // specialties: the folder sits one level below the home page's sections (no whole-tree search on every page)
+    var specialtyFolder = home?.Children().SelectMany(x => x.ContentType.Alias == "specialtyFolder" ? [x] : x.Children().Where(y => y.ContentType.Alias == "specialtyFolder")).FirstOrDefault();
+    var specialties = specialtyFolder?.Children().Where(x => x.ContentType.Alias == "specialty" && x.IsVisible()).Take(8).ToList() ?? [];
+    const string tile = "flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-sm font-semibold text-deep-900 transition hover:border-brand-500 hover:bg-brand-50 focus-visible:border-brand-500 dark:border-white/10 dark:text-slate-100 dark:hover:bg-white/5";
 }
 <div id="search" class="fixed inset-0 z-[90] hidden" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
     <div class="absolute inset-0 bg-deep-950/60 backdrop-blur-sm" data-action="search-close"></div>
-    <div class="relative mx-auto mt-[8vh] w-[min(680px,calc(100%-32px))] overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_rgba(0,0,0,.35)] dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+    <div class="relative flex h-full w-full flex-col overflow-hidden bg-white sm:mx-auto sm:mt-[7vh] sm:h-auto sm:max-h-[84vh] sm:w-[min(720px,calc(100%-32px))] sm:rounded-[28px] sm:shadow-[0_40px_100px_rgba(0,0,0,.35)] dark:bg-night-900 sm:dark:ring-1 dark:ring-white/10">
         <h2 id="searchTitle" class="sr-only">@D("EHC.Search.Title")</h2>
-        <label class="flex items-center gap-3 border-b border-slate-200 px-5 dark:border-white/10">
-            <svg class="ico text-brand-500" aria-hidden="true"><use href="#i-search" /></svg>
-            <span class="sr-only">@D("EHC.Search.Title")</span>
-            <input id="sIn" type="search" autocomplete="off" class="h-16 min-w-0 flex-1 bg-transparent text-lg outline-hidden placeholder:text-slate-400" placeholder="@D("EHC.Search.Placeholder")" aria-controls="sRes">
-            <button type="button" data-action="search-close" class="rounded-md border border-slate-200 px-1.5 py-0.5 text-xs text-slate-400 dark:border-white/15" aria-label="@D("EHC.Common.Close")">Esc</button>
-        </label>
-        <div id="sRes" class="max-h-[60vh] overflow-y-auto p-3" aria-live="polite"
-             data-api="/api/search" data-labels="@labels" data-hint="@D("EHC.Search.Hint")" data-empty="@D("EHC.Search.NoResults")" data-error="@D("EHC.Search.Error")">
-            <p class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">@D("EHC.Search.Hint")</p>
+
+        @* the box *@
+        <div class="s-bar flex items-center gap-2.5 border-b border-slate-200 px-4 sm:px-5 dark:border-white/10">
+            <svg class="ico shrink-0 text-brand-500 dark:text-brand-300" aria-hidden="true"><use href="#i-search" /></svg>
+            <input id="sIn" type="search" role="combobox" aria-expanded="false" aria-controls="sList" aria-autocomplete="list" aria-label="@D("EHC.Search.Title")" autocomplete="off" enterkeyhint="search" spellcheck="false"
+                   class="h-16 min-w-0 flex-1 bg-transparent text-lg text-deep-900 outline-hidden placeholder:text-slate-400 dark:text-white [&::-webkit-search-cancel-button]:hidden" placeholder="@D("EHC.Search.Placeholder")">
+            <span class="s-spin hidden" data-s-busy aria-hidden="true"></span>
+            <button type="button" data-s-clear class="hidden h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-soft hover:text-deep-900 dark:hover:bg-white/10 dark:hover:text-white" aria-label="@D("EHC.Search.Clear")"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-x" /></svg></button>
+            <button type="button" data-action="search-close" class="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:text-deep-900 dark:border-white/15 dark:text-slate-400 dark:hover:text-white" aria-label="@D("EHC.Common.Close")"><span class="max-sm:hidden" dir="ltr">Esc</span><span class="sm:hidden">@D("EHC.Common.Close")</span></button>
         </div>
+        @* filter chips per group (filled with the results) *@
+        <div class="hidden shrink-0 gap-2 overflow-x-auto border-b border-slate-200 px-4 py-2.5 [scrollbar-width:none] sm:px-5 dark:border-white/10 [&::-webkit-scrollbar]:hidden" data-s-scopes role="group" aria-label="@D("EHC.Search.Scope")"
+             data-all="@D("EHC.Common.All")"></div>
+
+        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-s-body>
+            <p class="hidden px-6 pb-2 pt-10 text-center text-slate-500 dark:text-slate-400" data-s-message></p>
+            @* results *@
+            <div class="hidden p-2 sm:p-3" data-s-results>
+                <div id="sList" role="listbox" aria-label="@D("EHC.Search.Title")"></div>
+            </div>
+            @* before typing (and under "no results") *@
+            <div class="space-y-7 p-4 sm:p-6" data-s-start>
+                <section class="hidden" data-s-recent>
+                    <div class="mb-2.5 flex items-center justify-between gap-3">
+                        <h3 class="s-head !mb-0">@D("EHC.Search.Recent")</h3>
+                        <button type="button" class="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-300" data-s-recent-clear>@D("EHC.Search.ClearRecent")</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2" data-s-recent-list></div>
+                </section>
+                @if (quick.Count > 0 || emergency is not null)
+                {
+                    <section>
+                        <h3 class="s-head">@D("EHC.Search.QuickAccess")</h3>
+                        <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            @foreach (var (url, title, icon) in quick)
+                            {
+                                <li><a class="@tile" href="@url"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-@icon" /></svg></span><span class="min-w-0 leading-snug">@title</span></a></li>
+                            }
+                            @if (emergency is not null)
+                            {
+                                <li><a class="@tile border-emerg-500/30 hover:border-emerg-600 hover:bg-emerg-50 dark:hover:bg-emerg-500/10" href="tel:@emergency.Dial"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerg-600 text-white"><svg class="ico !h-[18px] !w-[18px]" aria-hidden="true"><use href="#i-phone" /></svg></span><span class="min-w-0 leading-snug">@D("EHC.Facility.Emergency") <b class="text-emerg-600 dark:text-red-300" dir="ltr">@emergency.Number</b></span></a></li>
+                            }
+                        </ul>
+                    </section>
+                }
+                @if (specialties.Count > 0)
+                {
+                    <section>
+                        <h3 class="s-head">@D("EHC.Search.BySpecialty")</h3>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var s in specialties)
+                            {
+                                var name = s.Value<string>("pageTitle") is { Length: > 0 } t ? t : s.Name;
+                                <button type="button" class="chip inline-flex items-center gap-1.5 hover:border-brand-500 hover:text-brand-600" data-s-term="@name"><svg class="ico !h-3.5 !w-3.5 text-slate-400" aria-hidden="true"><use href="#i-search" /></svg>@name</button>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+        </div>
+
+        @* keys (devices with a keyboard) *@
+        <div class="hidden shrink-0 items-center gap-4 border-t border-slate-200 px-5 py-2.5 text-xs text-slate-500 sm:flex dark:border-white/10 dark:text-slate-400">
+            <span class="inline-flex items-center gap-1.5"><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd>@D("EHC.Search.KeysMove")</span>
+            <span class="inline-flex items-center gap-1.5"><kbd class="kbd">Enter</kbd>@D("EHC.Search.KeysOpen")</span>
+            <span class="inline-flex items-center gap-1.5"><kbd class="kbd">Esc</kbd>@D("EHC.Search.KeysClose")</span>
+            <span class="ms-auto inline-flex items-center gap-1" dir="ltr"><kbd class="kbd">Ctrl</kbd><kbd class="kbd">K</kbd></span>
+        </div>
+        <p class="sr-only" role="status" data-s-status></p>
+        <div class="hidden" data-s-config data-api="/api/search" data-labels="@labels" data-hint="@D("EHC.Search.Hint")" data-empty="@D("EHC.Search.NoResults")"
+             data-error="@D("EHC.Search.Error")" data-count="@D("EHC.Search.Count")" data-loading="@D("EHC.Search.Loading")"></div>
     </div>
 </div>

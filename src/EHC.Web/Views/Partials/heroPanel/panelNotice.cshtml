@@ -1,0 +1,31 @@
+@* Right panel item "Notice": tone info · success · warning · emergency · brand (allow-list, same as the callout block),
+   icon, title, text, link. Not an alert region: inside a rotating hero it would be announced while hidden. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var c = Model.Content;
+    var title = c.Value<string>("title");
+    var text = c.Value<string>("text");
+    if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(text)) { return; }
+    var tone = c.Value<string>("tone") ?? "info";
+    var (box, ic, defaultIcon) = tone switch
+    {
+        "success" => ("border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-400/20 dark:bg-night-900 dark:text-emerald-100", "bg-emerald-600 text-white", "shield"),
+        "warning" => ("border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-400/20 dark:bg-night-900 dark:text-amber-100", "bg-amber-500 text-amber-950", "note"),
+        "emergency" => ("border-emerg-500/30 bg-emerg-50 text-deep-950 dark:border-emerg-500/30 dark:bg-night-900 dark:text-red-100", "bg-emerg-600 text-white", "er"),
+        "brand" => ("border-white/20 bg-white/10 text-white backdrop-blur-xl", "bg-white text-brand-600 dark:bg-night-900 dark:text-brand-300", "star"),
+        _ => ("border-brand-100 bg-brand-50 text-deep-900 dark:border-brand-400/20 dark:bg-night-900 dark:text-slate-100", "bg-brand-600 text-white", "bulb"),
+    };
+    var icon = c.Value<string>("icon");
+    if (string.IsNullOrWhiteSpace(icon)) { icon = defaultIcon; }
+    var link = c.Value<Link>("link");
+}
+<div class="flex gap-3 rounded-[22px] border p-4 @box">
+    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl @ic" aria-hidden="true"><svg class="ico"><use href="#i-@icon" /></svg></span>
+    <div class="min-w-0 flex-1">
+        @if (!string.IsNullOrWhiteSpace(title)) { <b class="block leading-snug">@title</b> }
+        @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-1 text-sm opacity-90">@text</p> }
+        @if (link is not null) { <a href="@link.Url" target="@link.Target" class="mt-2 inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4">@link.Name<svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a> }
+    </div>
+</div>

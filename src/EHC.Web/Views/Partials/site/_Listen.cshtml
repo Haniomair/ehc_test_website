@@ -1,0 +1,15 @@
+@* "Listen" controls for an article (components/listen.js). Model: CSS selector of the text to read. Hidden until the
+   script finds a voice for the page language on this device. *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<string>
+@{
+    string D(string k) => Umbraco.GetDictionaryValue("EHC.Listen." + k) ?? "";
+}
+<span hidden class="inline-flex flex-wrap items-center gap-2" data-listen="@Model" data-label-listen="@D("Listen")" data-label-pause="@D("Pause")" data-label-resume="@D("Resume")">
+    <button type="button" data-listen-play aria-pressed="false" class="btn btn-ghost btn-sm">
+        <svg class="ico !h-4 !w-4" data-icon="play" aria-hidden="true"><use href="#i-play" /></svg>
+        <svg class="ico hidden !h-4 !w-4" data-icon="pause" aria-hidden="true"><use href="#i-pause" /></svg>
+        <span data-listen-label>@D("Listen")</span>
+    </button>
+    <button type="button" data-listen-stop class="btn btn-ghost btn-sm hidden">@D("Stop")</button>
+</span>
+<script src="~/assets/js/components/listen.js" asp-append-version="true" defer></script>

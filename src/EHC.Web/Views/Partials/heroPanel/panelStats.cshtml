@@ -1,0 +1,23 @@
+@* Right panel item "Stat highlight": one to three big numbers with labels; plain numbers count up when shown
+   (components/count-up.js), "##" placeholders stay as typed. *@
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var stats = Model.Content.Value<BlockListModel>("stats")?.Select(s => s.Content).Where(s => !string.IsNullOrWhiteSpace(s.Value<string>("value"))).Take(3).ToList() ?? [];
+    if (stats.Count == 0) { return; }
+    var cols = stats.Count switch { 1 => "", 2 => "grid-cols-2", _ => "grid-cols-3" };
+}
+<dl class="grid gap-2 @cols">
+    @foreach (var s in stats)
+    {
+        var icon = s.Value<string>("icon");
+        <div class="flex flex-col-reverse rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-xl @(s.Value<bool>("highlight") ? "ring-2 ring-accent-400" : "")">
+            <dt class="mt-1 text-sm text-white/85">@(s.Value<string>("label"))</dt>
+            <dd class="flex items-center gap-2">
+                @if (!string.IsNullOrWhiteSpace(icon)) { <svg class="ico !h-5 !w-5 text-brand-300" aria-hidden="true"><use href="#i-@icon" /></svg> }
+                <span class="text-3xl font-extrabold leading-none" dir="ltr"><span data-count="@(s.Value<string>("value"))">@(s.Value<string>("value"))</span>@(s.Value<string>("suffix"))</span>
+            </dd>
+        </div>
+    }
+</dl>
+<script src="~/assets/js/components/count-up.js" asp-append-version="true" defer></script>

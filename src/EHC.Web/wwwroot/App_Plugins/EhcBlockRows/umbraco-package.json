@@ -1,0 +1,30 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Block rows",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "blockEditorCustomView",
+      "alias": "Ehc.BlockEditorCustomView.StatusRow",
+      "name": "EHC block row with status tags",
+      "element": "/App_Plugins/EhcBlockRows/status-row.js",
+      "forBlockEditor": "block-list"
+    },
+    {
+      "type": "propertyAction",
+      "kind": "default",
+      "alias": "Ehc.PropertyAction.BlockList.TogglePictures",
+      "name": "Show / hide block pictures",
+      "api": "/App_Plugins/EhcBlockRows/toggle-pictures.js",
+      "forPropertyEditorUis": [
+        "Umb.PropertyEditorUi.BlockList"
+      ],
+      "weight": 100,
+      "meta": {
+        "icon": "icon-picture",
+        "label": "Show / hide pictures"
+      }
+    }
+  ]
+}

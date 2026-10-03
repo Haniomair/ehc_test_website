@@ -1,5 +1,6 @@
 @* Block 9 "Health calendar + campaigns": optional scrolling calendar strip, then up to 3 campaign posters —
-   picked by the editor, or (autoCurrent) the campaigns running or starting soonest by date. *@
+   picked by the editor, or (autoCurrent) the campaigns running or starting soonest by date, topped up with the most
+   recently ended ones (labelled as ended) so the row is never half empty. The grid follows the number of cards. *@
 @using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models.Blocks
 @using Umbraco.Cms.Core.Models.PublishedContent
@@ -9,14 +10,19 @@
     var home = Umbraco.AssignedContentItem.AncestorOrSelf("home");
     var folder = home?.Children().FirstOrDefault(x => x.ContentType.Alias == "campaignFolder");
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var all = folder?.Children().Where(x => x.ContentType.Alias == "campaign").ToList() ?? [];
+    DateOnly End(IPublishedContent x) => x.Value<DateOnly?>("endDate") ?? DateOnly.MaxValue;
     var campaigns = c.Value<bool>("autoCurrent")
-        ? folder?.Children().Where(x => x.ContentType.Alias == "campaign" && (x.Value<DateOnly?>("endDate") ?? DateOnly.MaxValue) >= today)
-            .OrderBy(x => x.Value<DateOnly?>("startDate") ?? DateOnly.MinValue).Take(3).ToList() ?? []
+        ? all.Where(x => End(x) >= today).OrderBy(x => x.Value<DateOnly?>("startDate") ?? DateOnly.MinValue)
+            .Concat(all.Where(x => End(x) < today).OrderByDescending(End)).Take(3).ToList()
         : c.Value<IEnumerable<IPublishedContent>>("campaigns")?.Take(3).ToList() ?? [];
+    var cols = campaigns.Count switch { 1 => "", 2 => "md:grid-cols-2", _ => "md:grid-cols-2 lg:grid-cols-3" };
     var calendar = c.Value<bool>("showCalendar")
         ? c.Value<BlockListModel>("calendarItems")?.Select(x => x.Content).Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("title"))).ToList() ?? []
         : [];
     if (campaigns.Count == 0 && calendar.Count == 0) { return; }
+    // "now" follows today's month when an entry names it; otherwise the editors' own flags
+    var autoNow = EHC.Web.Site.CalendarMonth.CurrentIndex(calendar.Select(x => x.Value<string>("month")).ToList(), today);
     string Tone(string? key) => key switch { "highlight" => "text-highlight-800 dark:text-highlight-300", "support" => "text-support-800 dark:text-support-300", "accent" => "text-deep-900 dark:text-accent-400", _ => "text-brand-600 dark:text-brand-300" };
     string D(string k) => Umbraco.GetDictionaryValue(k) ?? "";
 }
@@ -30,9 +36,10 @@
         <div class="rv mb-8 rounded-[22px] border border-slate-200 bg-soft p-4 dark:border-white/10 dark:bg-night-900">
             <h3 class="mb-3 px-1 text-sm font-bold text-deep-900 dark:text-white">@D("EHC.Campaigns.Calendar")</h3>
             <ol class="scrollbar-thin flex snap-x gap-2.5 overflow-x-auto pb-1" tabindex="0" aria-label="@D("EHC.Campaigns.Calendar")">
-                @foreach (var item in calendar)
+                @for (var ci = 0; ci < calendar.Count; ci++)
                 {
-                    var now = item.Value<bool>("isCurrent");
+                    var item = calendar[ci];
+                    var now = autoNow >= 0 ? ci == autoNow : item.Value<bool>("isCurrent");
                     <li class="w-[150px] shrink-0 snap-start rounded-2xl p-3.5 @(now ? "bg-deep-900 text-white ring-2 ring-brand-400 dark:bg-brand-500" : "bg-white dark:bg-white/5")" aria-current="@(now ? "date" : null)">
                         <span class="text-xs font-bold uppercase @(now ? "text-brand-300 dark:text-white" : Tone(item.Value<string>("color")))">@(item.Value<string>("month"))@if (now) {<text> · @D("EHC.Campaigns.Now")</text>}</span>
                         <b class="mt-1 block text-sm leading-snug">@(item.Value<string>("title"))</b>
@@ -43,8 +50,8 @@
     }
     @if (campaigns.Count > 0)
     {
-        <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            @foreach (var x in campaigns) { <div class="rv">@await Html.PartialAsync("cards/_CampaignCard", x)</div> }
+        <div class="grid gap-5 @cols">
+            @foreach (var x in campaigns) { <div class="rv">@await Html.PartialAsync("cards/_CampaignCard", x, new ViewDataDictionary(ViewData) { ["ended"] = End(x) < today })</div> }
         </div>
     }
 </div>

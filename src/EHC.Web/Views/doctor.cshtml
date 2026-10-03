@@ -33,7 +33,7 @@
                 else { <span class="grid h-full place-items-center text-7xl font-bold text-brand-300" aria-hidden="true">@name.Trim().FirstOrDefault()</span> }
             </div>
             <div>
-                @if (specialty is not null) { <a href="@specialty.Url()" class="eyebrow hover:underline">@specialty.Name</a> }
+                @if (specialty is not null) { <a href="@specialty.Url()" class="eyebrow min-h-6 hover:underline">@specialty.Name</a> }
                 <h1 class="h1">@name</h1>
                 @if (!string.IsNullOrWhiteSpace(Model.Value<string>("title"))) { <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">@(Model.Value<string>("title"))</p> }
                 <dl class="mt-6 grid gap-3 text-sm sm:grid-cols-2">

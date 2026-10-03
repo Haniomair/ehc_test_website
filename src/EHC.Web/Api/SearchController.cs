@@ -7,11 +7,14 @@ using Umbraco.Extensions;
 
 namespace EHC.Web.Api;
 
-public sealed record SearchHit(string Title, string Url, string? Icon);
+/// <summary>One result: <paramref name="Meta"/> is a short second line (a doctor's specialty, a facility's city, an
+/// e-service's provider); <paramref name="Date"/> (yyyy-MM-dd) is formatted by the browser in the page language.</summary>
+public sealed record SearchHit(string Title, string Url, string? Icon, string? Meta = null, string? Date = null);
 public sealed record SearchGroup(string Key, IReadOnlyList<SearchHit> Items);
 
 /// <summary>
-/// GET /api/search?q=&amp;culture= — Examine external index (published content only), grouped by kind, max 8 per group.
+/// GET /api/search?q=&amp;culture= — Examine external index (published content only), grouped by kind, max 8 per group
+/// (shown by the search palette, Views/Partials/site/_Search.cshtml).
 /// Arabic normalisation (hamza, taa marbuta) is a later improvement (docs/06-integrations.md).
 /// </summary>
 [ApiController]
@@ -21,15 +24,18 @@ public sealed class SearchController(IPublishedContentQuery content) : Controlle
 {
     private const int PerGroup = 8;
 
-    // content type → group key (order = display order); anything else routable falls into "pages"
+    // content type → group key (order = display order); other types (and the home page, which matches almost any word) are left out
     private static readonly (string Group, string[] Types)[] Groups =
     [
-        ("specialties", ["specialty"]),
         ("doctors", ["doctor"]),
+        ("specialties", ["specialty"]),
         ("facilities", ["facility"]),
+        ("services", ["eService", "eServicesFolder"]),
+        ("tools", ["healthTool", "healthToolsFolder"]),
+        ("articles", ["healthArticle", "healthLibrary"]),
         ("campaigns", ["campaign"]),
         ("news", ["newsItem"]),
-        ("pages", ["landingPage", "contentPage", "home", "doctorFolder", "facilityFolder", "newsFolder", "campaignFolder", "specialtyFolder"]),
+        ("pages", ["landingPage", "contentPage", "doctorFolder", "facilityFolder", "newsFolder", "campaignFolder", "specialtyFolder"]),
     ];
 
     [HttpGet]
@@ -50,7 +56,7 @@ public sealed class SearchController(IPublishedContentQuery content) : Controlle
             .Select(g => new SearchGroup(g.Group, hits
                 .Where(h => g.Types.Contains(h.ContentType.Alias))
                 .Take(PerGroup)
-                .Select(h => new SearchHit(Title(h, c), h.Url(c, UrlMode.Relative), Icon(h)))
+                .Select(h => new SearchHit(Title(h, c), h.Url(c, UrlMode.Relative), Icon(h), Meta(h, c), Date(h)))
                 .ToList()))
             .Where(g => g.Items.Count > 0)
             .ToList();
@@ -68,8 +74,33 @@ public sealed class SearchController(IPublishedContentQuery content) : Controlle
         "specialty" => x.Value<string>("icon") ?? "heart",
         "doctor" => "doc",
         "facility" => x.Value<bool>("hasEmergency") ? "er" : "hosp",
+        "eService" => x.Value<string>("icon") is { Length: > 0 } i ? i : "globe",
+        "eServicesFolder" => "globe",
+        "healthTool" or "healthToolsFolder" => "scal",
+        "healthArticle" or "healthLibrary" => "book",
         "campaign" => "flag",
         "newsItem" => "news",
         _ => "arrow",
+    };
+
+    private static string? Meta(IPublishedContent x, string culture)
+    {
+        var meta = x.ContentType.Alias switch
+        {
+            "doctor" => x.Value<IPublishedContent>("specialty")?.Name(culture),
+            "facility" => x.Value<string>("city", culture: culture),
+            "eService" => x.Value<string>("provider", culture: culture),
+            "healthArticle" or "newsItem" or "campaign" => x.Value<string>("intro", culture: culture),
+            _ => null,
+        };
+        meta = meta?.Trim();
+        return string.IsNullOrEmpty(meta) ? null : meta.Length > 90 ? meta[..90].TrimEnd() + "…" : meta;
+    }
+
+    private static string? Date(IPublishedContent x) => x.ContentType.Alias switch
+    {
+        "newsItem" => x.Value<DateOnly?>("publishDate")?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+        "campaign" => x.Value<DateOnly?>("startDate")?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+        _ => null,
     };
 }

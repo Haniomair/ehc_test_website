@@ -7,21 +7,31 @@ namespace EHC.Web.Site;
 /// </summary>
 public static class HealthTools
 {
-    public sealed record Tool(string Key, string Icon, string Category);
+    /// <param name="Kind">"calculator" (enter numbers, get a result) or "test" (answer questions: a self-check).</param>
+    /// <param name="Minutes">About how long it takes, shown on overview cards.</param>
+    public sealed record Tool(string Key, string Icon, string Category, string Kind = "calculator", int Minutes = 1);
 
     public static readonly IReadOnlyList<Tool> All =
     [
         new("bmi", "scal", "weight"),
         new("idealWeight", "target", "weight"),
-        new("calories", "flame", "weight"),
+        new("calories", "flame", "weight", Minutes: 2),
         new("ovulation", "cal", "pregnancy"),
         new("dueDate", "baby", "pregnancy"),
-        new("visualAcuity", "eye", "screening"),
-        new("prediabetes", "drop", "screening"),
-        new("asthma", "lungs", "screening"),
+        new("visualAcuity", "eye", "screening", "test", 3),
+        new("prediabetes", "drop", "screening", "test", 2),
+        new("asthma", "lungs", "screening", "test", 2),
     ];
 
     public static readonly IReadOnlyList<string> Categories = ["weight", "pregnancy", "screening"];
+
+    /// <summary>Icon for a category heading.</summary>
+    public static string CategoryIcon(string category) => category switch
+    {
+        "weight" => "scal",
+        "pregnancy" => "baby",
+        _ => "shield",
+    };
 
     private static readonly Dictionary<string, Tool> ByKey = All.ToDictionary(t => t.Key, StringComparer.OrdinalIgnoreCase);
 

@@ -1,0 +1,25 @@
+@* Right panel item "Quick actions": up to six task tiles (icon, label, optional sub-label, link). Tiles marked
+   "emergency style" use the fixed emergency red. *@
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@{
+    var actions = Model.Content.Value<BlockListModel>("actions")?.Select(a => a.Content)
+        .Where(a => !string.IsNullOrWhiteSpace(a.Value<string>("label")) && a.Value<Link>("link") is not null).Take(6).ToList() ?? [];
+    if (actions.Count == 0) { return; }
+}
+<ul class="grid grid-cols-2 gap-2">
+    @foreach (var a in actions)
+    {
+        var link = a.Value<Link>("link")!;
+        var icon = a.Value<string>("icon");
+        var sub = a.Value<string>("sub");
+        var urgent = a.Value<bool>("isEmergency");
+        <li>
+            <a href="@link.Url" target="@link.Target" class="flex h-full items-center gap-3 rounded-2xl p-3 text-white backdrop-blur-xl transition @(urgent ? "bg-emerg-600 hover:bg-emerg-600/90" : "border border-white/20 bg-white/10 hover:bg-white/20")">
+                @if (!string.IsNullOrWhiteSpace(icon)) { <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl @(urgent ? "bg-white/15" : "bg-white text-brand-500 dark:bg-night-900 dark:text-brand-300")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span> }
+                <span class="min-w-0"><b class="block text-sm leading-snug">@(a.Value<string>("label"))</b>@if (!string.IsNullOrWhiteSpace(sub)) {<span class="block text-xs text-white/80">@sub</span>}</span>
+            </a>
+        </li>
+    }
+</ul>

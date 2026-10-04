@@ -158,6 +158,10 @@ section[data-block="quickActionsBlock"] + section:is(.py-16, .py-24) { padding-t
 html[dir="rtl"] .anim-marquee { animation-name: ehc-mqr; }
 .anim-fadeup { animation: ehc-fadeUp .7s ease both; }
 .prog-on .bar i { animation: ehc-prog var(--hero-interval, 7s) linear forwards; }
+/* decorative motion waits until the page has settled (site.js adds html.motion-ready); the hero's timer is its progress
+   animation, so the slides wait too. Floating cards on the first panel are shown in place, without their entrance. */
+html:not(.motion-ready) :is(.anim-spin-slow, .anim-bob, .anim-marquee, .fc-move, .care-orbit, .logo-track, .prog-on .bar i, .care-auto .care-progress.is-on) { animation-play-state: paused; }
+html:not(.motion-ready) .is-shown :is(.fc-enter-rise, .fc-enter-slide) .fc { animation: none; }
 .is-held .prog-on .bar i { animation-play-state: paused; }   /* hover / keyboard focus: the bar (and so the rotation) waits */
 /* campaign hero: slides stacked in one cell; inactive ones stay in layout (height of the tallest) but are not seen or read */
 .hero-slides { display: grid; }
@@ -581,6 +585,8 @@ body:has(> #customizer.is-open) { overflow: hidden; }            /* from first p
    phones, bottom start corner on larger screens (the assistant button sits at the end corner). */
 .consent { @apply fixed inset-x-3 bottom-[76px] z-[70] rounded-2xl bg-white p-4 ring-1 ring-slate-200 sm:inset-x-auto sm:start-6 sm:bottom-6 sm:w-[420px] dark:bg-night-900 dark:ring-white/10 print:hidden shadow-[0_24px_48px_rgb(10_42_79/.22)]; transition: opacity .3s ease, transform .38s cubic-bezier(.22, 1, .36, 1); }
 .consent:not(.is-open) { opacity: 0; transform: translateY(16px); pointer-events: none; transition-duration: .2s; }
+/* asked for: on screen from the first paint, without the slide-in (theme-init.js) */
+html.consent-ask #consent { display: block; opacity: 1; transform: none; pointer-events: auto; transition: none; }
 .consent:focus { outline: none; }
 .consent:focus-visible { @apply ring-2 ring-brand-500; }
 

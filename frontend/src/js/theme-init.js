@@ -16,7 +16,11 @@
     (localStorage.getItem('ehc-a11y') || '').split(',').forEach(function (k) {
       if (/^(links|spacing|still|cursor|guide)$/.test(k)) html.classList.add('a11y-' + k);
     });
+    // cookie notice: shown from the first paint when no valid choice is stored. Keep in step with storedConsent() in site.js.
+    var c = (localStorage.getItem('ehc-consent') || '').split('|'), at = Date.parse(c[2] || '');
+    if (!(c[0] === '1' && /^(all|essential)$/.test(c[1]) && at > Date.now() - 365 * 864e5)) html.classList.add('consent-ask');
   } catch (e) {
     if (osDark) html.classList.add('dark');
+    html.classList.add('consent-ask');
   }
 })();

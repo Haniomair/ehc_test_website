@@ -157,11 +157,15 @@
   }
   if (consent) {
     var given = storedConsent();
-    if (given) applyConsent(given); else reveal(consent);
+    // asked for: theme-init.js has already shown it (html.consent-ask); otherwise it slides in as before
+    if (given) { html.classList.remove('consent-ask'); applyConsent(given); }
+    else if (html.classList.contains('consent-ask')) { consent.classList.remove('hidden'); consent.classList.add('is-open'); }
+    else reveal(consent);
     on('consent', function (el) {
       var choice = el.getAttribute('data-choice') === 'all' ? 'all' : 'essential';
       store.set('ehc-consent', [CONSENT_VERSION, choice, new Date().toISOString()].join('|'));
       applyConsent(choice);
+      html.classList.remove('consent-ask');
       conceal(consent);
       $$('[data-action="consent-open"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
       if (consentReturn && consentReturn.focus) consentReturn.focus();
@@ -444,6 +448,22 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* not essential */ }); });
   }
+
+  // ---------- decorative motion (spinning marks, floating cards, rotating hero, logo strips) starts once the page has
+  // settled: at the first interaction, or a few seconds after load. Until then the page holds still, so what a visitor
+  // sees first is final at once (ehc.css: html:not(.motion-ready)). ----------
+  (function () {
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
+      html.classList.add('motion-ready');
+      ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (t) { window.removeEventListener(t, start, true); });
+    }
+    ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (t) { window.addEventListener(t, start, { capture: true, passive: true }); });
+    if (document.readyState === 'complete') setTimeout(start, 4000);
+    else window.addEventListener('load', function () { setTimeout(start, 4000); });
+  })();
 
   // ---------- reveal-on-scroll for blocks that use .rv ----------
   var rv = $$('.rv');

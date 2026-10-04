@@ -66,7 +66,7 @@
 @if (marks.Count > 0)
 {
     <div class="rv mt-12 border-t border-slate-200 pt-8 dark:border-white/10">
-        @if (!string.IsNullOrWhiteSpace(marksHeading)) { <h3 class="mb-8 text-center text-sm font-bold uppercase tracking-[.14em] text-slate-500 rtl:tracking-normal dark:text-slate-400">@marksHeading</h3> }
+        @if (!string.IsNullOrWhiteSpace(marksHeading)) { <h2 class="mb-8 text-center text-sm font-bold uppercase tracking-[.14em] text-slate-500 rtl:tracking-normal dark:text-slate-400">@marksHeading</h2> }
         @* the first set is the real list; the copies (for the endless loop) are hidden from screen readers and keyboards *@
         <div id="@stripId" class="logo-strip overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
             <ul class="logo-track flex w-max items-center gap-x-6" style="--mq-dur: @(duration)s" aria-label="@marksHeading">

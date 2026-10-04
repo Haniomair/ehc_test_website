@@ -30,6 +30,8 @@
     }
     else
     {
+        @* the cards are h3s: name the list (the chosen audience, or the page) so headings go h1 › h2 › h3 *@
+        <h2 class="sr-only">@(audience is null ? Model.Name : Umbraco.GetDictionaryValue("EHC.EServices.Audience." + audience))</h2>
         <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach (var s in list) { <li>@await Html.PartialAsync("cards/_EServiceCard", s)</li> }
         </ul>

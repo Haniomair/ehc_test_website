@@ -22,6 +22,11 @@
   button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
 
   html { font-size: var(--fs, 16px); scroll-behavior: smooth; }
+  /* touch: Tailwind clears the tap flash and its hover: styles only apply where a mouse exists, so without these a tap
+     on a phone shows nothing until the next page arrives. A brand-tinted flash on every tap, and no wait for a
+     possible double-tap zoom on controls (pinch zoom is unaffected). */
+  html { -webkit-tap-highlight-color: color-mix(in srgb, var(--brand-500) 22%, transparent); }
+  a[href], button, summary, label, [role="button"], [role="tab"], [role="option"] { touch-action: manipulation; }
   body { @apply bg-white text-deep-950 antialiased dark:bg-night-950 dark:text-slate-100; overflow-x: clip; }
   /* the site's toggle decides, not the phone: "only light" forbids browser auto-dark (Chrome, Samsung Internet)
      from repainting light mode, and native controls follow the toggle. Set on <html> only: a plain "light"
@@ -573,6 +578,11 @@ html.a11y-still { scroll-behavior: auto; }
 .panel-sheet { --panel-from: 100%; transform: translateX(var(--panel-from)); transition: transform .38s cubic-bezier(.22, 1, .36, 1); box-shadow: 0 0 48px rgb(10 42 79 / .22); }
 [dir="rtl"] .panel-sheet { --panel-from: -100%; }
 .panel.is-open .panel-backdrop { opacity: 1; }
+/* drawer: the link a visitor tapped stays marked while its page loads (site.js) */
+@layer components {
+  .drawer-link { @apply flex min-h-11 items-center rounded-lg px-2 py-2 transition-colors active:bg-brand-50 dark:active:bg-white/10; }
+  .drawer-link.is-going { @apply bg-brand-50 font-semibold text-brand-700 dark:bg-white/10 dark:text-brand-300; }
+}
 .panel.is-open .panel-sheet { transform: none; }
 .panel:not(.is-open) { pointer-events: none; }
 .panel:not(.is-open) .panel-backdrop { transition-duration: .22s; }

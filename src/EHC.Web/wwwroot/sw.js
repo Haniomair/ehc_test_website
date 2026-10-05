@@ -13,6 +13,8 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys()
     .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    // the browser requests a page while this worker starts up, so a tapped link never waits for it
+    .then(() => self.registration.navigationPreload && self.registration.navigationPreload.enable())
     .then(() => self.clients.claim()));
 });
 
@@ -21,7 +23,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== location.origin || url.pathname.startsWith('/umbraco')) return;
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(() => caches.match(OFFLINE)));
+    event.respondWith(Promise.resolve(event.preloadResponse)
+      .then(preloaded => preloaded || fetch(req))
+      .catch(() => caches.match(OFFLINE)));
   } else if (FILES.includes(url.pathname)) {
     // the offline page's own files: network first, cache when offline
     event.respondWith(fetch(req).catch(() => caches.match(url.pathname)));

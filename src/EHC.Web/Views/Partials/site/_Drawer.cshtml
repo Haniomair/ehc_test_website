@@ -32,16 +32,16 @@
             {
                 if (link is not null)
                 {
-                    <a href="@link.Url" class="block border-b border-slate-200 py-3 font-semibold text-deep-900 dark:border-white/10 dark:text-white">@label</a>
+                    <a href="@link.Url" target="@link.Target" class="drawer-link min-h-12 rounded-none border-b border-slate-200 px-0 py-3 font-semibold text-deep-900 dark:border-white/10 dark:text-white">@label</a>
                 }
                 continue;
             }
-            <details class="group border-b border-slate-200 py-3 dark:border-white/10" open="@(i == 0)">
-                <summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-deep-900 dark:text-white"><span>@label</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
-                <div class="mt-2 grid gap-1 text-slate-600 dark:text-slate-300">
+            <details class="group border-b border-slate-200 dark:border-white/10" open="@(i == 0)">
+                <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between py-3 font-semibold text-deep-900 [&::-webkit-details-marker]:hidden dark:text-white"><span>@label</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
+                <div class="grid gap-0.5 pb-3 text-slate-600 dark:text-slate-300">
                     @foreach (var l in links)
                     {
-                        <a href="@l.Url" class="rounded-lg px-2 py-2 hover:bg-brand-50 dark:hover:bg-white/5">@l.Title</a>
+                        <a href="@l.Url" class="drawer-link hover:bg-brand-50 dark:hover:bg-white/5">@l.Title</a>
                     }
                 </div>
             </details>

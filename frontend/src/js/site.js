@@ -67,13 +67,13 @@
     $$('[aria-controls="' + el.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'true'); });
     setTimeout(function () { (focusEl || $(focusable, el) || el).focus(); }, 30);
   }
-  function hideModal() {
+  function hideModal(keepFocus) {
     if (!openModal) return;
     if (openModal.classList.contains('panel')) conceal(openModal); else openModal.classList.add('hidden');
     document.body.style.overflow = '';
     $$('[aria-controls="' + openModal.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
     openModal = null;
-    if (returnTo && returnTo.focus) returnTo.focus();
+    if (keepFocus !== true && returnTo && returnTo.focus) returnTo.focus();
   }
   document.addEventListener('keydown', function (e) {
     if (!openModal) return;
@@ -90,6 +90,25 @@
   var drawer = $('#drawer');
   on('drawer-open', function () { showModal(drawer); });
   on('drawer-close', hideModal);
+  // a tapped link answers at once: one on this page (an anchor, or the page itself) closes the drawer so the page can
+  // move; one to another page stays marked until that page arrives
+  if (drawer) {
+    drawer.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a || e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      if (a.protocol === 'tel:' || a.protocol === 'mailto:') return;
+      $$('.is-going', drawer).forEach(function (x) { x.classList.remove('is-going'); });
+      var samePage = a.origin === location.origin && a.pathname === location.pathname && a.search === location.search;
+      if (samePage || a.target === '_blank') { if (openModal === drawer) hideModal(true); }
+      else a.classList.add('is-going');
+    });
+  }
+  // Back / Forward can restore this page from the browser's memory as it was left: drawer open, a link marked
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    if (drawer) $$('.is-going', drawer).forEach(function (x) { x.classList.remove('is-going'); });
+    if (openModal) hideModal(true);
+  });
 
   // ---------- accessibility panel: each option is an "a11y-<key>" class on <html>, remembered as "ehc-a11y" ----------
   var a11y = $('#a11y');

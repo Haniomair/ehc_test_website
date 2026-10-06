@@ -21,7 +21,7 @@ namespace EHC.Web.Stats;
 /// Once an hour: stores the totals of every finished day that is not stored yet, then deletes single page views older
 /// than the retention period (never before their day is stored). Runs on one server.
 /// </summary>
-public sealed class StatsRollupJob(IStatsStore store, IStatsFunnels funnels, StatsCalendar calendar, IOptions<StatsOptions> options, TimeProvider clock, ILogger<StatsRollupJob> logger)
+public sealed class StatsRollupJob(IStatsStore store, IStatsFunnels funnels, IStatsHeat heat, StatsCalendar calendar, IOptions<StatsOptions> options, TimeProvider clock, ILogger<StatsRollupJob> logger)
     : IRecurringBackgroundJob
 {
     public TimeSpan Period => TimeSpan.FromHours(1);
@@ -46,7 +46,8 @@ public sealed class StatsRollupJob(IStatsStore store, IStatsFunnels funnels, Sta
         var keepFrom = calendar.Today.AddDays(-Math.Clamp(options.Value.RawRetentionDays, 7, 400));
         if (next < keepFrom) keepFrom = next;
         var removed = store.DeleteHitsBefore(calendar.StartUtc(keepFrom));
-        if (removed > 0) logger.LogInformation("Visitor statistics: removed {Count} page views from before {Day}", removed, keepFrom);
+        removed += heat.DeleteBefore(calendar.StartUtc(calendar.Today.AddDays(-Math.Clamp(options.Value.RawRetentionDays, 7, 400))));
+        if (removed > 0) logger.LogInformation("Visitor statistics: removed {Count} page views, clicks and scroll depths from before {Day}", removed, keepFrom);
         return Task.CompletedTask;
     }
 }
@@ -120,6 +121,7 @@ public static class StatsSetup
         services.AddSingleton<IStatsStore, StatsStore>();
         services.AddSingleton<StatsReports>();
         services.AddSingleton<IStatsFunnels, StatsFunnels>();
+        services.AddSingleton<IStatsHeat, StatsHeat>();
         services.AddSingleton<StatsVisitors>();
         services.AddSingleton<IStatsGeo, StatsGeo>();
         services.AddSingleton<StatsQueue>();

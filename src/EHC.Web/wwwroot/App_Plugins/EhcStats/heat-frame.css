@@ -1,0 +1,11 @@
+/* Added by the "Heatmaps" dashboard (stats-heatmap.js) to the page shown in its preview frame. A file rather than an
+   inline <style>, because the public site's Content-Security-Policy only allows same-origin style sheets. */
+#consent { display: none !important; }
+*, *::before, *::after { animation: none !important; transition: none !important; }
+#ehc-heat-layer canvas { position: absolute; inset: 0; }
+.ehc-heat-mark { position: absolute; left: 0; right: 0; border-top: 1px solid #111; }
+.ehc-heat-mark span {
+  position: absolute; inset-inline-start: 8px; top: 4px; padding: 2px 8px; border-radius: 3px;
+  font: 600 12px/1.4 system-ui, sans-serif; background: #111; color: #fff;
+}
+.ehc-heat-box { position: absolute; outline: 3px solid #111; outline-offset: 2px; border-radius: 2px; }

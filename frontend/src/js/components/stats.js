@@ -2,11 +2,12 @@
    browser storage, no third party: the server derives a daily visitor hash, country and device group and stores no IP
    address. Sends the page key, language, referring site, utm_source / utm_campaign and whether the screen is a touch
    screen. data-consent="required" on the script tag: wait for consent to optional cookies (Ehc:Stats:RequireConsent).
-   Prerendered pages are counted only once actually shown; pages restored from the back/forward cache count again. */
+   Prerendered pages are counted only once actually shown; pages restored from the back/forward cache count again.
+   Pages inside a frame (the backoffice heatmap view) are not counted. */
 (function () {
   'use strict';
   var me = document.currentScript;
-  if (!me || !navigator.sendBeacon || navigator.webdriver) return;
+  if (!me || !navigator.sendBeacon || navigator.webdriver || window.self !== window.top) return;
   var page = me.getAttribute('data-page'), culture = me.getAttribute('data-culture');
   var api = me.getAttribute('data-api') || '/api/stats';
   if (!page) return;

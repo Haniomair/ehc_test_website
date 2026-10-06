@@ -11,8 +11,12 @@ public sealed class StatsOptions
     public bool Enabled { get; set; } = true;
     /// <summary>Count only visitors who accepted optional cookies. Off by default: counting uses no cookies or stored ids.</summary>
     public bool RequireConsent { get; set; }
-    /// <summary>Single page views are deleted after this many days; the daily totals are kept.</summary>
+    /// <summary>Single page views (and heatmap clicks and scroll depths) are deleted after this many days; the daily totals are kept.</summary>
     public int RawRetentionDays { get; set; } = 30;
+    /// <summary>Click and scroll heatmaps, from visitors who accepted optional cookies only.</summary>
+    public bool Heatmaps { get; set; } = true;
+    /// <summary>Share of page views (0–1) whose clicks and scrolling are recorded, to keep the volume down on busy days.</summary>
+    public double HeatmapSampleRate { get; set; } = 1;
     /// <summary>Days start and end at midnight in this time zone.</summary>
     public string TimeZone { get; set; } = "Asia/Riyadh";
     /// <summary>Countries (ISO codes) for which region and city are recorded; everyone else is counted by country only.</summary>

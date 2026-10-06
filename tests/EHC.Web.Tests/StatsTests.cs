@@ -213,6 +213,41 @@ public class StatsTests
         Assert.NotNull(FunnelMath.Validate(new string('x', 101), [a, b]));
     }
 
+    [Theory]
+    [InlineData("body", true)]
+    [InlineData("#acc-1a2b3c4d", true)]
+    [InlineData("#tool-visualAcuity-1>div:nth-of-type(2)>button:nth-of-type(1)", true)]
+    [InlineData("body>main:nth-of-type(1)>section:nth-of-type(3)>a:nth-of-type(12)", true)]
+    [InlineData("body>ehc-card:nth-of-type(1)", true)]                     // custom elements
+    [InlineData("div", false)]                                              // must start at body or an id
+    [InlineData("body>a[href='x']", false)]                                 // attribute selectors are never produced
+    [InlineData("body>a:nth-of-type(0)", false)]
+    [InlineData("#a,body", false)]
+    [InlineData("#1abc", false)]
+    [InlineData("body>script:nth-of-type(1)<", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Only_structural_click_paths_are_accepted(string? selector, bool ok) => Assert.Equal(ok, HeatRules.ValidSelector(selector));
+
+    [Fact]
+    public void Click_path_length_is_limited() =>
+        Assert.False(HeatRules.ValidSelector("body" + string.Concat(Enumerable.Repeat(">div:nth-of-type(1)", 13))));
+
+    [Fact]
+    public void Scroll_reach_is_the_share_of_views_at_or_below_each_depth()
+    {
+        // 4 page views: one saw only the top 30 %, one 50 %, two the whole page
+        var reach = HeatRules.Reach(new Dictionary<int, int> { [30] = 1, [50] = 1, [100] = 2 });
+        Assert.Equal(21, reach.Length);
+        Assert.Equal(100, reach[0]);
+        Assert.Equal(100, reach[6]);     // 30 %
+        Assert.Equal(75, reach[7]);      // 35 %
+        Assert.Equal(75, reach[10]);     // 50 %
+        Assert.Equal(50, reach[11]);     // 55 %
+        Assert.Equal(50, reach[20]);     // 100 %
+        Assert.All(HeatRules.Reach(new Dictionary<int, int>()), v => Assert.Equal(0, v));
+    }
+
     private sealed class FixedClock(DateTime utc) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(utc);

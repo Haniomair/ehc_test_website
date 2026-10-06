@@ -38,6 +38,15 @@
       "weight": 3,
       "meta": { "label": "Funnels", "pathname": "funnels" },
       "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
+    },
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.Heatmaps",
+      "name": "Heatmaps",
+      "element": "/App_Plugins/EhcStats/stats-heatmap.js",
+      "weight": 2,
+      "meta": { "label": "Heatmaps", "pathname": "heatmaps" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
     }
   ]
 }

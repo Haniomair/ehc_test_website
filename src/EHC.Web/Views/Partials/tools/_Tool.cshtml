@@ -6,7 +6,10 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<HealthTools.Tool>
 @{
     string D(string k) => Umbraco.GetDictionaryValue("EHC.Tools." + k) ?? "";
-    var id = "tool-" + Guid.NewGuid().ToString("N")[..8];
+    // the same on every load (anchors and click heatmaps rely on it); numbered in case a page has a tool twice
+    var n = (Context.Items["ehc-tool-n"] as int? ?? 0) + 1;
+    Context.Items["ehc-tool-n"] = n;
+    var id = $"tool-{Model.Key}-{n}";
     ViewData["toolId"] = id;
     var partial = Model.Key switch
     {

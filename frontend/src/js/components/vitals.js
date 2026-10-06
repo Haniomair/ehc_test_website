@@ -6,7 +6,8 @@
 (function () {
   'use strict';
   var me = document.currentScript;
-  if (!me || !navigator.sendBeacon || !window.PerformanceObserver) return;
+  // not inside frames: the backoffice heatmap view shows pages in one
+  if (!me || !navigator.sendBeacon || !window.PerformanceObserver || window.self !== window.top) return;
   var page = me.getAttribute('data-page'), culture = me.getAttribute('data-culture'), lib = me.getAttribute('data-lib');
   var api = me.getAttribute('data-api') || '/api/vitals';
   var rate = parseFloat(me.getAttribute('data-sample') || '1');

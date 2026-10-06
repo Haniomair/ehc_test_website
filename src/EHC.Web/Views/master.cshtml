@@ -113,6 +113,12 @@
         @* visitor statistics: cookieless, same-origin; editors previewing unpublished changes are not counted *@
         <script src="~/assets/js/components/stats.js" asp-append-version="true" defer data-page="@Model.Key" data-culture="@site.Culture.Name"
                 data-consent="@(Stats.Value.RequireConsent ? "required" : "none")"></script>
+        @if (Stats.Value.Heatmaps)
+        {
+            @* click and scroll heatmaps: records nothing until the visitor accepts optional cookies *@
+            <script src="~/assets/js/components/heat.js" asp-append-version="true" defer data-page="@Model.Key" data-culture="@site.Culture.Name"
+                    data-sample="@Stats.Value.HeatmapSampleRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"></script>
+        }
     }
 </body>
 </html>

@@ -25,7 +25,20 @@
 @{
     void Mark(string? name, IPublishedContent? logo)
     {
-        if (logo is not null) { <img src="@logo.Url()" alt="@name" class="max-h-16 w-auto max-w-[140px] object-contain" loading="lazy"> }
+        if (logo is not null)
+        {
+            // the size it is shown at (fits 140x64), so the strip keeps its place while logos load
+            var w = logo.Value<int>("umbracoWidth");
+            var h = logo.Value<int>("umbracoHeight");
+            var scale = w > 0 && h > 0 ? Math.Min(1.0, Math.Min(140.0 / w, 64.0 / h)) : 0;
+            var shownW = (int)Math.Round(w * scale);
+            var shownH = (int)Math.Round(h * scale);
+            // raster logos are resized to twice that size and sent as WebP (resized images are cached, originals are not); SVGs go as they are
+            var url = logo.Url();
+            var src = url.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) ? url : logo.GetCropUrl(height: shownH > 0 ? Math.Min(h, shownH * 2) : 128, furtherOptions: "format=webp&quality=85");
+            if (shownH > 0) { <img src="@src" alt="@name" width="@shownW" height="@shownH" class="max-h-16 w-auto max-w-[140px] object-contain" loading="lazy"> }
+            else { <img src="@src" alt="@name" class="max-h-16 w-auto max-w-[140px] object-contain" loading="lazy"> }
+        }
         else { <span class="text-xl font-black tracking-[.04em] text-slate-500 dark:text-slate-300">@name</span> }
     }
 }

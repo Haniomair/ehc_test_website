@@ -74,7 +74,7 @@
   --hero-2-to:   var(--highlight-500);
 
   /* decorative pattern (logo star by default; a theme can swap it) */
-  --pattern-image: url('../img/mark.png');
+  --pattern-image: url('../img/mark.webp');
 }
 
 /* Map roles → Tailwind colour utilities.

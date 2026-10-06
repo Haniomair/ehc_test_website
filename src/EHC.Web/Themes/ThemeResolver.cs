@@ -75,7 +75,7 @@ public sealed partial class ThemeResolver(
     };
 
     /// <summary>The default pattern (EHC star), as the customizer sets it explicitly.</summary>
-    public const string StarPattern = "url('/assets/img/mark.png')";
+    public const string StarPattern = "url('/assets/img/mark.webp')";
 
     /// <summary>Motifs a reviewer can try in the look customizer (key → CSS), "star" being the EHC mark.</summary>
     public static readonly IReadOnlyDictionary<string, string> CustomizerPatterns = new Dictionary<string, string>

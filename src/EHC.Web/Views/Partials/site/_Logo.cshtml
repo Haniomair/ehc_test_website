@@ -18,16 +18,22 @@
         var webp = path[..^4] + ".webp";
         return Env.WebRootFileProvider.GetFileInfo(webp).Exists ? V(webp) : null;
     }
+    // intrinsic size of the built-in logo files (keeps the header from shifting while the logo loads); unknown for editor/theme logos
+    (int W, int H)? Size(string path) =>
+        path.StartsWith("/assets/img/logo-ar", StringComparison.Ordinal) ? (520, 123)
+        : path.StartsWith("/assets/img/logo-en", StringComparison.Ordinal) ? (520, 110)
+        : null;
     void Img(string src, string cls)
     {
         var webp = Webp(src);
+        var dim = Size(src);
         if (webp is null)
         {
-            <img class="@cls" src="@V(src)" alt="@alt">
+            <img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H">
         }
         else
         {
-            <picture class="contents"><source srcset="@webp" type="image/webp"><img class="@cls" src="@V(src)" alt="@alt"></picture>
+            <picture class="contents"><source srcset="@webp" type="image/webp"><img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H"></picture>
         }
     }
 }

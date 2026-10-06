@@ -51,7 +51,7 @@
             if (posters[i])
             {
                 @* the whole poster on large screens (decorative here: the slide carries its description) *@
-                <div class="hero-swap max-lg:hidden @(i == 0 ? "" : "slide-off")" data-slide-media="@i" aria-hidden="true"><picture class="media-bg"><img src="@HeroCampaign.PosterUrl(slides[i], 2560)" alt="" fetchpriority="@(i == 0 ? "high" : null)" loading="@(i == 0 ? null : "lazy")" decoding="async"></picture></div>
+                <div class="hero-swap max-lg:hidden @(i == 0 ? "" : "slide-off")" data-slide-media="@i" aria-hidden="true"><picture class="media-bg"><img src="@HeroCampaign.PosterUrl(slides[i], 2560)" srcset="@HeroCampaign.PosterSrcset(slides[i])" sizes="100vw" alt="" fetchpriority="@(i == 0 ? "high" : null)" loading="@(i == 0 ? null : "lazy")" decoding="async"></picture></div>
                 continue;
             }
             <div class="hero-swap @(i == 0 ? "" : "slide-off")" data-slide-media="@i">@await Html.PartialAsync("site/_MediaBackground", media[i] with { ShowPattern = false })</div>
@@ -97,7 +97,7 @@
                     {
                         @* phones / tablets: the poster in the slide (its centre, around the focal point; a wide poster keeps its
                            message in the middle), with its description *@
-                        <img class="mb-6 aspect-[4/5] w-full rounded-2xl object-cover shadow-[0_20px_50px_rgba(0,0,0,.3)] sm:aspect-[16/9] lg:hidden" style="object-position: @media[i].Focal" src="@HeroCampaign.PosterUrl(s, 2560)" alt="@media[i].Alt" loading="lazy" decoding="async">
+                        <img class="mb-6 aspect-[4/5] w-full rounded-2xl object-cover shadow-[0_20px_50px_rgba(0,0,0,.3)] sm:aspect-[16/9] lg:hidden" style="object-position: @media[i].Focal" src="@HeroCampaign.PosterUrl(s, 2560)" srcset="@HeroCampaign.PosterSrcset(s)" sizes="100vw" alt="@media[i].Alt" loading="lazy" decoding="async">
                     }
                     @if (primary is not null || secondary is not null)
                     {

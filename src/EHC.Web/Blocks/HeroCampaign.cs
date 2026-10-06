@@ -72,6 +72,20 @@ public static class HeroCampaign
     public static string? PosterUrl(IPublishedElement slide, int width) =>
         slide.Value<MediaWithCrops>("backgroundImage") is { } image ? image.GetCropUrl(width: width, furtherOptions: "format=webp&quality=82") ?? image.Url() : null;
 
+    private static readonly int[] PosterWidths = [640, 960, 1280, 1920, 2560];
+
+    /// <summary>
+    /// The whole poster at several widths (srcset), so phones get a small file. Both poster images (the wide one and
+    /// the one in the slide on phones) use it with the same sizes, so a phone downloads one file, not two.
+    /// Null when the picture cannot be resized (then only src is used).
+    /// </summary>
+    public static string? PosterSrcset(IPublishedElement slide)
+    {
+        if (slide.Value<MediaWithCrops>("backgroundImage") is not { } image) return null;
+        var urls = PosterWidths.Select(w => (w, url: image.GetCropUrl(width: w, furtherOptions: "format=webp&quality=82"))).ToList();
+        return urls.Any(u => u.url is null) ? null : string.Join(", ", urls.Select(u => $"{u.url} {u.w}w"));
+    }
+
     /// <summary>
     /// The panels to render, one per distinct source, each listing the slides that show it (so a panel the hero
     /// shares with several slides is rendered once: no duplicate forms or ids).

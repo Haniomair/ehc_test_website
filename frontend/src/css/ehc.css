@@ -324,6 +324,18 @@ html:not([dir="rtl"]) [data-map] a.leaflet-popup-close-button { right: .5rem; }
 /* list card whose pin was just clicked */
 [data-facility].is-map-active { @apply ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-night-950; }
 .finder-row.is-map-active { @apply bg-brand-50 ring-0 ring-offset-0 dark:bg-brand-500/15; }
+/* Facility finder list (over a hundred rows): rows out of view skip layout and paint until they come near. That clips
+   each row to its box, so the focus ring is drawn inside the row (same colours as the global ring). The trailing arrow
+   is drawn by CSS rather than an <svg><use> per row. */
+[data-finder-list] > li { content-visibility: auto; contain-intrinsic-size: auto 65px; }
+.finder-row:focus-visible { outline-offset: -3px; box-shadow: inset 0 0 0 5px var(--deep-950); }
+.finder-row::after {
+  content: ""; @apply h-4 w-4 shrink-0 bg-slate-300 transition;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.dark .finder-row::after { @apply bg-slate-600; }
+.finder-row:hover::after { @apply bg-brand-500; }
+html[dir="rtl"] .finder-row::after { transform: scaleX(-1); }
 
 /* Saudi Model of Care (careModelBlock): a slowly turning orbit; each system's arc is faint until its system is chosen */
 .care-orbit { transform-origin: 50% 50%; animation: care-spin 90s linear infinite; }

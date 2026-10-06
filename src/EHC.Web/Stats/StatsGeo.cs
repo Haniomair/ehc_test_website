@@ -9,8 +9,11 @@ using Umbraco.Cms.Infrastructure.BackgroundJobs;
 
 namespace EHC.Web.Stats;
 
-/// <summary>Country (ISO code) for everyone; region and city only for the countries in Ehc:Stats:CityCountries.</summary>
-public sealed record GeoPlace(string? Country, string? Region, string? City)
+/// <summary>
+/// Country (ISO code) for everyone; region, city and the city's position only for the countries in
+/// Ehc:Stats:CityCountries. The position is rounded to 0.1° (about 10 km) and used only by the in-memory real-time map.
+/// </summary>
+public sealed record GeoPlace(string? Country, string? Region, string? City, double? Lat = null, double? Lon = null)
 {
     public static readonly GeoPlace Unknown = new(null, null, null);
 }
@@ -87,7 +90,10 @@ public sealed class StatsGeo : IStatsGeo, IDisposable
             var region = data!.TryGetValue("subdivisions", out var s) && s is IList<object> { Count: > 0 } list && list[0] is IDictionary<string, object> first
                 ? Name(first) : null;
             var city = data.TryGetValue("city", out var c) && c is IDictionary<string, object> cd ? Name(cd) : null;
-            return new(country, Clip(region), Clip(CityOnly(city)));
+            var (lat, lon) = data.TryGetValue("location", out var l) && l is IDictionary<string, object> loc
+                && loc.TryGetValue("latitude", out var la) && la is double latitude && loc.TryGetValue("longitude", out var lo) && lo is double longitude
+                ? (Math.Round(latitude, 1), Math.Round(longitude, 1)) : ((double?)null, (double?)null);
+            return new(country, Clip(region), Clip(CityOnly(city)), lat, lon);
         }
         catch (Exception e) when (e is InvalidDatabaseException or ObjectDisposedException or ArgumentException)
         {

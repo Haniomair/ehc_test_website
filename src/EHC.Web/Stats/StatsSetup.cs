@@ -120,6 +120,7 @@ public static class StatsSetup
         services.AddSingleton<StatsVisitors>();
         services.AddSingleton<IStatsGeo, StatsGeo>();
         services.AddSingleton<StatsQueue>();
+        services.AddSingleton<StatsLive>();
         services.AddHostedService<StatsWriter>();
         services.AddHttpClient(StatsGeoUpdateJob.HttpClientName, c => c.Timeout = TimeSpan.FromMinutes(10));
         services.AddRecurringBackgroundJob<StatsRollupJob>();

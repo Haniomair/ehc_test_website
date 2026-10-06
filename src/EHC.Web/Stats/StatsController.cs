@@ -18,6 +18,7 @@ public sealed record StatsInput(Guid PageKey, string? Culture, string? Referrer,
 [EnableRateLimiting(Api.ApiSetup.StatsPolicy)]
 public sealed class StatsController(
     StatsQueue queue,
+    StatsLive live,
     StatsVisitors visitors,
     IStatsGeo geo,
     IPublishedContentQuery content,
@@ -50,9 +51,12 @@ public sealed class StatsController(
         var place = geo.Lookup(address);
         var source = newVisit ? StatsTraffic.Source(input.Referrer, Request.Host.Host, input.Source) : (TrafficSource?)null;
 
+        var now = clock.GetUtcNow().UtcDateTime;
+        var device = StatsTraffic.Device(userAgent, input.Touch);
+        live.Add(new LiveHit(now, visitor, newVisit, input.PageKey, culture, place, source?.Medium, source?.Source, device));
         queue.TryAdd(new StatsHitDto
         {
-            CreatedUtc = clock.GetUtcNow().UtcDateTime,
+            CreatedUtc = now,
             PageKey = input.PageKey,
             Culture = culture,
             Visitor = visitor,
@@ -63,7 +67,7 @@ public sealed class StatsController(
             Country = place.Country,
             Region = place.Region,
             City = place.City,
-            Device = StatsTraffic.Device(userAgent, input.Touch),
+            Device = device,
             Browser = StatsTraffic.Browser(userAgent),
             Os = StatsTraffic.OperatingSystem(userAgent, input.Touch),
         });

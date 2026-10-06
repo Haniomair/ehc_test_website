@@ -4,8 +4,8 @@
 import { LitElement, html, svg, css, nothing } from '@umbraco-cms/backoffice/external/lit';
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import { LANGUAGE, number, country, capital, get, niceStep, pageLabel, sourceLabel, barList, listStyles } from './stats-common.js';
 
-const API = '/umbraco/management/api/v1/ehc/stats';
 const PRESETS = [
   { id: 'today', label: 'Today' },
   { id: 'yesterday', label: 'Yesterday' },
@@ -16,25 +16,14 @@ const PRESETS = [
   { id: 'custom', label: 'Custom…' },
 ];
 const MEASURES = { visitors: 'Visitors', visits: 'Visits', views: 'Page views' };
-const MEDIUM = { direct: 'Direct', search: 'Search engines', social: 'Social media', referral: 'Other websites', campaign: 'Campaign links' };
-const LANGUAGE = { 'ar-SA': 'Arabic', 'en-US': 'English' };
-const number = new Intl.NumberFormat('en');
 const dayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const longDay = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-let regions;
-try { regions = new Intl.DisplayNames(['en'], { type: 'region' }); } catch { regions = null; }
 
 const toDate = (s) => new Date(s + 'T00:00:00Z');
 const iso = (d) => d.toISOString().slice(0, 10);
 const addDays = (s, n) => { const d = toDate(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
-const country = (code) => (!code ? 'Unknown' : (regions?.of(code) ?? code));
-
-/** Clean y-axis step: 1, 2 or 5 × a power of ten. */
-function niceStep(raw) {
-  const pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1))));
-  const n = raw / pow;
-  return Math.max(1, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow);
-}
+const VIEWS = [{ key: 'views', title: 'Views' }, { key: 'visitors', title: 'Visitors' }];
+const VISITS = [{ key: 'visits', title: 'Visits' }, { key: 'visitors', title: 'Visitors' }];
 
 export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
   static properties = {
@@ -81,11 +70,8 @@ export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
     }
   }
 
-  async #fetch(path) {
-    const token = await this.#auth.getLatestToken();
-    const response = await fetch(`${API}/${path}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!response.ok) throw new Error(String(response.status));
-    return response;
+  #fetch(path) {
+    return get(this.#auth, path);
   }
 
   #query() {
@@ -184,17 +170,17 @@ export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
         </div>
         ${this._table ? this.#dayTable() : this.#chart()}
       </uui-box>
-      <uui-box headline="Pages">${this.#list(top.page, { label: (i) => this.#page(i), count: 'views' })}</uui-box>
+      <uui-box headline="Pages">${barList(top.page, pageLabel, VIEWS)}</uui-box>
       <div class="grid">
-        <uui-box headline="Where visits come from">${this.#list(top.source, { label: (i) => this.#source(i), count: 'visits' })}</uui-box>
-        <uui-box headline="Countries">${this.#list(top.country, { label: (i) => country(i.value) })}</uui-box>
-        <uui-box headline="Regions in Saudi Arabia">${this.#list(top.region, { label: (i) => i.value.split('|')[1] || 'Unknown' })}</uui-box>
-        <uui-box headline="Cities in Saudi Arabia">${this.#list(top.city, { label: (i) => this.#city(i) })}</uui-box>
-        <uui-box headline="Devices">${this.#list(top.device, { label: (i) => i.value.charAt(0).toUpperCase() + i.value.slice(1) })}</uui-box>
-        <uui-box headline="Browsers">${this.#list(top.browser, { label: (i) => i.value })}</uui-box>
-        <uui-box headline="Operating systems">${this.#list(top.os, { label: (i) => i.value })}</uui-box>
-        <uui-box headline="Site language">${this.#list(top.culture, { label: (i) => LANGUAGE[i.value] ?? i.value })}</uui-box>
-        ${top.campaign?.length ? html`<uui-box headline="Campaign links (utm_campaign)">${this.#list(top.campaign, { label: (i) => this.#campaign(i), count: 'visits' })}</uui-box>` : nothing}
+        <uui-box headline="Where visits come from">${barList(top.source, (i) => sourceLabel(i.value), VISITS)}</uui-box>
+        <uui-box headline="Countries">${barList(top.country, (i) => country(i.value), VIEWS)}</uui-box>
+        <uui-box headline="Regions in Saudi Arabia">${barList(top.region, (i) => i.value.split('|')[1] || 'Unknown', VIEWS)}</uui-box>
+        <uui-box headline="Cities in Saudi Arabia">${barList(top.city, (i) => this.#city(i), VIEWS)}</uui-box>
+        <uui-box headline="Devices">${barList(top.device, (i) => capital(i.value), VIEWS)}</uui-box>
+        <uui-box headline="Browsers">${barList(top.browser, (i) => i.value, VIEWS)}</uui-box>
+        <uui-box headline="Operating systems">${barList(top.os, (i) => i.value, VIEWS)}</uui-box>
+        <uui-box headline="Site language">${barList(top.culture, (i) => LANGUAGE[i.value] ?? i.value, VIEWS)}</uui-box>
+        ${top.campaign?.length ? html`<uui-box headline="Campaign links (utm_campaign)">${barList(top.campaign, (i) => this.#campaign(i), VISITS)}</uui-box>` : nothing}
       </div>
     `;
   }
@@ -287,34 +273,6 @@ export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
     </table>`;
   }
 
-  /** A top list: label with a thin bar for its share of the largest row, then the counts. */
-  #list(items, { label, count = 'views' }) {
-    if (!items?.length) return html`<p class="muted">No data for this period.</p>`;
-    const most = Math.max(...items.map((i) => i[count]), 1);
-    const visitsOnly = count === 'visits';
-    return html`<table class="list">
-      <thead><tr><th></th><th class="num">${visitsOnly ? 'Visits' : 'Views'}</th><th class="num">Visitors</th></tr></thead>
-      <tbody>${items.map((i) => html`<tr>
-        <td><div class="name">${label(i)}</div><div class="share"><span style=${`width:${Math.max(2, (i[count] / most) * 100)}%`}></span></div></td>
-        <td class="num">${number.format(i[count])}</td>
-        <td class="num">${number.format(i.visitors)}</td>
-      </tr>`)}</tbody>
-    </table>`;
-  }
-
-  #page(i) {
-    const culture = i.value.split('|')[1];
-    const lang = culture === 'ar-SA' ? 'AR' : culture === 'en-US' ? 'EN' : '';
-    const name = i.url ? html`<a href=${i.url} target="_blank" rel="noopener">${i.label}</a>` : i.label;
-    return html`${lang ? html`<span class="lang" title=${LANGUAGE[culture]}>${lang}</span>` : nothing}${name}`;
-  }
-
-  #source(i) {
-    const [medium, source] = i.value.split('|');
-    if (medium === 'direct') return html`Direct <span class="sub">typed, bookmarked or from an app</span>`;
-    return html`${source || 'Unknown'} <span class="sub">${MEDIUM[medium] ?? medium}</span>`;
-  }
-
   #city(i) {
     const [, region, city] = i.value.split('|');
     return html`${city || 'Unknown'} <span class="sub">${region}</span>`;
@@ -325,7 +283,7 @@ export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
     return html`${campaign} <span class="sub">${source}</span>`;
   }
 
-  static styles = css`
+  static styles = [listStyles, css`
     :host { display: grid; gap: var(--uui-size-layout-1); padding: var(--uui-size-layout-1); }
     .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; }
     .filters label { display: inline-flex; gap: var(--uui-size-space-2); align-items: center; }
@@ -345,34 +303,13 @@ export default class EhcStatsDashboard extends UmbElementMixin(LitElement) {
     .vs { font-weight: 400; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--uui-size-layout-1); align-items: start; }
     .chart { position: relative; width: 100%; }
-    .chart svg { display: block; outline: none; touch-action: pan-y; }
-    .chart svg:focus-visible { outline: 2px solid var(--uui-color-focus); outline-offset: 2px; border-radius: 4px; }
-    .gridline { stroke: var(--uui-color-divider-standalone, #e3e3e3); stroke-width: 1; }
-    .tick { fill: var(--uui-color-text-alt); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .chart svg { display: block; touch-action: pan-y; }
     .line { fill: none; stroke: var(--uui-color-interactive); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
     .area { fill: var(--uui-color-interactive); opacity: .1; }
     .cross { stroke: var(--uui-color-text-alt); stroke-width: 1; }
     .dot { fill: var(--uui-color-interactive); stroke: var(--uui-color-surface); stroke-width: 2; }
-    .tip { position: absolute; top: 0; transform: translateX(-50%); pointer-events: none; background: var(--uui-color-surface);
-      border: 1px solid var(--uui-color-border); border-radius: 6px; padding: 6px 10px; font-size: 12px; white-space: nowrap;
-      box-shadow: var(--uui-shadow-depth-1); color: var(--uui-color-text-alt); }
-    .tip b { font-size: 15px; color: var(--uui-color-text); }
-    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: start; padding: 7px 8px; border-bottom: 1px solid var(--uui-color-border); vertical-align: top; }
-    th { font-weight: 600; font-size: 12px; color: var(--uui-color-text-alt); }
-    .num { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; width: 1%; }
-    .list .name { overflow-wrap: anywhere; }
-    .share { height: 4px; margin-top: 5px; background: var(--uui-color-divider, #f0f0f0); border-radius: 2px; }
-    .share span { display: block; height: 4px; background: var(--uui-color-interactive); border-radius: 0 2px 2px 0; }
-    .sub { color: var(--uui-color-text-alt); font-size: 12px; margin-inline-start: 4px; }
-    .lang { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-inline-end: 6px;
-      border: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); vertical-align: 1px; }
-    .muted { color: var(--uui-color-text-alt); }
-    .error { color: var(--uui-color-danger); margin: 0; }
     .warn { margin: 0; padding: 8px 12px; border-radius: 6px; background: var(--uui-color-warning, #fbd142); color: var(--uui-color-warning-contrast, #000); }
-    .note { color: var(--uui-color-text-alt); font-size: 12px; margin: 0; }
-  `;
+  `];
 }
 
 customElements.define('ehc-stats-dashboard', EhcStatsDashboard);

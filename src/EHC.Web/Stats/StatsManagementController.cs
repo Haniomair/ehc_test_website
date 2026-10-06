@@ -26,9 +26,20 @@ public sealed record StatsReport(
     IReadOnlyDictionary<string, IReadOnlyList<StatsItem>> Top,
     DateOnly? GeoBuilt);
 
+public sealed record LiveReport(
+    DateTimeOffset At,
+    int Active,
+    IReadOnlyList<int> PerMinute,
+    IReadOnlyList<LivePlace> Places,
+    IReadOnlyList<LiveItem> Countries,
+    IReadOnlyList<LiveItem> Pages,
+    IReadOnlyList<LiveItem> Sources,
+    IReadOnlyList<LiveItem> Devices,
+    bool GeoLoaded);
+
 /// <summary>
 /// Backoffice API for the "Statistics" section (users whose group has that section):
-/// /umbraco/management/api/v1/ehc/stats/{summary|export}?from=yyyy-MM-dd&amp;to=yyyy-MM-dd.
+/// /umbraco/management/api/v1/ehc/stats/{summary|export}?from=yyyy-MM-dd&amp;to=yyyy-MM-dd and .../live.
 /// </summary>
 [ApiVersion("1.0")]
 [VersionedApiBackOfficeRoute("ehc/stats")]
@@ -36,7 +47,9 @@ public sealed record StatsReport(
 [Authorize(Policy = StatsSetup.Policy)]
 public sealed class StatsManagementController(
     StatsReports reports,
+    StatsLive live,
     StatsCalendar calendar,
+    TimeProvider clock,
     IStatsGeo geo,
     IUmbracoContextFactory contexts) : ManagementApiControllerBase
 {
@@ -77,6 +90,21 @@ public sealed class StatsManagementController(
             current.Days.Select(d => new StatsDay(d.Day, d.Views, d.Visits, d.Visitors)).ToList(),
             lists,
             geo.Built is { } built ? DateOnly.FromDateTime(built) : null));
+    }
+
+    /// <summary>Visitors on the site now (last 5 minutes), page views per minute and arrivals in the last 30 minutes.</summary>
+    [HttpGet("live")]
+    public ActionResult<LiveReport> Live()
+    {
+        Response.Headers.CacheControl = "no-store";
+        var s = live.Snapshot();
+        using var cref = contexts.EnsureUmbracoContext();
+        var pages = s.Pages.Select(p =>
+        {
+            var item = Item(cref.UmbracoContext, new StatsRow(StatsStore.Page, p.Value, p.Count, 0, 0));
+            return p with { Label = item.Label, Url = item.Url };
+        }).ToList();
+        return Ok(new LiveReport(clock.GetUtcNow(), s.Active, s.PerMinute, s.Places, s.Countries, pages, s.Sources, s.Devices, geo.Built is not null));
     }
 
     [HttpGet("export")]

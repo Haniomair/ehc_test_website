@@ -9,6 +9,7 @@
     "publish:umbraco": "cross-env EHC_WWWROOT=../src/EHC.Web/wwwroot/assets npm run build",
     "check:contrast": "node scripts/check-contrast.mjs",
     "tiles": "node scripts/fetch-tiles.mjs",
+    "map:saudi": "node scripts/saudi-map.mjs",
     "thumbnails": "node scripts/block-thumbnails.mjs"
   },
   "devDependencies": {

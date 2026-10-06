@@ -20,6 +20,15 @@
       "weight": 10,
       "meta": { "label": "Visitors", "pathname": "visitors" },
       "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
+    },
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.RealTime",
+      "name": "Real-time visitors",
+      "element": "/App_Plugins/EhcStats/stats-live.js",
+      "weight": 5,
+      "meta": { "label": "Real time", "pathname": "real-time" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
     }
   ]
 }

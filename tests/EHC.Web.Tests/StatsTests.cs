@@ -148,6 +148,37 @@ public class StatsTests
         Assert.Equal([0, 10, 6, 0, 3], range.Days.Select(d => d.Views));
     }
 
+    [Fact]
+    public void Live_view_counts_each_visitor_once_at_their_latest_page()
+    {
+        var now = new DateTime(2026, 10, 6, 9, 0, 0, DateTimeKind.Utc);
+        var live = new StatsLive(new FixedClock(now));
+        Guid home = Guid.NewGuid(), doctors = Guid.NewGuid();
+        var dammam = new GeoPlace("SA", "Eastern Province", "Dammam", 26.4, 50.1);
+        var khobar = new GeoPlace("SA", "Eastern Province", "Khobar", 26.3, 50.2);
+        var abroad = new GeoPlace("AE", null, null);
+        LiveHit Hit(int minutesAgo, string visitor, bool first, Guid page, GeoPlace place, string? medium = null, string? source = null) =>
+            new(now.AddMinutes(-minutesAgo), visitor, first, page, "ar-SA", place, medium, source, "mobile");
+
+        live.Add(Hit(40, "gone", true, home, dammam, "direct", ""));       // older than 30 minutes: dropped
+        live.Add(Hit(20, "earlier", true, home, dammam, "search", "Google")); // left 20 minutes ago: not on the site now
+        live.Add(Hit(4, "a", true, home, dammam, "search", "Google"));
+        live.Add(Hit(1, "a", false, doctors, dammam));                     // same visitor, now on another page
+        live.Add(Hit(2, "b", true, home, khobar, "social", "X"));
+        live.Add(Hit(0, "c", true, home, abroad, "direct", ""));
+
+        var s = live.Snapshot();
+
+        Assert.Equal(3, s.Active);
+        Assert.Equal(5, s.PerMinute.Sum());
+        Assert.Equal(1, s.PerMinute[^1]);                                  // the current minute
+        Assert.Equal(new LiveItem(StatsStore.PageValue(home, "ar-SA"), 2), s.Pages[0]);
+        Assert.Equal(new LiveItem(StatsStore.PageValue(doctors, "ar-SA"), 1), s.Pages[1]);
+        Assert.Equal([new LiveItem("SA", 2), new LiveItem("AE", 1)], s.Countries);
+        Assert.Equal(2, s.Places.Count);                                   // Saudi cities only
+        Assert.Equal(new LiveItem("search|Google", 2), s.Sources[0]);      // visits started in the last 30 minutes
+    }
+
     private sealed class FixedClock(DateTime utc) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(utc);

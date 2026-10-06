@@ -179,6 +179,40 @@ public class StatsTests
         Assert.Equal(new LiveItem("search|Google", 2), s.Sources[0]);      // visits started in the last 30 minutes
     }
 
+    [Fact]
+    public void Funnel_steps_must_be_reached_in_order()
+    {
+        Guid home = Guid.NewGuid(), find = Guid.NewGuid(), doctor = Guid.NewGuid(), other = Guid.NewGuid();
+        var hits = new (string, Guid)[]
+        {
+            ("a", home), ("a", other), ("a", find), ("a", doctor),   // all three, with another page in between
+            ("b", home), ("b", find),                                // stopped at step 2
+            ("c", find), ("c", doctor),                              // never entered at step 1
+            ("d", doctor), ("d", home), ("d", find),                 // step 3 seen only before step 1
+            ("e", home), ("e", home),                                // reloads count once
+        };
+
+        Assert.Equal([4, 3, 1], FunnelMath.Progress(hits, [home, find, doctor]));
+    }
+
+    [Fact]
+    public void Funnel_with_no_page_views_is_all_zero() =>
+        Assert.Equal([0, 0], FunnelMath.Progress([], [Guid.NewGuid(), Guid.NewGuid()]));
+
+    [Fact]
+    public void Funnel_definition_is_checked()
+    {
+        Guid a = Guid.NewGuid(), b = Guid.NewGuid();
+        Assert.Null(FunnelMath.Validate("Book a doctor", [a, b]));
+        Assert.Null(FunnelMath.Validate("Back and forth", [a, b, a]));   // a page may come back later
+        Assert.NotNull(FunnelMath.Validate(" ", [a, b]));
+        Assert.NotNull(FunnelMath.Validate("One step", [a]));
+        Assert.NotNull(FunnelMath.Validate("Too many", Enumerable.Range(0, 9).Select(_ => Guid.NewGuid()).ToList()));
+        Assert.NotNull(FunnelMath.Validate("Same twice", [a, a]));
+        Assert.NotNull(FunnelMath.Validate("Empty step", [a, Guid.Empty]));
+        Assert.NotNull(FunnelMath.Validate(new string('x', 101), [a, b]));
+    }
+
     private sealed class FixedClock(DateTime utc) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(utc);

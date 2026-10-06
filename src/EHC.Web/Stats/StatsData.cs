@@ -157,7 +157,9 @@ public sealed class StatsMigrationRunner(
     {
         if (runtime.Level < RuntimeLevel.Run) return;
         var plan = new MigrationPlan("EHC.Stats");
-        plan.From(string.Empty).To<AddStatsTables>("ehc-stats-1");
+        plan.From(string.Empty)
+            .To<AddStatsTables>("ehc-stats-1")
+            .To<AddStatsFunnelTables>("ehc-stats-2");
         await new Upgrader(plan).ExecuteAsync(executor, scopes, keyValues);
     }
 }

@@ -29,6 +29,15 @@
       "weight": 5,
       "meta": { "label": "Real time", "pathname": "real-time" },
       "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
+    },
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.Funnels",
+      "name": "Funnels",
+      "element": "/App_Plugins/EhcStats/stats-funnels.js",
+      "weight": 3,
+      "meta": { "label": "Funnels", "pathname": "funnels" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
     }
   ]
 }

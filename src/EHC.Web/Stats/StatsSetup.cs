@@ -21,7 +21,7 @@ namespace EHC.Web.Stats;
 /// Once an hour: stores the totals of every finished day that is not stored yet, then deletes single page views older
 /// than the retention period (never before their day is stored). Runs on one server.
 /// </summary>
-public sealed class StatsRollupJob(IStatsStore store, StatsCalendar calendar, IOptions<StatsOptions> options, TimeProvider clock, ILogger<StatsRollupJob> logger)
+public sealed class StatsRollupJob(IStatsStore store, IStatsFunnels funnels, StatsCalendar calendar, IOptions<StatsOptions> options, TimeProvider clock, ILogger<StatsRollupJob> logger)
     : IRecurringBackgroundJob
 {
     public TimeSpan Period => TimeSpan.FromHours(1);
@@ -37,6 +37,8 @@ public sealed class StatsRollupJob(IStatsStore store, StatsCalendar calendar, IO
         var next = store.RolledUpTo()?.AddDays(1) ?? (store.FirstHitUtc() is { } first ? calendar.DayOf(first) : settled);
         for (var day = next; day < settled; day = day.AddDays(1))
         {
+            // funnels first: SaveDay marks the day as done
+            funnels.SaveDay(day);
             store.SaveDay(day, store.Aggregate(calendar.StartUtc(day), calendar.StartUtc(day.AddDays(1))));
             next = day.AddDays(1);
         }
@@ -117,6 +119,7 @@ public static class StatsSetup
             StatsCalendar.Zone(sp.GetRequiredService<IOptions<StatsOptions>>().Value.TimeZone), sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IStatsStore, StatsStore>();
         services.AddSingleton<StatsReports>();
+        services.AddSingleton<IStatsFunnels, StatsFunnels>();
         services.AddSingleton<StatsVisitors>();
         services.AddSingleton<IStatsGeo, StatsGeo>();
         services.AddSingleton<StatsQueue>();

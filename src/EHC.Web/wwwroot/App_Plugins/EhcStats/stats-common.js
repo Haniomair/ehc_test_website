@@ -20,6 +20,22 @@ export async function get(auth, path) {
   return response;
 }
 
+/** POST / PUT / DELETE with a JSON body; throws the server's message (ProblemDetails title) on failure. */
+export async function send(auth, method, path, body) {
+  const token = await auth.getLatestToken();
+  const response = await fetch(`${API}/${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!response.ok) {
+    let message = String(response.status);
+    try { message = (await response.json()).title || message; } catch { /* not JSON */ }
+    throw new Error(message);
+  }
+  return response.status === 204 ? null : response.json();
+}
+
 /** Clean axis step: 1, 2 or 5 × a power of ten. */
 export function niceStep(raw) {
   const pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1))));

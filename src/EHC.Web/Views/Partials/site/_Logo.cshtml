@@ -2,7 +2,8 @@
    surface, e.g. the footer; otherwise it follows dark mode). Dark surfaces use the white logo file; the CSS filter
    (brightness-0 invert) is only a fallback for editor/theme logos without one, because Samsung Internet's
    "Dark sites" mode renders filtered images almost black. Built-in logos have a WebP next to the PNG (served via
-   <picture>); paths carry a file version so /assets can cache them for a year. *@
+   <picture>); paths carry a file version so /assets can cache them for a year. The white file is loaded lazily
+   (only when it is shown: dark mode, or the footer coming into view), so light-mode visitors do not download it up front. *@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Versions
@@ -23,30 +24,30 @@
         path.StartsWith("/assets/img/logo-ar", StringComparison.Ordinal) ? (520, 123)
         : path.StartsWith("/assets/img/logo-en", StringComparison.Ordinal) ? (520, 110)
         : null;
-    void Img(string src, string cls)
+    void Img(string src, string cls, bool lazy = false)
     {
         var webp = Webp(src);
         var dim = Size(src);
         if (webp is null)
         {
-            <img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H">
+            <img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H" loading="@(lazy ? "lazy" : null)">
         }
         else
         {
-            <picture class="contents"><source srcset="@webp" type="image/webp"><img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H"></picture>
+            <picture class="contents"><source srcset="@webp" type="image/webp"><img class="@cls" src="@V(src)" alt="@alt" width="@dim?.W" height="@dim?.H" loading="@(lazy ? "lazy" : null)"></picture>
         }
     }
 }
 @if (white is null)
 {
-    Img(Model.LogoUrl, $"block {size} {(onDark ? "brightness-0 invert" : "dark:brightness-0 dark:invert")}");
+    Img(Model.LogoUrl, $"block {size} {(onDark ? "brightness-0 invert" : "dark:brightness-0 dark:invert")}", lazy: onDark);
 }
 else if (onDark)
 {
-    Img(white, $"block {size}");
+    Img(white, $"block {size}", lazy: true);
 }
 else
 {
     Img(Model.LogoUrl, $"block {size} dark:hidden");
-    Img(white, $"hidden {size} dark:block");
+    Img(white, $"hidden {size} dark:block", lazy: true);
 }

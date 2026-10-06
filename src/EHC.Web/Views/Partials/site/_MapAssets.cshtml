@@ -6,13 +6,16 @@
 @using Microsoft.AspNetCore.Hosting
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<object>
 @inject IWebHostEnvironment Env
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Versions
 @{
     var tiles = MapTiles.Url(Env);
+    // versioned paths, so /assets can cache the vendor files for a year
+    string V(string path) => Versions.AddFileVersionToPath(Context.Request.PathBase, path);
 }
 <script src="~/assets/js/components/map.js" asp-append-version="true" defer
-        data-leaflet-js="@Url.Content("~/assets/vendor/leaflet/leaflet.js")" data-leaflet-css="@Url.Content("~/assets/vendor/leaflet/leaflet.css")"
-        data-cluster-js="@Url.Content("~/assets/vendor/leaflet.markercluster/leaflet.markercluster.js")" data-cluster-css="@Url.Content("~/assets/vendor/leaflet.markercluster/MarkerCluster.css")"
-        data-tiles="@tiles" data-protomaps-js="@Url.Content("~/assets/vendor/protomaps-leaflet/protomaps-leaflet.js")"
+        data-leaflet-js="@V("/assets/vendor/leaflet/leaflet.js")" data-leaflet-css="@V("/assets/vendor/leaflet/leaflet.css")"
+        data-cluster-js="@V("/assets/vendor/leaflet.markercluster/leaflet.markercluster.js")" data-cluster-css="@V("/assets/vendor/leaflet.markercluster/MarkerCluster.css")"
+        data-tiles="@tiles" data-protomaps-js="@V("/assets/vendor/protomaps-leaflet/protomaps-leaflet.js")"
         data-label-zoom-in="@Umbraco.GetDictionaryValue("EHC.Map.ZoomIn")" data-label-zoom-out="@Umbraco.GetDictionaryValue("EHC.Map.ZoomOut")"
         data-label-show-all="@Umbraco.GetDictionaryValue("EHC.Map.ShowAll")" data-label-details="@Umbraco.GetDictionaryValue("EHC.Events.Details")"
         data-label-directions="@Umbraco.GetDictionaryValue("EHC.Facility.Directions")" data-label-two-fingers="@Umbraco.GetDictionaryValue("EHC.Map.TwoFingers")"

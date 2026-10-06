@@ -1,0 +1,25 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Visitor statistics",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "section",
+      "alias": "Ehc.Section.Statistics",
+      "name": "Statistics",
+      "weight": 50,
+      "meta": { "label": "Statistics", "pathname": "statistics" },
+      "conditions": [{ "alias": "Umb.Condition.SectionUserPermission", "match": "Ehc.Section.Statistics" }]
+    },
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.VisitorStatistics",
+      "name": "Visitor statistics",
+      "element": "/App_Plugins/EhcStats/stats-dashboard.js",
+      "weight": 10,
+      "meta": { "label": "Visitors", "pathname": "visitors" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Statistics" }]
+    }
+  ]
+}

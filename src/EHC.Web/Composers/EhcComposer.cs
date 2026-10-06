@@ -40,6 +40,7 @@ public sealed class EhcComposer : IComposer
         EHC.Web.Api.ApiSetup.Add(builder);
         EHC.Web.Feedback.FeedbackSetup.Add(builder);
         EHC.Web.Vitals.VitalsSetup.Add(builder);
+        EHC.Web.Stats.StatsSetup.Add(builder);
         Performance.Add(builder);
         MapTiles.Add(builder);
         ThemePreview.Add(builder);

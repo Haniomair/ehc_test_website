@@ -10,6 +10,7 @@
     <PackageReference Include="Umbraco.Cms"/>
     <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice"/>
     <PackageReference Include="uSync"/>
+    <PackageReference Include="MaxMind.Db"/>
   </ItemGroup>
 
   <ItemGroup>

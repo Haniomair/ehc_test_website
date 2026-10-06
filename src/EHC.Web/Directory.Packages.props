@@ -13,6 +13,7 @@
     <PackageVersion Include="Umbraco.Cms" Version="17.7.0" />
     <PackageVersion Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="17.7.0" />
     <PackageVersion Include="uSync" Version="17.4.2" />
+    <PackageVersion Include="MaxMind.Db" Version="5.2.0" />
     <PackageVersion Include="Microsoft.ICU.ICU4C.Runtime" Version="$(UmbracoAppLocalIcuVersion)" />
   </ItemGroup>
 </Project>

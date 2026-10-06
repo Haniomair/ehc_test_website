@@ -4,6 +4,7 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @inject ISiteContext Site
 @inject Microsoft.Extensions.Options.IOptions<EHC.Web.Vitals.VitalsOptions> Vitals
+@inject Microsoft.Extensions.Options.IOptions<EHC.Web.Stats.StatsOptions> Stats
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Versions
 @{
     Layout = null;
@@ -106,6 +107,12 @@
         @* real-visitor Core Web Vitals: loads and sends nothing until the visitor accepts optional cookies *@
         <script src="~/assets/js/components/vitals.js" asp-append-version="true" defer data-page="@Model.Key" data-culture="@site.Culture.Name"
                 data-lib="@Versions.AddFileVersionToPath(Context.Request.PathBase, "/assets/vendor/web-vitals/web-vitals.iife.js")" data-sample="@Vitals.Value.SampleRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"></script>
+    }
+    @if (Stats.Value.Enabled && UmbracoContext?.InPreviewMode != true)
+    {
+        @* visitor statistics: cookieless, same-origin; editors previewing unpublished changes are not counted *@
+        <script src="~/assets/js/components/stats.js" asp-append-version="true" defer data-page="@Model.Key" data-culture="@site.Culture.Name"
+                data-consent="@(Stats.Value.RequireConsent ? "required" : "none")"></script>
     }
 </body>
 </html>

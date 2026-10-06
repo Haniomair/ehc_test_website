@@ -8,7 +8,7 @@
       "type": "section",
       "alias": "Ehc.Section.Statistics",
       "name": "Statistics",
-      "weight": 50,
+      "weight": 850,
       "meta": { "label": "Statistics", "pathname": "statistics" },
       "conditions": [{ "alias": "Umb.Condition.SectionUserPermission", "match": "Ehc.Section.Statistics" }]
     },

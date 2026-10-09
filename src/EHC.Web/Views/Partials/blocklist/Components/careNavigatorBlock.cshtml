@@ -1,6 +1,9 @@
 @* Block 2 "Care navigator": two questions (who? what do you need?) → recommended next step.
    Options come from the block (whoOptions / needOptions) as JSON in data-options; frontend/src/js/components/care-navigator.js
-   updates the result. Urgent needs are shown in emergency red. Inside a hero right panel (ViewData["inHero"] = true) it is
+   updates the result. Urgent needs are shown in emergency red.
+   Symptom guide (optional): with symptoms and care levels on the block, a "By symptom" tile opens a symptom search; the
+   chosen symptom's care level gives the advice, and levels with "Show nearest" list the three closest suitable facilities
+   (the visitor's position is used in the browser only; ER wait times from /api/er-wait when the feed has them). Inside a hero right panel (ViewData["inHero"] = true) it is
    the glass panel alone; as a section it is a two-column band: heading, intro, how it works and the emergency number
    (Site settings) beside the panel, on the block's gradient. *@
 @using System.Text.Json
@@ -30,10 +33,35 @@
             urgent = n.Value<bool>("isUrgent"),
         })
         .ToList() ?? [];
+    var levels = (c.Value<BlockListModel>("careLevels")?.Select(b => b.Content) ?? [])
+        .Where(l => l.Value<string>("level") is { Length: > 0 } && !string.IsNullOrWhiteSpace(l.Value<string>("title")))
+        .GroupBy(l => l.Value<string>("level")!)
+        .ToDictionary(g => g.Key, g =>
+        {
+            var l = g.First();
+            return new
+            {
+                title = l.Value<string>("title") ?? "",
+                text = l.Value<string>("text") ?? "",
+                cta = l.Value<string>("ctaLabel") ?? "",
+                href = l.Value<Link>("ctaLink")?.Url ?? "",
+                nearest = l.Value<string>("nearest") is "emergency" or "primaryCare" or "hospital" ? l.Value<string>("nearest") : null,
+            };
+        });
+    // a symptom is offered only when its care level has advice
+    var symptoms = (c.Value<BlockListModel>("symptoms")?.Select(b => b.Content) ?? [])
+        .Where(x => !string.IsNullOrWhiteSpace(x.Value<string>("label")) && x.Value<string>("level") is { } lv && levels.ContainsKey(lv))
+        .Select(x => new { label = x.Value<string>("label")!.Trim(), words = x.Value<string>("keywords") ?? "", level = x.Value<string>("level")!, note = x.Value<string>("note") ?? "" })
+        .ToList();
     if (needs.Count == 0) { return; }
     var inHero = ViewData["inHero"] is true;
     var first = needs.FirstOrDefault(n => !n.urgent) ?? needs[0];
-    var json = JsonSerializer.Serialize(new { who, needs });
+    var json = JsonSerializer.Serialize(new { who, needs, symptoms, levels });
+    var sym = symptoms.Count > 0;
+    string NV(string key) => Umbraco.GetDictionaryValue("EHC.Navigator." + key) ?? "";
+    var uid = Model.ContentKey.ToString("N")[..8];
+    var levelNames = sym ? JsonSerializer.Serialize(new[] { "emergency", "urgent", "primary", "virtual", "self" }.ToDictionary(k => k, k => NV("Level." + k))) : null;
+    var facilitiesUrl = sym ? Umbraco.ContentAtRoot().FirstOrDefault(r => r.ContentType.Alias == "home")?.FirstChild(x => x.ContentType.Alias == "facilityFolder")?.Url() : null;
     var heading = c.Value<string>("heading");
     var intro = c.Value<string>("intro");
     const string pill = "nv-who rounded-full border border-white/25 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/10 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900";
@@ -42,7 +70,7 @@
     @* inHero: its own glass card (it sits on photos / gradients); as a section the questions sit directly on the band *@
     void Panel(bool header)
     {
-        <div class="relative text-white @(header ? "rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" : "")" data-navigator data-options="@json">
+        <div class="relative text-white @(header ? "rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_80px_rgba(0,0,0,.25)] backdrop-blur-xl" : "")" data-navigator data-options="@json"@HtmlAttributes.Data("sym-none", sym ? NV("NoMatch") : null)@HtmlAttributes.Data("sym-count", sym ? NV("Results") : null)@HtmlAttributes.Data("sym-levels", levelNames)@HtmlAttributes.Data("near-culture", sym ? System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName : null)@HtmlAttributes.Data("near-km", sym ? NV("Km") : null)@HtmlAttributes.Data("near-min", sym ? Umbraco.GetDictionaryValue("EHC.Er.MinutesShort") : null)@HtmlAttributes.Data("near-locating", sym ? NV("Locating") : null)@HtmlAttributes.Data("near-failed", sym ? Umbraco.GetDictionaryValue("EHC.Map.LocateFailed") : null)@HtmlAttributes.Data("near-all", facilitiesUrl)@HtmlAttributes.Data("near-all-label", sym ? Umbraco.GetDictionaryValue("EHC.Map.ShowAll") : null)>
             @if (header)
             {
             <div class="mb-5 flex items-center gap-3">
@@ -53,21 +81,29 @@
                 </div>
             </div>
             }
+            @* two views: the needs (main) and, with symptoms, the symptom guide; components/care-navigator.js slides between them.
+               The main view sets the height; the symptom view fills the same box and scrolls inside, so the card never jumps. *@
+            <div class="relative @(sym ? "min-h-[26rem]" : "")" data-nav-views>
+            <div data-nav-view="main">
             @if (who.Count > 1)
             {
-                <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
-                <div class="mb-5 flex flex-wrap gap-2" role="group" aria-labelledby="@("nvw-" + Model.ContentKey.ToString("N")[..8])">
+                <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvw-" + uid)"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">1</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Who")</p>
+                <div class="mb-5 flex flex-wrap gap-2" role="group" aria-labelledby="@("nvw-" + uid)">
                     @for (var i = 0; i < who.Count; i++)
                     {
                         <button type="button" class="@pill" aria-pressed="@(i == 0 ? "true" : "false")" data-who="@who[i].key">@who[i].label</button>
                     }
                 </div>
             }
-            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvn-" + Model.ContentKey.ToString("N")[..8])"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">@(who.Count > 1 ? "2" : "1")</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Need")</p>
-            <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-labelledby="@("nvn-" + Model.ContentKey.ToString("N")[..8])">
+            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal" id="@("nvn-" + uid)"><span class="me-1 inline-grid h-5 w-5 place-items-center rounded-full bg-white/20 text-xs">@(who.Count > 1 ? "2" : "1")</span>@Umbraco.GetDictionaryValue("EHC.Navigator.Need")</p>
+            <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-labelledby="@("nvn-" + uid)">
                 @foreach (var n in needs)
                 {
                     <button type="button" data-need="@n.key" aria-pressed="@(n == first ? "true" : "false")" class="flex flex-col items-start gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:bg-white/10 @(n.urgent ? "aria-pressed:border-emerg-500 aria-pressed:bg-emerg-600" : "aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900")"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-@n.icon" /></svg><span>@n.label</span></button>
+                }
+                @if (sym)
+                {
+                    <button type="button" data-need-symptom class="group flex flex-col items-start gap-1.5 rounded-2xl border border-dashed border-white/40 bg-white/5 p-3 text-start text-[.82rem] font-semibold transition hover:border-white hover:bg-white/10" hidden><span class="flex w-full items-center justify-between"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-search" /></svg><svg class="ico flip !h-4 !w-4 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100 rtl:group-hover:-translate-x-0.5" aria-hidden="true"><use href="#i-arrow" /></svg></span><span>@NV("BySymptom")</span></button>
                 }
             </div>
             <div class="rounded-2xl bg-white p-4 text-deep-950 dark:bg-night-900 dark:text-white" aria-live="polite" data-nav-out>
@@ -76,6 +112,65 @@
                     <div class="min-w-0 flex-1"><b data-nav-title class="block leading-snug">@first.title</b><span data-nav-text class="block text-sm text-slate-500 dark:text-slate-400">@first.text</span></div>
                 </div>
                 <a data-nav-cta href="@first.href" class="btn btn-primary mt-3 w-full btn-sm @(first.urgent ? "!bg-emerg-600 !shadow-none" : "") @(string.IsNullOrWhiteSpace(first.cta) ? "hidden" : "")">@first.cta</a>
+            </div>
+            </div>
+            @if (sym)
+            {
+                var order = new[] { "emergency", "urgent", "primary", "virtual", "self" };
+                <div class="absolute inset-0 flex flex-col" data-nav-view="symptom" hidden>
+                    <div class="mb-4 flex shrink-0 items-center gap-3">
+                        <button type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 transition hover:bg-white/10" data-nav-back aria-label="@NV("Back")"><svg class="ico !h-5 !w-5 ltr:rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+                        <div class="min-w-0">
+                            <h3 class="text-lg font-bold leading-tight focus:outline-none focus-visible:shadow-none" tabindex="-1" data-nav-sym-heading>@NV("SymptomTitle")</h3>
+                            <p class="text-sm text-white/75">@NV("SymptomIntro")</p>
+                        </div>
+                    </div>
+                    <label for="nvs-@uid" class="sr-only">@NV("SymptomLabel")</label>
+                    <div class="relative z-10 shrink-0">
+                        <svg class="ico pointer-events-none absolute start-4 top-1/2 !h-5 !w-5 -translate-y-1/2 text-slate-400" aria-hidden="true"><use href="#i-search" /></svg>
+                        <input id="nvs-@uid" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nvl-@uid" autocomplete="off"
+                               class="field !h-12 !rounded-2xl !ps-11" placeholder="@NV("SymptomPlaceholder")" data-nav-search>
+                        @* suggestions float over the chips, inside the view's box (never past the card's rounded edge) *@
+                        <ul id="nvl-@uid" role="listbox" aria-label="@NV("SymptomLabel")" class="absolute inset-x-0 top-full mt-2 max-h-60 overflow-y-auto rounded-2xl bg-white p-1.5 text-deep-950 shadow-[0_16px_40px_rgba(0,0,0,.3)] dark:bg-night-900 dark:text-white" data-nav-list hidden></ul>
+                    </div>
+                    <p class="sr-only" aria-live="polite" data-nav-count></p>
+
+                    <div class="nv-scroll nv-fade mt-3 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pb-6 pe-1 pt-2" data-nav-browse>
+                        @foreach (var lv in order)
+                        {
+                            var group = symptoms.Select((s, i) => (s, i)).Where(x => x.s.level == lv).ToList();
+                            if (group.Count == 0) { continue; }
+                            <div>
+                                <p class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal"><span class="h-2 w-2 rounded-full @(lv == "emergency" ? "bg-emerg-500" : "bg-white/60")" aria-hidden="true"></span>@NV("Level." + lv)</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (var x in group)
+                                    {
+                                        <button type="button" data-sym="@x.i" class="rounded-full border px-3.5 py-1.5 text-sm font-semibold transition @(lv == "emergency" ? "border-emerg-500/70 bg-emerg-600/30 hover:bg-emerg-600/50" : "border-white/25 bg-white/5 hover:bg-white/15")">@x.s.label</button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="nv-scroll mt-3 min-h-0 flex-1 overflow-y-auto pb-1 focus:outline-none focus-visible:shadow-none" tabindex="-1" data-nav-sym-out hidden>
+                    <div class="rounded-2xl bg-white p-4 text-deep-950 dark:bg-night-900 dark:text-white">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <b class="text-sm text-slate-500 dark:text-slate-400" data-nav-sym-name></b>
+                            <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold" data-nav-sym-badge></span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl" data-nav-sym-icon><svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg></span>
+                            <div class="min-w-0 flex-1"><b class="block leading-snug" data-nav-sym-title></b><span class="block text-sm text-slate-500 dark:text-slate-400" data-nav-sym-text></span></div>
+                        </div>
+                        <a href="#" class="btn btn-primary btn-sm mt-3 w-full" data-nav-sym-cta hidden></a>
+                        <button type="button" class="btn btn-ghost btn-sm mt-2 w-full" data-nav-near-btn hidden><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-locate" /></svg><span>@NV("ShowNearest")</span></button>
+                        <div class="mt-3 grid gap-2" aria-live="polite" data-nav-near hidden></div>
+                        <p class="mt-3 flex items-start gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400"><svg class="ico mt-0.5 !h-3.5 !w-3.5 shrink-0" aria-hidden="true"><use href="#i-shield" /></svg><span>@NV("Disclaimer")</span></p>
+                        <button type="button" class="link mt-2 text-sm font-semibold" data-nav-sym-again>@NV("AnotherSymptom")</button>
+                    </div>
+                    </div>
+                </div>
+            }
             </div>
         </div>
     }

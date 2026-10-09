@@ -1,0 +1,186 @@
+@* Contact form: complaints, questions, suggestions, volunteering, research and other messages (the same choices as the
+   form on ehc.med.sa). Beside it: what happens next, other ways to reach us (phone / e-mail, each optional) and a
+   not-for-emergencies notice. components/contact-form.js checks the fields, posts JSON to /api/contact and shows the
+   reference number; the server checks everything again (Contact/ContactController.cs). Messages are read in the
+   Messages section of the backoffice. Every editor field is optional. *@
+@using EHC.Web.Blocks
+@using EHC.Web.Contact
+@using Microsoft.Extensions.Options
+@using Umbraco.Cms.Core.Models
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
+@inject IOptions<ContactOptions> ContactSettings
+@{
+    var c = Model.Content;
+    string T(string key) => Umbraco.GetDictionaryValue("EHC.ContactForm." + key) ?? key;
+    var page = Umbraco.AssignedContentItem;
+    var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    var id = "cf-" + Model.ContentKey.ToString("N")[..8];
+    var phone = c.Value<string>("phone")?.Trim();
+    var phoneHref = phone is null ? "" : new string(phone.Where(ch => char.IsDigit(ch) || ch == '+').ToArray());
+    var email = c.Value<string>("email")?.Trim();
+    if (email is not null && !System.Net.Mail.MailAddress.TryCreate(email, out _)) { email = null; }
+    var privacy = c.Value<Link>("privacyLink");
+    if (string.IsNullOrWhiteSpace(privacy?.Url)) { privacy = null; }
+    var success = c.Value<string>("successText");
+    if (string.IsNullOrWhiteSpace(success)) { success = T("SuccessText"); }
+    var consent = privacy is null ? null : T("Consent").Split("{0}", 2);
+    var months = Math.Clamp(ContactSettings.Value.RetentionMonths, 1, 120);
+    string Err(string field) => id + "-" + field + "-e";
+}
+@* phones: heading and emergency notice, the form, then the rest; wide screens: those two columns side by side *@
+<div class="wrap grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8">
+    <div class="rv flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
+        @await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), c.Value<string>("intro")))
+        <p class="flex items-start gap-3 rounded-2xl bg-emerg-50 p-4 text-sm font-semibold text-emerg-600 ring-1 ring-emerg-600/20 dark:bg-emerg-500/15 dark:text-red-200">
+            <svg class="ico mt-0.5 shrink-0" aria-hidden="true"><use href="#i-er" /></svg>@T("Emergency")
+        </p>
+    </div>
+
+    <div class="rv order-last flex flex-col gap-8 lg:order-none lg:col-start-1 lg:row-start-2">
+        <div>
+            <h3 class="mb-4 font-bold text-deep-900 dark:text-white">@T("NextTitle")</h3>
+            <ol class="grid gap-4">
+                @for (var i = 1; i <= 3; i++)
+                {
+                    <li class="flex items-start gap-3.5">
+                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200" aria-hidden="true">@i</span>
+                        <span class="pt-1 text-slate-700 dark:text-slate-300">@T("Next" + i)</span>
+                    </li>
+                }
+            </ol>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(phone) || email is not null)
+        {
+            <div>
+                <h3 class="mb-4 font-bold text-deep-900 dark:text-white">@T("OtherWays")</h3>
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                    @if (!string.IsNullOrWhiteSpace(phone))
+                    {
+                        <a href="tel:@phoneHref" class="group flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:hover:border-brand-400">
+                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-phone" /></svg></span>
+                            <span class="grid">
+                                <span class="text-sm text-slate-600 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Facility.Phone")</span>
+                                <span class="font-bold text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300" dir="ltr">@phone</span>
+                            </span>
+                        </a>
+                    }
+                    @if (email is not null)
+                    {
+                        <a href="mailto:@email" class="group flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:hover:border-brand-400">
+                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-mail" /></svg></span>
+                            <span class="grid min-w-0">
+                                <span class="text-sm text-slate-600 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Contact.Email")</span>
+                                <span class="break-all font-bold text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@email</span>
+                            </span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="rv card scroll-mt-28 p-5 shadow-soft sm:p-8 lg:col-start-2 lg:row-span-2 lg:row-start-1" data-contact-form data-page="@(page?.Key)" data-culture="@culture" data-sending="@T("Sending")"
+         data-error-send="@T("Error.send")" data-error-busy="@T("Error.busy")" data-counter="@T("CharactersLeft")" data-copied="@T("Copied")">
+        @* shown by the script: without it a plain submit would put the answers in the address bar *@
+        <form class="grid gap-7" novalidate data-contact-step="form" aria-describedby="@(id)-req" hidden>
+            <div class="rounded-2xl border border-emerg-600/40 bg-emerg-50 p-5 focus:outline-none focus-visible:shadow-none dark:bg-emerg-500/15" tabindex="-1" data-contact-summary hidden>
+                <h3 class="font-bold text-emerg-600 dark:text-red-200">@T("ErrorSummary")</h3>
+                <ul class="mt-2 grid list-disc gap-1 ps-5 text-sm font-semibold" data-contact-summary-list></ul>
+            </div>
+
+            <fieldset aria-describedby="@Err("service")">
+                <legend class="mb-4 text-lg font-bold text-deep-900 dark:text-white">@T("Service")</legend>
+                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach (var s in ContactText.Services)
+                    {
+                        <label class="group relative flex cursor-pointer">
+                            <input type="radio" name="service" value="@s.Key" required class="peer absolute inset-0 m-0 cursor-pointer opacity-0" data-contact-field="service">
+                            <span class="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition group-hover:border-brand-500 peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:ring-1 peer-checked:ring-brand-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2 dark:border-white/15 dark:bg-white/5 dark:peer-checked:border-brand-400 dark:peer-checked:bg-brand-500/15 dark:peer-checked:ring-brand-400 dark:peer-focus-visible:ring-offset-night-900">
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-soft text-brand-600 transition group-has-[:checked]:bg-brand-600 group-has-[:checked]:text-white dark:bg-white/10 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-@s.Icon" /></svg></span>
+                                <span class="grid gap-0.5">
+                                    <span class="font-bold text-deep-900 dark:text-white">@T("Service." + s.Key)</span>
+                                    <span class="text-sm leading-snug text-slate-600 dark:text-slate-400">@T("ServiceHint." + s.Key)</span>
+                                </span>
+                            </span>
+                        </label>
+                    }
+                </div>
+                <p id="@Err("service")" class="mt-2 text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="service" hidden>@T("Error.service")</p>
+            </fieldset>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <div class="grid content-start gap-2">
+                    <label for="@(id)-name" class="text-sm font-semibold text-deep-900 dark:text-white">@T("Name")</label>
+                    <input id="@(id)-name" name="name" type="text" class="field" autocomplete="name" dir="auto" required minlength="@ContactText.MinName" maxlength="@ContactText.MaxName" aria-describedby="@Err("name")" data-contact-field="name">
+                    <p id="@Err("name")" class="text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="name" hidden>@T("Error.name")</p>
+                </div>
+                <div class="grid content-start gap-2">
+                    <label for="@(id)-phone" class="text-sm font-semibold text-deep-900 dark:text-white">@T("Phone")</label>
+                    <input id="@(id)-phone" name="phone" type="tel" class="field text-start" inputmode="tel" autocomplete="tel" dir="ltr" required maxlength="30" placeholder="05XXXXXXXX" aria-describedby="@(id)-phone-h @Err("phone")" data-contact-field="phone">
+                    <p id="@(id)-phone-h" class="sr-only">@T("PhoneHint")</p>
+                    <p id="@Err("phone")" class="text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="phone" hidden>@T("Error.phone")</p>
+                </div>
+                <div class="grid content-start gap-2 sm:col-span-2">
+                    <label for="@(id)-email" class="text-sm font-semibold text-deep-900 dark:text-white">@T("Email")</label>
+                    <input id="@(id)-email" name="email" type="email" class="field text-start" autocomplete="email" dir="ltr" required maxlength="@ContactText.MaxEmail" placeholder="name@example.com" aria-describedby="@Err("email")" data-contact-field="email">
+                    <p id="@Err("email")" class="text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="email" hidden>@T("Error.email")</p>
+                </div>
+                <div class="grid content-start gap-2 sm:col-span-2">
+                    <label for="@(id)-message" class="text-sm font-semibold text-deep-900 dark:text-white">@T("Message")</label>
+                    <p id="@(id)-message-h" class="text-sm text-slate-600 dark:text-slate-400">@T("MessageHint")</p>
+                    <textarea id="@(id)-message" name="message" rows="6" class="field h-auto min-h-40 resize-y py-3 leading-relaxed" dir="auto" required minlength="@ContactText.MinMessage" maxlength="@ContactText.MaxMessage" aria-describedby="@(id)-message-h @(id)-message-c @Err("message")" data-contact-field="message"></textarea>
+                    <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                        <p id="@Err("message")" class="text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="message" hidden>@T("Error.message")</p>
+                        <p id="@(id)-message-c" class="ms-auto text-xs tabular-nums text-slate-500 dark:text-slate-400" data-contact-counter data-max="@ContactText.MaxMessage">@T("CharactersLeft").Replace("{0}", ContactText.MaxMessage.ToString())</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid gap-2">
+                <div class="flex items-start gap-3">
+                    <input id="@(id)-consent" name="consent" type="checkbox" required class="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand-600" aria-describedby="@Err("consent")" data-contact-field="consent">
+                    <label for="@(id)-consent" class="cursor-pointer text-sm text-slate-700 dark:text-slate-300">
+                        @if (consent is { Length: 2 })
+                        {
+                            @consent[0]<a href="@(privacy!.Url)" target="@privacy.Target" rel="@(privacy.Target == "_blank" ? "noopener" : null)" class="link font-semibold">@privacy.Name</a>@consent[1]
+                        }
+                        else
+                        {
+                            @T("ConsentNoLink")
+                        }
+                    </label>
+                </div>
+                <p id="@Err("consent")" class="text-sm font-semibold text-emerg-600 dark:text-red-200" data-contact-error="consent" hidden>@T("Error.consent")</p>
+            </div>
+
+            @* honeypot: invisible to people, filled in by bots *@
+            <div class="absolute -start-[9999px]" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+            <div class="grid gap-4 border-t border-slate-200 pt-6 dark:border-white/10 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+                <p class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400 sm:max-w-[26rem]"><svg class="ico mt-0.5 !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-shield" /></svg><span><span id="@(id)-req">@T("AllRequired")</span> @T("Privacy").Replace("{0}", months.ToString())</span></p>
+                <button type="submit" class="btn btn-primary btn-lg w-full sm:w-auto" data-contact-submit><svg class="ico" aria-hidden="true"><use href="#i-send" /></svg><span data-contact-submit-text>@T("Send")</span></button>
+            </div>
+            <p class="text-sm font-semibold text-emerg-600 dark:text-red-200" role="alert" data-contact-fail hidden></p>
+        </form>
+
+        <div class="grid justify-items-center gap-5 py-6 text-center" data-contact-step="done" hidden>
+            <span class="grid h-16 w-16 place-items-center rounded-full bg-brand-600 text-white shadow-glow" aria-hidden="true"><svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10" /></svg></span>
+            <h3 class="text-2xl font-extrabold text-deep-900 focus:outline-none focus-visible:shadow-none dark:text-white" tabindex="-1" data-contact-done-title>@T("SuccessTitle")</h3>
+            <p class="max-w-[30rem] whitespace-pre-line text-slate-600 dark:text-slate-400">@success</p>
+            <div class="grid w-full max-w-sm gap-1.5 rounded-2xl border border-dashed border-brand-500 bg-brand-50 p-5 dark:bg-brand-500/10">
+                <span class="text-sm font-semibold text-slate-600 dark:text-slate-400">@T("Reference")</span>
+                <span class="flex items-center justify-center gap-3">
+                    <b class="text-2xl font-extrabold tracking-wider text-deep-900 dark:text-white" dir="ltr" data-contact-reference></b>
+                    <button type="button" class="btn btn-ghost btn-sm" data-contact-copy hidden>@T("Copy")</button>
+                </span>
+                <span class="text-sm text-slate-600 dark:text-slate-400">@T("ReferenceHint")</span>
+            </div>
+            <button type="button" class="btn btn-ghost" data-contact-again>@T("Another")</button>
+        </div>
+        <noscript><p class="mt-6 rounded-2xl bg-soft p-4 text-sm font-semibold text-deep-900 dark:bg-white/5 dark:text-white">@T("NoScript")</p></noscript>
+    </div>
+</div>
+<script src="~/assets/js/components/contact-form.js" asp-append-version="true" defer></script>

@@ -104,6 +104,7 @@ public static class ComponentCatalog
         new("visitorGuideBlock", "data", "clock", "دليل الزوار", "Visitor guide", "أوقات الزيارة والتعليمات وما يجب إحضاره.", "Visiting hours, guidelines and what to bring."),
         new("healthLibraryBlock", "data", "book", "المكتبة الصحية", "Health library", "أحدث المقالات التثقيفية، لموضوع واحد أو للجميع.", "Latest patient-education articles, one topic or all."),
         new("contactBlock", "data", "phone", "بيانات التواصل", "Contact details", "عنوان وهواتف وبريد وخريطة.", "Address, phones, email and map."),
+        new("contactFormBlock", "data", "mail", "نموذج التواصل", "Contact form", "شكاوى واستفسارات واقتراحات برقم مرجعي، تُقرأ في قسم الرسائل.", "Complaints, questions and suggestions with a reference number, read in the Messages section."),
         new("openingHoursBlock", "data", "clock", "أوقات العمل", "Opening hours", "أيام وساعات مع شريط الطوارئ.", "Days and hours with emergency strip."),
         new("timetableBlock", "data", "cal", "جدول مواعيد", "Timetable", "مواعيد مجمعة حسب اليوم مع فلتر.", "Times grouped by day with a filter."),
         new("eventsBlock", "data", "cal", "فعاليات", "Events", "تواريخ ميلادية وهجرية.", "Gregorian and Hijri dates."),

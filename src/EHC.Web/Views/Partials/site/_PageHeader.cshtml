@@ -1,7 +1,10 @@
 @* Inner-page header: breadcrumb + title (pageTitle or name) + intro, as a soft band or over the header image
-   (pageHeaderComposition: headerStyle = band | image). Detail pages may pass an eyebrow and extra content via ViewData. *@
+   (pageHeaderComposition: headerStyle = band | image). The band is toned by section and carries the page's icon
+   (PageMotif). Detail pages may pass an eyebrow and extra content via ViewData. *@
 @using EHC.Web.Blocks
+@using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
+@inject ISiteContext Site
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     var node = Model;
@@ -12,25 +15,29 @@
     var crumbs = node.Ancestors().Reverse().ToList();
     var hasImage = node.Value<string>("headerStyle") == "image" && node.Value<MediaWithCrops>("headerImage") is not null;
     var bg = hasImage ? MediaBackground.ForHeader(node.Value<MediaWithCrops>("headerImage")) : null;
+    var motif = hasImage ? null : PageMotif.For(node, Site.Get(node).MegaMenu);
 }
-<div class="@(hasImage ? "media-hero text-white" : "bg-soft dark:bg-night-900/60")" style="@(bg?.FocalStyle)"@HtmlAttributes.Data("overlay", bg?.Overlay)@HtmlAttributes.Data("strength", bg?.Strength)>
+<div class="@(hasImage ? "media-hero text-white" : "page-band")" data-tone="@(motif?.Tone)" style="@(bg?.FocalStyle)"@HtmlAttributes.Data("overlay", bg?.Overlay)@HtmlAttributes.Data("strength", bg?.Strength)>
     @if (bg is not null) { @await Html.PartialAsync("site/_MediaBackground", bg) }
     <div class="wrap relative py-10 lg:py-14">
-        @if (crumbs.Count > 0)
-        {
-            <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-5 text-sm">
-                <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-600 dark:text-slate-400")">
-                    @foreach (var a in crumbs)
-                    {
-                        <li class="flex items-center gap-1.5"><a href="@a.Url()" class="inline-block py-1 hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>
-                    }
-                    <li aria-current="page" class="font-semibold @(hasImage ? "text-white" : "text-deep-900 dark:text-white")">@node.Name</li>
-                </ol>
-            </nav>
-        }
-        @if (!string.IsNullOrWhiteSpace(eyebrow)) { <div class="eyebrow @(hasImage ? "!text-white" : "")">@eyebrow</div> }
-        <h1 class="h1 max-w-4xl @(hasImage ? "!text-white" : "")">@title</h1>
-        @if (!string.IsNullOrWhiteSpace(intro)) { <p class="lead mt-4 max-w-[680px] text-[1.15rem] @(hasImage ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@intro</p> }
-        @if (ViewData["extra"] is Microsoft.AspNetCore.Html.IHtmlContent extra) { <div class="mt-5">@extra</div> }
+        @if (motif is not null) { @await Html.PartialAsync("site/_PageBandArt", motif) }
+        <div class="@(motif is not null ? "lg:pe-80" : null)">
+            @if (crumbs.Count > 0)
+            {
+                <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-5 text-sm">
+                    <ol class="flex flex-wrap items-center gap-1.5 @(hasImage ? "text-white/80" : "text-slate-600 dark:text-slate-400")">
+                        @foreach (var a in crumbs)
+                        {
+                            <li class="flex items-center gap-1.5"><a href="@a.Url()" class="inline-block py-1 hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li>
+                        }
+                        <li aria-current="page" class="font-semibold @(hasImage ? "text-white" : "text-deep-900 dark:text-white")">@node.Name</li>
+                    </ol>
+                </nav>
+            }
+            @if (!string.IsNullOrWhiteSpace(eyebrow)) { <div class="eyebrow @(hasImage ? "!text-white" : "")">@eyebrow</div> }
+            <h1 class="h1 max-w-4xl @(hasImage ? "!text-white" : "")">@title</h1>
+            @if (!string.IsNullOrWhiteSpace(intro)) { <p class="lead mt-4 max-w-[680px] text-[1.15rem] @(hasImage ? "text-white/90" : "text-slate-600 dark:text-slate-400")">@intro</p> }
+            @if (ViewData["extra"] is Microsoft.AspNetCore.Html.IHtmlContent extra) { <div class="mt-5">@extra</div> }
+        </div>
     </div>
 </div>

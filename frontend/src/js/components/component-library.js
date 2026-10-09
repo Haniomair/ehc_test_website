@@ -15,12 +15,11 @@
   var empty = root.querySelector('[data-library-empty]');
   var dlg = document.querySelector('[data-library-dialog]');
   var body = dlg && dlg.querySelector('[data-library-dialog-body]');
-  var header = document.getElementById('hdr');
   var category = '', current = -1, opener = null;
 
   root.classList.add('lib-js');
   if (toolbar) toolbar.hidden = false;
-  if (header) root.style.setProperty('--header-h', header.offsetHeight + 'px');
+  // --header-h (where the toolbar sticks) is kept up to date by site.js as the header slims or hides
   live.forEach(function (t) {
     t.querySelector('[data-library-stage]').inert = true;
     var btn = t.querySelector('[data-library-open]');

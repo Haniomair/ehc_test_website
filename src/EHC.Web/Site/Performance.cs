@@ -10,7 +10,8 @@ namespace EHC.Web.Site;
 
 /// <summary>
 /// Brotli/gzip for pages, CSS/JS/SVG/JSON/XML, and long-lived caching for versioned front-end assets
-/// (asp-append-version adds ?v=hash, so a changed file gets a new URL). The backoffice is left alone.
+/// (asp-append-version adds ?v=hash, so a changed file gets a new URL). Backoffice extensions in App_Plugins are
+/// revalidated on every load so a deploy shows up without clearing the browser cache.
 /// </summary>
 public static class Performance
 {
@@ -46,6 +47,19 @@ public static class Performance
                                 context.Response.Headers.CacheControl = versioned || path.StartsWithSegments("/assets/fonts")
                                     ? "public, max-age=31536000, immutable"
                                     : "public, max-age=86400";
+                            }
+                            return Task.CompletedTask;
+                        });
+                    }
+                    else if (path.StartsWithSegments("/App_Plugins"))
+                    {
+                        // backoffice extensions are loaded by unversioned URLs: revalidate every time (a 304 via the
+                        // ETag when unchanged), or the browser keeps running the previous version after a deploy
+                        context.Response.OnStarting(() =>
+                        {
+                            if (context.Response.StatusCode is StatusCodes.Status200OK or StatusCodes.Status304NotModified)
+                            {
+                                context.Response.Headers.CacheControl = "no-cache";
                             }
                             return Task.CompletedTask;
                         });

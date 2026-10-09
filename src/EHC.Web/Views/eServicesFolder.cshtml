@@ -17,10 +17,10 @@
     @if (used.Count > 1)
     {
         <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.EServices.Audiences")">
-            <a class="chip" href="@ListingQuery.With(req, "audience", null)" aria-current="@(audience is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
+            <a class="chip inline-flex items-center gap-1.5 whitespace-nowrap" href="@ListingQuery.With(req, "audience", null)" aria-current="@(audience is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
             @foreach (var a in used)
             {
-                <a class="chip" href="@ListingQuery.With(req, "audience", a.Key)" aria-current="@(audience == a.Key ? "true" : null)"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-@a.Icon" /></svg>@Umbraco.GetDictionaryValue("EHC.EServices.Audience." + a.Key)</a>
+                <a class="chip inline-flex items-center gap-1.5 whitespace-nowrap" href="@ListingQuery.With(req, "audience", a.Key)" aria-current="@(audience == a.Key ? "true" : null)"><svg class="ico !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-@a.Icon" /></svg>@Umbraco.GetDictionaryValue("EHC.EServices.Audience." + a.Key)</a>
             }
         </nav>
     }

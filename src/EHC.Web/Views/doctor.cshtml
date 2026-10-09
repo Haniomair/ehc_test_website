@@ -4,6 +4,8 @@
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.PublishedContent
 @using Umbraco.Cms.Core.Strings
+@using EHC.Web.Site
+@inject ISiteContext Site
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "master.cshtml";
@@ -18,9 +20,11 @@
     var bio = Model.Value<IHtmlEncodedString>("bio")?.ToHtmlString();
     var booking = Model.Value<Link>("bookingUrl");
     var crumbs = Model.Ancestors().Reverse().ToList();
+    var motif = PageMotif.For(Model, Site.Get(Model).MegaMenu);
 }
-<div class="bg-soft dark:bg-night-900/60">
-    <div class="wrap py-10 lg:py-14">
+<div class="page-band" data-tone="@motif.Tone">
+    <div class="wrap relative py-10 lg:py-14">
+        @await Html.PartialAsync("site/_PageBandArt", motif with { Icon = null })
         <nav aria-label="@Umbraco.GetDictionaryValue("EHC.Common.Breadcrumb")" class="mb-7 text-sm">
             <ol class="flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-400">
                 @foreach (var a in crumbs) { <li class="flex items-center gap-1.5"><a href="@a.Url()" class="inline-block py-1 hover:underline">@a.Name</a><svg class="ico flip !h-3.5 !w-3.5 opacity-60" aria-hidden="true"><use href="#i-arrow" /></svg></li> }

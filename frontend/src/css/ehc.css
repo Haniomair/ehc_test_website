@@ -103,15 +103,16 @@
   .field-select:has(option:checked:not([value="all"])) + svg { @apply text-white; }
   .field-select option { @apply bg-white text-deep-900 dark:bg-night-900 dark:text-white; }
 
-  .mega-link { @apply flex gap-3 rounded-2xl p-3 transition hover:bg-brand-50 dark:hover:bg-white/5; }
+  .mega-link { @apply flex gap-3 rounded-2xl px-2.5 py-2 transition hover:bg-brand-50 dark:hover:bg-white/5; }
   .mega-link b { @apply block text-[.93rem] font-semibold text-deep-900 dark:text-white; }
   .mega-link span.d { @apply block text-[.8rem] leading-snug text-slate-500 dark:text-slate-400; }
-  .mega-ic { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300; }
+  .mega-ic { @apply grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300; }
   /* rich text from the restricted editor (richTextBlock, content pages) */
   /* decorative ticker words (marqueeBlock) are generated content, not page text */
   .marquee-word::before { content: attr(data-word); }
   .rte { @apply text-[1.05rem] leading-relaxed text-slate-700 dark:text-slate-300; }
   .rte > * + * { margin-top: 1em; }
+  .rte > :first-child { margin-top: 0; }
   .rte h2 { @apply mt-10 text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-snug text-deep-900 dark:text-white; }
   .rte h3 { @apply mt-8 text-xl font-bold text-deep-900 dark:text-white; }
   .rte ul { @apply list-disc ps-6; }
@@ -131,7 +132,9 @@ html[dir="rtl"] .flip { transform: scaleX(-1); }
 :lang(ar) .text-stroke { color: var(--brand-100); -webkit-text-stroke: 0; }
 :lang(ar).dark .text-stroke, :lang(ar) .dark .text-stroke { color: color-mix(in srgb, var(--brand-300) 22%, transparent); }
 /* two padded sections on the page background in a row: the gap is one section's spacing, not both added together */
-.sec-plain + .sec-plain { padding-top: 0; }
+.sec-plain:not([data-block="pageNavBlock"]) + .sec-plain { padding-top: 0; }
+/* a contents bar with too few headings to show (page-nav.js leaves it hidden) takes no space */
+section[data-block="pageNavBlock"]:has(> [data-page-nav][hidden]) { display: none; }
 /* quick actions overlapping the hero: the part of the bar below the hero sits on the next section's background
    (no white strip in between), and that section starts closer, the bar already separates it from the hero */
 section[data-block="quickActionsBlock"]:has(+ section.bg-soft) { background-color: var(--color-soft); }
@@ -361,6 +364,66 @@ html[dir="rtl"] .finder-row::after { transform: scaleX(-1); }
 .mega-panel { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .2s ease, transform .2s ease, visibility .2s; }
 .mega-panel.open { opacity: 1; visibility: visible; transform: none; }
 
+/* ------------------------------------------------ menu motion (site.js). Transform and opacity only; the global
+   reduced-motion and .a11y-still rules switch all of it off, and site.js skips its own animations then too. */
+/* the panels share one background that carries the fill, the shadow and the strip along the bottom edge; site.js sets
+   its height to the open panel, and between panels it morphs with the content slide's duration and easing */
+.mega-bg { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .2s ease, transform .2s ease, visibility .2s, height .52s cubic-bezier(.65, 0, .35, 1); }
+#megaWrap.is-open .mega-bg { opacity: 1; visibility: visible; transform: none; }
+/* first open: the links rise in one after another and the featured card slides in from the inline end. Transitions,
+   not keyframe animations: animated items inside the panel could stay painted see-through in Chromium. A closing panel
+   keeps its items in place while it fades (the delays outlast the fade). */
+.mega-anim { opacity: 0; transform: translateY(8px); transition: opacity .22s ease, transform .26s cubic-bezier(.2, .8, .2, 1); transition-delay: calc(min(var(--i, 0), 10) * 16ms + 30ms); }
+.mega-feat { --mega-from: 24px; opacity: 0; transform: translateX(var(--mega-from)); transition: opacity .28s ease .08s, transform .36s cubic-bezier(.2, .8, .2, 1) .08s; }
+[dir="rtl"] .mega-feat { --mega-from: -24px; }
+.mega-panel.open :is(.mega-anim, .mega-feat) { opacity: 1; transform: none; }
+/* moving from one open panel to the next slides the contents like a carousel instead (site.js): the new panel is there
+   at once (no fade, no stagger) and the old one stays fully visible until its content has slid out */
+.mega-panel.open.mega-switch, .mega-panel.open.mega-switch :is(.mega-anim, .mega-feat) { transition: none; }
+.mega-panel.mega-leaving { opacity: 1; visibility: visible; transform: none; transition: none; }
+.mega-panel.mega-leaving :is(.mega-anim, .mega-feat) { opacity: 1; transform: none; transition: none; }
+.mega-panel:not(.open) :is(.anim-bob, .anim-spin-slow) { animation-play-state: paused; }
+
+/* links: the icon fills and lifts, an arrow slides in */
+.mega-link .mega-ic { transition: background-color .2s ease, color .2s ease, transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease; }
+.mega-link:is(:hover, :focus-visible) .mega-ic { @apply bg-brand-600 text-white shadow-glow; transform: translateY(-2px); }
+.mega-ic.is-emerg { @apply bg-emerg-50 text-emerg-600 dark:bg-emerg-500/15 dark:text-red-300; }
+.mega-link:is(:hover, :focus-visible) .mega-ic.is-emerg { @apply bg-emerg-600 text-white; box-shadow: none; }
+.mega-go { @apply text-brand-500 dark:text-brand-300; opacity: 0; translate: -6px 0; transition: opacity .2s ease, translate .25s cubic-bezier(.2, .8, .2, 1); }
+[dir="rtl"] .mega-go { translate: 6px 0; }
+.mega-link:is(:hover, :focus-visible) .mega-go { opacity: 1; translate: 0 0; }
+
+/* top items: one highlight slides between them (site.js); the items' own hover colour is the fallback without it */
+.nav-pill { transition: transform .38s cubic-bezier(.2, .8, .2, 1), width .38s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.nav-pill.is-on { opacity: 1; }
+.nav-pill.no-move { transition: opacity .2s ease; }
+[data-nav].pill-on .mtrig { background-color: transparent; }
+
+/* header: slimmer with a soft shadow once the page has scrolled, out of view while scrolling down (site.js) */
+#hdr { transition: transform .32s cubic-bezier(.2, .8, .2, 1), box-shadow .3s ease; }
+#hdr.hdr-scrolled { box-shadow: 0 10px 30px rgb(10 42 79 / .08); }
+#hdr.hdr-hidden { transform: translateY(-100%); }
+.hdr-bar, .hdr-logo { transition: height .3s cubic-bezier(.2, .8, .2, 1); }
+#hdr.hdr-scrolled .hdr-bar { height: 58px; }
+#hdr.hdr-scrolled .hdr-logo { height: 32px; }
+@media (min-width: 64rem) {
+  #hdr.hdr-scrolled .hdr-bar { height: 4rem; }
+  #hdr.hdr-scrolled .hdr-logo { height: 42px; }
+}
+
+/* the app card's phone: only when its area is tall enough to show the screen, never as a thin sliver */
+.app-phone-area { container-type: size; }
+@container (max-height: 88px) { .app-phone { display: none; } }
+
+/* a light sweep across store buttons on hover */
+.shine { position: relative; overflow: hidden; isolation: isolate; }
+.shine::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / .22) 50%, transparent 65%); translate: -110% 0; transition: translate .7s ease; }
+.shine:is(:hover, :focus-visible)::after { translate: 110% 0; }
+
+/* mobile drawer: its items rise in one after another while the sheet slides in (transitions, as in the mega menu) */
+#drawer .drawer-item { opacity: 0; transform: translateY(10px); transition: opacity .3s ease, transform .36s cubic-bezier(.2, .8, .2, 1); transition-delay: calc(min(var(--i, 0), 10) * 30ms + 120ms); }
+#drawer.is-open .drawer-item { opacity: 1; transform: none; }
+
 @keyframes ehc-spin { to { transform: rotate(360deg); } }
 @keyframes ehc-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes ehc-mq { to { transform: translateX(-50%); } }
@@ -372,6 +435,92 @@ html[dir="rtl"] .finder-row::after { transform: scaleX(-1); }
   *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .rv, html.rv-on .rv:not(.in) { opacity: 1; transform: none; }
 }
+
+/* ---------------------------------------------------------------------
+   PAGE BAND — inner-page header without a photo (site/_PageHeader, doctor)
+   A soft gradient toned by section (data-tone, see PageMotif), a dot field
+   that fades out before the text, a glow and the brand mark behind the
+   page's icon in rings at the end side. Colours are roles only, so occasion
+   themes recolour it; the decoration is aria-hidden and below the text.
+   --------------------------------------------------------------------- */
+.page-band {
+  --tone: var(--brand-500); --end: 100%; --start: 0%;
+  position: relative; isolation: isolate; overflow: hidden;
+  background:
+    radial-gradient(560px 340px at var(--end) 0%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 70%),
+    radial-gradient(520px 260px at var(--start) 115%, color-mix(in srgb, var(--brand-400) 9%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--soft), color-mix(in srgb, var(--tone) 7%, var(--soft)));
+}
+html[dir="rtl"] .page-band { --end: 0%; --start: 100%; }
+.page-band[data-tone="support"] { --tone: var(--support-500); }
+.page-band[data-tone="accent"] { --tone: var(--accent-500); }
+.page-band[data-tone="highlight"] { --tone: var(--highlight-500); }
+.page-band::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--tone) 30%, transparent) 1.2px, transparent 1.7px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to left, #000 0%, transparent 55%);
+}
+html[dir="rtl"] .page-band::before { mask-image: linear-gradient(to right, #000 0%, transparent 55%); }
+.page-band::after {
+  content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tone) 35%, transparent) 50%, transparent);
+}
+.page-band-art { position: absolute; inset-block: 0; inset-inline-end: 0; z-index: -1; display: grid; width: 12rem; place-items: center; pointer-events: none; translate: 30% -18%; }
+html[dir="rtl"] .page-band-art { translate: -30% -18%; }
+.page-band-mark { position: absolute; width: 17rem; aspect-ratio: 1; opacity: .07; }
+.page-band-emblem { display: none; }
+@media (min-width: 1024px) {
+  .page-band-art { width: 20rem; translate: none; }
+  html[dir="rtl"] .page-band-art { translate: none; }
+  .page-band-mark { width: 27rem; }
+  .page-band-emblem {
+    position: relative; display: grid; place-items: center; width: 8.5rem; height: 8.5rem; border-radius: 9999px;
+    color: var(--tone); background: color-mix(in srgb, white 78%, transparent); backdrop-filter: blur(6px);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tone) 20%, transparent),
+      0 0 0 1.5rem color-mix(in srgb, var(--tone) 7%, transparent),
+      0 0 0 3rem color-mix(in srgb, var(--tone) 4%, transparent),
+      0 22px 44px -20px color-mix(in srgb, var(--tone) 55%, transparent);
+  }
+  .page-band-emblem .ico { width: 3.5rem; height: 3.5rem; stroke-width: 1.5; }
+}
+.dark .page-band {
+  background:
+    radial-gradient(560px 340px at var(--end) 0%, color-mix(in srgb, var(--tone) 22%, transparent), transparent 70%),
+    radial-gradient(520px 260px at var(--start) 115%, color-mix(in srgb, var(--brand-400) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--night-900), color-mix(in srgb, var(--tone) 8%, var(--night-900)));
+}
+.dark .page-band::before { background-image: radial-gradient(color-mix(in srgb, var(--tone) 40%, transparent) 1.2px, transparent 1.7px); }
+.dark .page-band-mark { filter: brightness(0) invert(1); opacity: .05; }
+.dark .page-band-emblem { color: color-mix(in srgb, var(--tone) 60%, white); background: color-mix(in srgb, white 6%, transparent); }
+
+/* preview notice (site/_PreviewNotice): a page with no content. A sketched blank page with a note badge; the badge
+   dot's pulse stops under reduced motion / a11y-still. */
+.preview-art { position: relative; width: 9.5rem; height: 7rem; }
+.preview-sheet {
+  position: absolute; inset: 0; display: grid; align-content: center; gap: .55rem; padding: 1rem 1.15rem;
+  border-radius: 1.1rem; background: #fff; rotate: -4deg;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-500) 18%, transparent), 0 18px 36px -20px color-mix(in srgb, var(--brand-500) 55%, transparent);
+}
+html[dir="rtl"] .preview-sheet { rotate: 4deg; }
+.preview-sheet i {
+  display: block; height: .55rem; border-radius: 9999px;
+  background: var(--brand-100);
+}
+.preview-sheet i:not([class]) { width: 100%; }
+.preview-badge {
+  position: absolute; inset-inline-end: -.9rem; bottom: -.9rem; display: grid; place-items: center; width: 3.25rem; height: 3.25rem;
+  border-radius: 9999px; background: var(--brand-600); color: #fff;
+  box-shadow: 0 0 0 .4rem #fff, 0 12px 24px -10px color-mix(in srgb, var(--brand-600) 70%, transparent);
+}
+.preview-badge .ico { width: 1.5rem; height: 1.5rem; }
+.preview-dot { width: .5rem; height: .5rem; border-radius: 9999px; background: var(--accent-500); animation: ehc-preview-dot 1.6s ease-in-out infinite; }
+@keyframes ehc-preview-dot { 50% { box-shadow: 0 0 0 .3rem color-mix(in srgb, var(--accent-500) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .preview-dot { animation: none; } }
+.dark .preview-sheet { background: color-mix(in srgb, white 5%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent); }
+.dark .preview-sheet i { background: color-mix(in srgb, white 10%, transparent); }
+.dark .preview-badge { box-shadow: 0 0 0 .4rem var(--night-950); }
 
 /* ---------------------------------------------------------------------
    MEDIA HEROES — image / video with a theme-aware overlay
@@ -539,6 +688,12 @@ html[dir="rtl"] .compare.is-ready .compare-after { clip-path: inset(0 var(--pos)
 .rte.rte-on-dark { color: rgb(255 255 255 / .9); }
 .rte.rte-on-dark :is(h2, h3, strong, a) { color: #fff; }
 
+/* "On this page" beside a long rich text (richTextBlock + components/rte-toc.js) */
+.rte-toc { position: sticky; top: calc(var(--header-h, 76px) + 1.5rem); max-height: calc(100vh - var(--header-h, 76px) - 3rem); overflow-y: auto; }
+.rte-toc-link { @apply -ms-px block border-s-2 border-transparent py-1.5 ps-4 text-sm leading-snug text-slate-600 transition hover:border-slate-300 hover:text-deep-900 dark:text-slate-400 dark:hover:border-white/30 dark:hover:text-white; }
+.rte-toc-link[aria-current="true"] { @apply border-brand-500 font-semibold text-deep-900 dark:border-brand-300 dark:text-white; }
+.rte h2[id] { scroll-margin-top: calc(var(--header-h, 76px) + 1.5rem); }
+
 /* page contents bar (pageNavBlock + components/page-nav.js) */
 .page-nav-host { position: sticky; top: var(--header-h, 76px); z-index: 30; padding-block: 0 !important; }
 .page-nav-link { @apply block whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-soft hover:text-deep-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white; }
@@ -643,6 +798,14 @@ select.field { @apply pe-10; }
 .opt > input:focus-visible + span { @apply ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-night-900; }
 .opt-row { @apply flex; }
 .opt-row > span { @apply w-full rounded-xl px-4 py-3; }
+
+/* care navigator symptom view (components/care-navigator.js): a thin scrollbar that suits the dark band, and a soft fade
+   at the top and bottom edges of the chip list so it reads as scrollable */
+.nv-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / .35) transparent; }
+.nv-scroll::-webkit-scrollbar { width: 6px; }
+.nv-scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / .3); border-radius: 999px; }
+.nv-scroll::-webkit-scrollbar-track { background: transparent; }
+.nv-fade { mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 28px), transparent 100%); }
 
 /* health tools (Views/Partials/tools, components/health-tools.js): the card is a size container so the form and the
    result sit side by side only when the card itself is wide — also inside a narrow column */

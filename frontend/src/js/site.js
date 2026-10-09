@@ -13,6 +13,8 @@
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function on(action, fn) { $$('[data-action="' + action + '"]').forEach(function (el) { el.addEventListener('click', function (e) { fn(el, e); }); }); }
   var focusable = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
+  // no motion for visitors who asked for less (system setting, or "pause animations" in the accessibility panel)
+  function calm() { return html.classList.contains('a11y-still') || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
 
   // ---------- dark mode: explicit choice is remembered; otherwise follow the OS (Samsung Internet: dark, see theme-init.js) ----------
   var samsung = /SamsungBrowser/i.test(navigator.userAgent);
@@ -56,12 +58,28 @@
     if (ms) el._hideTimer = setTimeout(function () { el.classList.add('hidden'); }, ms); else el.classList.add('hidden');
   }
 
+  // ---------- dialogs that are not side panels (search): a quick zoom-and-fade in and out ----------
+  function zoomIn(el) {
+    var back = el.children[0], card = el.children[1];
+    if (calm() || !el.animate) return;
+    if (back) back.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' });
+    if (card) card.animate([{ opacity: 0, transform: 'translateY(10px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
+  function zoomOut(el) {
+    var back = el.children[0], card = el.children[1];
+    function done() { if (openModal !== el) el.classList.add('hidden'); }
+    if (calm() || !el.animate || !card) { done(); return; }
+    if (back) back.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    var a = card.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(6px) scale(.98)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    a.onfinish = function () { done(); el.getAnimations({ subtree: true }).forEach(function (x) { x.cancel(); }); };
+  }
+
   // ---------- modal helper (drawer, search): focus in, Tab trapped, Esc closes, focus returns ----------
   var openModal = null, returnTo = null;
   function showModal(el, focusEl) {
     if (!el) return;
     returnTo = document.activeElement;
-    if (el.classList.contains('panel')) reveal(el); else el.classList.remove('hidden');
+    if (el.classList.contains('panel')) reveal(el); else { el.getAnimations && el.getAnimations({ subtree: true }).forEach(function (x) { x.cancel(); }); el.classList.remove('hidden'); zoomIn(el); }
     document.body.style.overflow = 'hidden';
     openModal = el;
     $$('[aria-controls="' + el.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'true'); });
@@ -69,10 +87,11 @@
   }
   function hideModal(keepFocus) {
     if (!openModal) return;
-    if (openModal.classList.contains('panel')) conceal(openModal); else openModal.classList.add('hidden');
+    var closing = openModal;
     document.body.style.overflow = '';
-    $$('[aria-controls="' + openModal.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+    $$('[aria-controls="' + closing.id + '"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
     openModal = null;
+    if (closing.classList.contains('panel')) conceal(closing); else zoomOut(closing);
     if (keepFocus !== true && returnTo && returnTo.focus) returnTo.focus();
   }
   document.addEventListener('keydown', function (e) {
@@ -417,22 +436,102 @@
   });
 
   // ---------- mega menu ----------
+  // The panels share one background (#megaWrap .mega-bg) that fits the open panel, so moving from one menu to the next
+  // never closes or reopens: the contents slide like a carousel, from the side the new item is on, while the height
+  // morphs in step with them. On a
+  // first open the links rise in one after another (ehc.css). No motion when calm().
   var hdr = $('#hdr'), dim = $('#megaDim'), trigs = $$('.mtrig'), openId = null, tOpen, tClose;
+  var megaWrap = $('#megaWrap'), megaBg = $('[data-mega-bg]');
   function panel(id) { return document.getElementById(id); }
+  // the background fits the open panel plus the strip along its bottom edge; between panels the height morphs with the
+  // same duration and easing as the content slide (ehc.css .mega-bg), so the two move as one
+  var megaStrip = $('[data-mega-strip]');
+  function sizeBg(p, morph) {
+    if (!megaBg || !p) return;
+    var h = p.offsetHeight + (megaStrip ? megaStrip.offsetHeight : 0);
+    if (morph && !calm()) { megaBg.style.height = h + 'px'; return; }
+    megaBg.style.transition = 'none';
+    megaBg.style.height = h + 'px';
+    void megaBg.offsetHeight;
+    megaBg.style.transition = '';
+  }
+  /* switching panels works like a carousel: the old content slides out towards one side while the new slides in from
+     the other, together and at the same pace. The side follows where the new item sits on screen (to the right of the
+     old one: the content comes from the right), so it is right in both reading directions. The old panel stays visible
+     for the whole slide (.mega-leaving); each panel clips its own content. */
+  // Quick changes of mind are interruptible: each content's slide starts from where it is right now (mid-slide), a
+  // content the pointer comes back to slides back in from its current place, and contents already on their way out
+  // keep going. Nothing restarts, so nothing jumps.
+  var SLIDE = { duration: 520, easing: 'cubic-bezier(.65,0,.35,1)' };
+  function now(el) { var cs = getComputedStyle(el); return { x: Math.round(new DOMMatrix(cs.transform).m41), o: parseFloat(cs.opacity) }; }
+  function stopSlide(p) {
+    var inner = p && p.firstElementChild, a = inner && inner._slide;
+    if (!a) return;
+    inner._slide = null;
+    a.onfinish = null;
+    a.cancel();
+  }
+  function hideNow(p) {   // a content that has slid out: its panel goes at once (no fade back over the new one)
+    p.style.transition = 'none';
+    p.classList.remove('mega-leaving');
+    void p.offsetWidth;
+    p.style.transition = '';
+  }
+  function slidePanels(prev, next, fromRight) {
+    var outEl = prev.firstElementChild, inEl = next.firstElementChild;
+    if (!outEl || !inEl || !outEl.animate || calm()) { $$('.mega-leaving').forEach(function (p) { stopSlide(p); hideNow(p); }); return; }
+    var dist = Math.min(Math.round(next.offsetWidth * 0.22), 280) * (fromRight ? 1 : -1);
+    var at = function (f) { return 'translateX(' + Math.round(dist * f) + 'px)'; };
+    var outFrom = now(outEl), inFrom = inEl._slide ? now(inEl) : null;
+    stopSlide(prev);
+    stopSlide(next);
+    next.classList.remove('mega-leaving');
+    prev.classList.add('mega-leaving');
+    // at rest: the soft crossing (each content fades only on the far part of its trip); mid-slide: from where it is
+    var outKeys = outFrom.o > 0.99 && Math.abs(outFrom.x) < 1
+      ? [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: at(-0.75), offset: 0.75 }, { opacity: 0, transform: at(-1) }]
+      : [{ opacity: outFrom.o, transform: 'translateX(' + outFrom.x + 'px)' }, { opacity: 0, transform: at(-1) }];
+    var inKeys = inFrom
+      ? [{ opacity: inFrom.o, transform: 'translateX(' + inFrom.x + 'px)' }, { opacity: 1, transform: 'none' }]
+      : [{ opacity: 0, transform: at(1) }, { opacity: 0, transform: at(0.75), offset: 0.25 }, { opacity: 1, transform: 'none' }];
+    var out = outEl.animate(outKeys, SLIDE);
+    outEl._slide = out;
+    out.onfinish = function () { outEl._slide = null; hideNow(prev); out.cancel(); };
+    var into = inEl.animate(inKeys, SLIDE);
+    inEl._slide = into;
+    into.onfinish = function () { if (inEl._slide === into) inEl._slide = null; };
+  }
   function openMega(id) {
     clearTimeout(tClose);
+    if (!id) { if (openId) closeMega(false); return; }   // a plain link item
     if (openId === id) return;
+    var was = openId, next = panel(id), prev = was && panel(was);
     trigs.forEach(function (t) { t.setAttribute('aria-expanded', t.getAttribute('data-mega') === id ? 'true' : 'false'); });
+    if (prev) {
+      // switching: no stagger; the contents slide like a carousel (slidePanels)
+      var a = $('[data-mega="' + was + '"]'), b = $('[data-mega="' + id + '"]');
+      next.classList.add('mega-switch');
+      slidePanels(prev, next, !!(a && b) && b.getBoundingClientRect().left > a.getBoundingClientRect().left);
+    } else if (next) {
+      next.classList.remove('mega-switch');
+    }
     $$('.mega-panel').forEach(function (p) { p.classList.toggle('open', p.id === id); });
+    if (megaWrap) megaWrap.classList.add('is-open');
+    sizeBg(next, !!prev);
     openId = id;
     if (dim) dim.classList.toggle('opacity-100', !!id);
+    syncPill();
+    syncHeader();
   }
   function closeMega(refocus) {
     var was = openId;
+    $$('.mega-leaving').forEach(function (p) { stopSlide(p); hideNow(p); });
     openId = null;
     trigs.forEach(function (t) { t.setAttribute('aria-expanded', 'false'); });
-    $$('.mega-panel').forEach(function (p) { p.classList.remove('open'); });
+    $$('.mega-panel').forEach(function (p) { p.classList.remove('mega-switch'); p.classList.remove('open'); });   // fade out normally
+    if (megaWrap) megaWrap.classList.remove('is-open');
     if (dim) dim.classList.remove('opacity-100');
+    syncPill();
     if (refocus && was) { var t = $('[data-mega="' + was + '"]'); if (t) t.focus(); }
   }
   if (hdr && trigs.length) {
@@ -440,12 +539,12 @@
     trigs.forEach(function (t, i) {
       var id = t.getAttribute('data-mega');
       if (hover) {
-        t.addEventListener('mouseenter', function () { clearTimeout(tOpen); tOpen = setTimeout(function () { openMega(id); }, openId ? 0 : 120); });
+        t.addEventListener('mouseenter', function () { clearTimeout(tOpen); tOpen = setTimeout(function () { openMega(id); }, openId ? 90 : 120); });   // while open: passing over an item on the way to another does not switch
         t.addEventListener('mouseleave', function () { clearTimeout(tOpen); });
       }
       t.addEventListener('click', function () { if (openId === id) closeMega(false); else openMega(id); });
       t.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowDown') { e.preventDefault(); openMega(id); var f = $('a', panel(id)); if (f) f.focus(); }
+        if (e.key === 'ArrowDown') { if (!id) return; e.preventDefault(); openMega(id); var f = $('a', panel(id)); if (f) f.focus(); }
         else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
           e.preventDefault();
           var step = (e.key === 'ArrowRight') === (html.dir !== 'rtl') ? 1 : -1;
@@ -461,7 +560,83 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && openId && !openModal) closeMega(true); });
     document.addEventListener('click', function (e) { if (openId && !hdr.contains(e.target)) closeMega(false); });
     $$('.mega-panel a').forEach(function (a) { a.addEventListener('click', function () { closeMega(false); }); });
+    window.addEventListener('resize', function () { if (openId) sizeBg(panel(openId), false); });
   }
+
+  // ---------- top items: one highlight slides to the item under the pointer, else the focused one, else the open one ----------
+  var nav = $('[data-nav]'), pill = $('[data-nav-pill]'), pillOver = null, pillShown = false;
+  function syncPill() {
+    if (!nav || !pill) return;
+    var focused = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('mtrig') && nav.contains(document.activeElement) ? document.activeElement : null;
+    var target = pillOver || focused || (openId && $('[data-mega="' + openId + '"]', nav));
+    if (!target) { pill.classList.remove('is-on'); pillShown = false; return; }
+    var n = nav.getBoundingClientRect(), r = target.getBoundingClientRect();
+    // measured from the inline start, so the same code works right to left
+    var x = html.dir === 'rtl' ? -(n.right - r.right) : r.left - n.left;
+    if (!pillShown) pill.classList.add('no-move');
+    pill.style.width = r.width + 'px';
+    pill.style.height = r.height + 'px';
+    pill.style.transform = 'translate(' + x + 'px,' + (r.top - n.top) + 'px)';
+    if (!pillShown) { void pill.offsetWidth; pill.classList.remove('no-move'); }
+    pill.classList.add('is-on');
+    pillShown = true;
+  }
+  if (nav && pill) {
+    nav.classList.add('pill-on');
+    $$('.mtrig', nav).forEach(function (t) {
+      t.addEventListener('mouseenter', function () { pillOver = t; syncPill(); });
+      t.addEventListener('focus', syncPill);
+      t.addEventListener('blur', function () { setTimeout(syncPill, 0); });
+    });
+    nav.addEventListener('mouseleave', function () { pillOver = null; syncPill(); });
+    window.addEventListener('resize', function () { pillShown = false; syncPill(); });
+  }
+
+  // ---------- header on scroll: slimmer with a shadow once scrolled; hidden while scrolling down (never while a menu is
+  // open or something in it has focus, nor on pages with a sticky contents bar); back as soon as the page scrolls up.
+  // --header-h follows what is visible, so sticky bars below it move with it. ----------
+  var lastY = window.scrollY || 0, ticking = false;
+  var keepHeader = !!$('[data-page-nav], .page-nav-host');
+  function syncHeader() {
+    if (!hdr) return;
+    var y = window.scrollY || 0;
+    hdr.classList.toggle('hdr-scrolled', y > 8);
+    var busy = openId || openModal || hdr.contains(document.activeElement);
+    if (busy || keepHeader || y < 140 || y < lastY - 4) hdr.classList.remove('hdr-hidden');
+    else if (y > lastY + 4) hdr.classList.add('hdr-hidden');
+    lastY = y;
+    html.style.setProperty('--header-h', (hdr.classList.contains('hdr-hidden') ? 0 : hdr.offsetHeight) + 'px');
+  }
+  if (hdr) {
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; syncHeader(); });
+    }, { passive: true });
+    hdr.addEventListener('focusin', function () { hdr.classList.remove('hdr-hidden'); });
+    hdr.addEventListener('transitionend', function (e) { if (e.target === hdr || e.propertyName === 'height') html.style.setProperty('--header-h', (hdr.classList.contains('hdr-hidden') ? 0 : hdr.offsetHeight) + 'px'); });
+    syncHeader();
+  }
+
+  // ---------- drawer groups open and close smoothly (the <details> still works without the script) ----------
+  $$('details[data-smooth]').forEach(function (d) {
+    var summary = $('summary', d), body = summary && summary.nextElementSibling;
+    if (!summary || !body || !body.animate) return;
+    var running = null;
+    summary.addEventListener('click', function (e) {
+      if (calm()) return;
+      e.preventDefault();
+      if (running) running.cancel();
+      var opening = !d.open;
+      if (opening) d.open = true;
+      var h = body.offsetHeight;
+      running = body.animate(opening
+        ? [{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }]
+        : [{ height: h + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], { duration: opening ? 280 : 200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      body.style.overflow = 'hidden';
+      running.onfinish = function () { running = null; body.style.overflow = ''; if (!opening) d.open = false; };
+    });
+  });
 
   // ---------- installable app: service worker for the offline page (sw.js; network first, nothing stale) ----------
   if ('serviceWorker' in navigator) {

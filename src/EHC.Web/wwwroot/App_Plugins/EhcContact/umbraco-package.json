@@ -1,0 +1,25 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "EHC Contact messages",
+  "version": "1.0.0",
+  "allowPublicAccess": false,
+  "extensions": [
+    {
+      "type": "section",
+      "alias": "Ehc.Section.Messages",
+      "name": "Messages",
+      "weight": 840,
+      "meta": { "label": "Messages", "pathname": "messages" },
+      "conditions": [{ "alias": "Umb.Condition.SectionUserPermission", "match": "Ehc.Section.Messages" }]
+    },
+    {
+      "type": "dashboard",
+      "alias": "Ehc.Dashboard.ContactMessages",
+      "name": "Contact messages",
+      "element": "/App_Plugins/EhcContact/messages-dashboard.js",
+      "weight": 10,
+      "meta": { "label": "Contact messages", "pathname": "contact" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Ehc.Section.Messages" }]
+    }
+  ]
+}

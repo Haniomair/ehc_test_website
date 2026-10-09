@@ -1,11 +1,37 @@
-@* Block 19 "Rich text": body from the restricted editor (h2/h3, bold, italic, lists, links). *@
+@* Block 19 "Rich text": body from the restricted editor (h2/h3, bold, italic, lists, links). Aligned with the page
+   header at a comfortable reading width. With three or more h2 headings it gets an "On this page" list beside it on
+   large screens, sticky while reading, marking the section in view (components/rte-toc.js). *@
+@using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models.Blocks
 @using Umbraco.Cms.Core.Strings
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<BlockListItem>
 @{
     var body = Model.Content.Value<IHtmlEncodedString>("body")?.ToHtmlString();
     if (string.IsNullOrWhiteSpace(body)) { return; }
+    var toc = RichTextToc.From(body);
+    var title = Umbraco.GetDictionaryValue("EHC.PageNav.Title");
 }
-<div class="wrap">
-    <div class="rte mx-auto max-w-[760px]">@Html.Raw(body)</div>
-</div>
+@if (toc.Entries.Count >= 3)
+{
+    <div class="wrap grid gap-10 lg:grid-cols-[minmax(0,800px)_16rem] lg:justify-between">
+        <div class="rte" data-rte-toc-body>@Html.Raw(toc.Html)</div>
+        <aside class="hidden lg:block">
+            <nav class="rte-toc" aria-label="@title" data-rte-toc>
+                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500 rtl:tracking-normal dark:text-slate-400">@title</p>
+                <ol class="grid border-s border-slate-200 dark:border-white/10">
+                    @foreach (var e in toc.Entries)
+                    {
+                        <li><a class="rte-toc-link" href="#@e.Id">@e.Text</a></li>
+                    }
+                </ol>
+            </nav>
+        </aside>
+    </div>
+    <script src="~/assets/js/components/rte-toc.js" asp-append-version="true" defer></script>
+}
+else
+{
+    <div class="wrap">
+        <div class="rte max-w-[800px]">@Html.Raw(toc.Html)</div>
+    </div>
+}

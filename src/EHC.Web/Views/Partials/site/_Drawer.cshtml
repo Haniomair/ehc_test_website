@@ -1,10 +1,12 @@
-@* Mobile / tablet menu (below xl). Same navigation data as the mega menu, as disclosure groups. *@
+@* Mobile / tablet menu (below xl). Same navigation data as the mega menu, as disclosure groups. Its items rise in one
+   after another as the sheet slides in (.drawer-item, --i), and the groups open and close smoothly (site.js). *@
 @using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
 @{
     var items = Model.MegaMenu?.ToList() ?? [];
+    var step = 0;   // stagger order
 }
 <div id="drawer" class="panel fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.Menu")">
     <div class="panel-backdrop absolute inset-0 bg-deep-950/50" data-action="drawer-close"></div>
@@ -15,7 +17,7 @@
         </div>
         @if (Model.HeaderCta is { } cta)
         {
-            <a class="btn btn-primary mb-4 w-full" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
+            <a class="drawer-item btn btn-primary mb-4 w-full" style="--i:@(step++)" href="@cta.Url" target="@cta.Target"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span>@cta.Name</span></a>
         }
         @for (var i = 0; i < items.Count; i++)
         {
@@ -32,12 +34,12 @@
             {
                 if (link is not null)
                 {
-                    <a href="@link.Url" target="@link.Target" class="drawer-link min-h-12 rounded-none border-b border-slate-200 px-0 py-3 font-semibold text-deep-900 dark:border-white/10 dark:text-white">@label</a>
+                    <a href="@link.Url" target="@link.Target" style="--i:@(step++)" class="drawer-item drawer-link min-h-12 rounded-none border-b border-slate-200 px-0 py-3 font-semibold text-deep-900 dark:border-white/10 dark:text-white">@label</a>
                 }
                 continue;
             }
-            <details class="group border-b border-slate-200 dark:border-white/10" open="@(i == 0)">
-                <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between py-3 font-semibold text-deep-900 [&::-webkit-details-marker]:hidden dark:text-white"><span>@label</span><svg class="ico !h-4 !w-4 transition group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
+            <details class="drawer-item group border-b border-slate-200 dark:border-white/10" style="--i:@(step++)" open="@(i == 0)" data-smooth>
+                <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between py-3 font-semibold text-deep-900 [&::-webkit-details-marker]:hidden dark:text-white"><span>@label</span><svg class="ico !h-4 !w-4 transition-transform duration-300 group-open:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></summary>
                 <div class="grid gap-0.5 pb-3 text-slate-600 dark:text-slate-300">
                     @foreach (var l in links)
                     {
@@ -48,7 +50,7 @@
         }
         @if (Model.Emergency is not null || Model.Advice is not null)
         {
-            <div class="mt-auto grid grid-cols-2 gap-2 pt-6">
+            <div class="drawer-item mt-auto grid grid-cols-2 gap-2 pt-6" style="--i:@(step++)">
                 @if (Model.Emergency is { } e)
                 {
                     <a href="tel:@e.Dial" class="rounded-2xl bg-emerg-600 p-3 text-center font-bold text-white"><small class="block text-xs font-medium">@Umbraco.GetDictionaryValue("EHC.Mobile.Emergency")</small>@e.Number</a>

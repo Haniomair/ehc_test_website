@@ -12,6 +12,7 @@ public static class ApiSetup
 {
     public const string Policy = "ehc-api";
     public const string FeedbackPolicy = "ehc-feedback";
+    public const string ContactPolicy = "ehc-contact";
     public const string VitalsPolicy = "ehc-vitals";
     public const string StatsPolicy = "ehc-stats";
     public const int ReadPermitsPerMinute = 600;
@@ -33,6 +34,10 @@ public static class ApiSetup
             o.AddPolicy(FeedbackPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
+            // contact form: a person sends one or two messages; a shared hospital IP still leaves room for several people
+            o.AddPolicy(ContactPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(15), QueueLimit = 0 }));
             // Core Web Vitals: one small report per page view; hospitals and offices share one public IP
             o.AddPolicy(VitalsPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 http.Connection.RemoteIpAddress?.ToString() ?? "unknown",

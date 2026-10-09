@@ -1,5 +1,7 @@
-@* Leader message (CEO / chair): portrait (a cut-out PNG works best), quote, name, role, optional signature image and
-   link, with a large faded background word (decorative, hidden from screen readers). Only approved, attributed quotes. *@
+@* Leader message (CEO / chair): portrait, quote, name, role, optional signature image and link, with a large faded
+   background word (decorative, hidden from screen readers). A cut-out PNG/SVG portrait (transparent background) stands
+   directly on the card over a soft arch; a regular photo fills its panel edge to edge. Images are never requested wider
+   than the uploaded original, so a small upload is not blown up and blurred. Only approved, attributed quotes. *@
 @using EHC.Web.Blocks
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
@@ -12,43 +14,76 @@
     var portrait = c.Value<MediaWithCrops>("portrait");
     var signature = c.Value<MediaWithCrops>("signature");
     var name = c.Value<string>("personName");
+    var role = c.Value<string>("role");
     var watermark = c.Value<string>("watermark");
     var link = c.Value<Link>("link");
-    string Src(MediaWithCrops m, int w) => m.Url()!.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || m.Url()!.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
-        ? m.GetCropUrl(width: w, furtherOptions: "format=webp&quality=85") ?? m.Url()!
-        : m.GetCropUrl(w, (int)(w * 1.2), furtherOptions: "format=webp&quality=80") ?? m.Url()!;
+    bool IsCutout(MediaWithCrops m) => m.Url()!.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || m.Url()!.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+    int Cap(MediaWithCrops m, int w) => m.Value<int>("umbracoWidth") is > 0 and var max ? Math.Min(w, max) : w;
+    string Src(MediaWithCrops m, int w)
+    {
+        w = Cap(m, w);
+        return IsCutout(m)
+            ? m.GetCropUrl(width: w, furtherOptions: "format=webp&quality=90") ?? m.Url()!
+            : m.GetCropUrl(w, (int)(w * 1.2), furtherOptions: "format=webp&quality=85") ?? m.Url()!;
+    }
+    string SrcSet(MediaWithCrops m, params int[] widths) => string.Join(", ", widths.Select(w => Cap(m, w)).Distinct().Select(w => $"{Src(m, w)} {w}w"));
+    const string Sizes = "(min-width: 1024px) 440px, (min-width: 768px) 380px, 100vw";
+    var cutout = portrait is not null && IsCutout(portrait);
+    const string QuotePath = "M9.6 5C6 6.6 4 9.5 4 13.3V19h6v-6H7c0-2.6 1.3-4.4 3.6-5.4zM19.6 5C16 6.6 14 9.5 14 13.3V19h6v-6h-3c0-2.6 1.3-4.4 3.6-5.4z";
 }
-<div class="relative overflow-hidden">
+<div class="relative">
     @if (!string.IsNullOrWhiteSpace(watermark))
     {
-        <span class="pointer-events-none absolute end-0 top-0 hidden select-none whitespace-nowrap text-[clamp(3rem,8vw,7.5rem)] font-extrabold leading-none text-deep-900/[.035] lg:block dark:text-white/[.04]" aria-hidden="true">@watermark</span>
+        <span class="pointer-events-none absolute inset-x-0 top-0 hidden h-[clamp(4.5rem,12vw,11rem)] overflow-hidden lg:block" aria-hidden="true"><span class="absolute end-0 top-0 select-none whitespace-nowrap text-[clamp(3rem,8vw,7.5rem)] font-extrabold leading-none text-deep-900/[.035] [mask-image:linear-gradient(to_right,black_55%,transparent)] rtl:[mask-image:linear-gradient(to_left,black_55%,transparent)] dark:text-white/[.04]">@watermark</span></span>
     }
     <div class="wrap relative">
         <div class="rv sec-head">@await Html.PartialAsync("blocklist/_SectionHeader", new SectionHeader(c.Value<string>("eyebrow"), c.Value<string>("heading"), null))</div>
-        <figure class="rv grid items-end gap-10 rounded-[30px] bg-soft px-6 pt-10 sm:px-12 md:grid-cols-[1fr_minmax(0,300px)] dark:bg-night-900">
-            <div class="pb-10 md:pb-14">
-                <svg class="h-10 w-10 text-brand-600 dark:text-brand-300 rtl:-scale-x-100" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.6 5C6 6.6 4 9.5 4 13.3V19h6v-6H7c0-2.6 1.3-4.4 3.6-5.4zM19.6 5C16 6.6 14 9.5 14 13.3V19h6v-6h-3c0-2.6 1.3-4.4 3.6-5.4z" /></svg>
-                <blockquote class="mt-5 text-[clamp(1.15rem,2vw,1.45rem)] font-semibold leading-relaxed text-deep-900 dark:text-white">@Text.Emphasis(quote, Encoder)</blockquote>
-                <figcaption class="mt-7 flex flex-wrap items-end gap-x-8 gap-y-4">
-                    <span>
-                        @if (!string.IsNullOrWhiteSpace(name)) { <b class="block text-lg text-deep-900 dark:text-white">@name</b> }
-                        @if (!string.IsNullOrWhiteSpace(c.Value<string>("role"))) { <span class="text-sm text-slate-600 dark:text-slate-400">@(c.Value<string>("role"))</span> }
-                    </span>
-                    @if (signature is not null) { <img src="@Src(signature, 320)" alt="" class="h-14 w-auto opacity-80 dark:invert" loading="lazy"> }
-                </figcaption>
-                @if (link is not null) { <a class="btn btn-primary mt-7" href="@link.Url" target="@link.Target">@link.Name</a> }
-            </div>
-            <div class="relative mx-auto w-full max-w-[300px] self-end">
-                <span class="absolute inset-x-6 bottom-0 top-16 rounded-t-full bg-linear-to-t from-brand-200 to-brand-50 dark:from-brand-500/25 dark:to-transparent" aria-hidden="true"></span>
-                @if (portrait is not null)
+        <figure class="rv grid overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-soft md:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] dark:border-white/10 dark:bg-night-900">
+            <div class="relative flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+                <svg class="pointer-events-none absolute end-6 top-6 h-24 w-24 text-brand-600/[.06] sm:end-10 sm:top-8 sm:h-32 sm:w-32 rotate-180 rtl:-scale-x-100 dark:text-white/[.04]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="@QuotePath" /></svg>
+                <span class="grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-glow" aria-hidden="true">
+                    <svg class="h-7 w-7 rtl:-scale-x-100" viewBox="0 0 24 24" fill="currentColor"><path d="@QuotePath" /></svg>
+                </span>
+                <blockquote class="relative mt-7 text-[clamp(1.15rem,1.9vw,1.5rem)] font-semibold leading-[1.85] text-deep-900 dark:text-white [&_em]:not-italic [&_em]:text-brand-700 dark:[&_em]:text-brand-300">@Text.Emphasis(quote, Encoder)</blockquote>
+                @if (!string.IsNullOrWhiteSpace(name) || !string.IsNullOrWhiteSpace(role) || signature is not null)
                 {
-                    <img src="@Src(portrait, 600)" alt="" class="relative w-full object-contain object-bottom" loading="lazy">
+                    <figcaption class="relative mt-9 flex flex-wrap items-center justify-between gap-x-8 gap-y-5 border-t border-slate-200 pt-7 dark:border-white/10">
+                        <span class="flex items-center gap-4">
+                            <span class="h-12 w-1 shrink-0 rounded-full bg-linear-to-b from-brand-500 to-accent-500" aria-hidden="true"></span>
+                            <span>
+                                @if (!string.IsNullOrWhiteSpace(name)) { <b class="block text-lg leading-snug text-deep-900 sm:text-xl dark:text-white">@name</b> }
+                                @if (!string.IsNullOrWhiteSpace(role)) { <span class="mt-1 block text-sm font-semibold text-brand-700 dark:text-brand-300">@role</span> }
+                            </span>
+                        </span>
+                        @if (signature is not null) { <img src="@Src(signature, 320)" alt="" class="h-14 w-auto opacity-80 dark:invert" loading="lazy"> }
+                    </figcaption>
                 }
-                else
-                {
-                    <span class="relative mx-auto mb-10 grid h-48 w-48 place-items-center rounded-full bg-white text-6xl font-bold text-brand-300 dark:bg-white/5" aria-hidden="true">@((name ?? "?").Trim().FirstOrDefault())</span>
-                }
+                @if (link is not null) { <a class="btn btn-primary relative mt-8 self-start" href="@link.Url" target="@link.Target">@link.Name</a> }
             </div>
+            @if (portrait is not null && !cutout)
+            {
+                <div class="relative order-first h-80 overflow-hidden bg-soft sm:h-[26rem] md:order-none md:h-auto md:min-h-[460px] dark:bg-deep-900">
+                    <img src="@Src(portrait, 880)" srcset="@SrcSet(portrait, 440, 880, 1200)" sizes="@Sizes" alt="" class="absolute inset-0 h-full w-full object-cover object-top" loading="lazy">
+                    <span class="absolute inset-x-0 bottom-0 h-1.5 bg-linear-to-r from-brand-500 to-accent-500" aria-hidden="true"></span>
+                </div>
+            }
+            else if (portrait is not null)
+            {
+                <div class="relative order-first flex items-end justify-center overflow-hidden px-6 pt-10 md:order-none md:min-h-[460px] md:pt-14">
+                    <span class="absolute inset-x-8 bottom-0 top-12 rounded-t-full bg-linear-to-b from-brand-50 to-brand-100 sm:inset-x-16 md:inset-x-8 md:top-16 lg:inset-x-10 dark:from-white/[.03] dark:to-white/[.08]" aria-hidden="true"></span>
+                    <span class="absolute inset-x-14 bottom-0 top-20 rounded-t-full border border-brand-200/70 sm:inset-x-24 md:inset-x-14 md:top-24 lg:inset-x-16 dark:border-white/10" aria-hidden="true"></span>
+                    <img src="@Src(portrait, 880)" srcset="@SrcSet(portrait, 440, 880, 1200)" sizes="@Sizes" alt="" class="relative max-h-[420px] w-full max-w-[360px] object-contain object-bottom md:max-h-none" loading="lazy">
+                    <span class="absolute inset-x-0 bottom-0 h-1.5 bg-linear-to-r from-brand-500 to-accent-500" aria-hidden="true"></span>
+                </div>
+            }
+            else
+            {
+                <div class="relative order-first flex items-end justify-center overflow-hidden bg-linear-to-br from-brand-600 to-deep-900 px-8 pt-10 md:order-none md:min-h-[460px]">
+                    <span class="absolute -end-16 -top-16 h-64 w-64 rounded-full border border-white/10" aria-hidden="true"></span>
+                    <span class="absolute -bottom-24 -start-20 h-80 w-80 rounded-full border border-white/10" aria-hidden="true"></span>
+                    <span class="relative mb-12 grid h-44 w-44 place-items-center rounded-full bg-white/10 text-6xl font-bold text-white ring-1 ring-white/20" aria-hidden="true">@((name ?? "?").Replace("د.", "").Replace("Dr.", "").Trim().FirstOrDefault())</span>
+                </div>
+            }
         </figure>
     </div>
 </div>

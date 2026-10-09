@@ -111,6 +111,20 @@ ModSecurity log and add it.
 If the site shows HTTP 500.3x, set `stdoutLogEnabled="true"` in the server's `web.config` and read `logs/stdout*`;
 Umbraco's own log is in `umbraco/Logs`.
 
+### Linux server (Oracle Cloud or any Ubuntu VM)
+`deploy/deploy-oracle.ps1` deploys over SSH to an Ubuntu VM (arm64 or x64). The site runs as the `ehc` systemd
+service on `127.0.0.1:5000` behind Caddy, which obtains the HTTPS certificate and serves HTTP/2 and HTTP/3.
+1. Create the VM (Ubuntu, e.g. the Ampere A1 shape), save its SSH key, and allow TCP 80 and 443 (and UDP 443) in
+   the subnet's security list. Point the domain's DNS A record to the VM's public IP.
+2. Copy `deploy/oracle.env.example` to `deploy/oracle.env` and fill it in.
+3. Prepare the server once: `powershell -ExecutionPolicy Bypass -File deploy/deploy-oracle.ps1 -Setup`
+4. Settings and first deploy, with the local database and media (stop the local site first):
+   `powershell -ExecutionPolicy Bypass -File deploy/deploy-oracle.ps1 -Settings -Code -SeedData`
+
+Later deploys: `deploy/deploy-oracle.ps1`; `-Media` and `-Settings` work as for the Windows host, and `-Rollback`
+restores the previous code. On the server: site files in `/var/www/ehc`, logs with `journalctl -u ehc` and in
+`/var/www/ehc/umbraco/Logs`, restart with `sudo systemctl restart ehc`.
+
 ## Map tiles
 Maps use a self-hosted basemap: one PMTiles file of the Eastern Province, cut from the latest Protomaps
 OpenStreetMap build and served by the site itself, so visitors' browsers never contact a map provider.

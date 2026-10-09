@@ -13,8 +13,7 @@
     nav.setAttribute('data-page-nav-ready', '');
     var list = nav.querySelector('[data-page-nav-list]'), own = nav.closest('section[data-block]');
     if (!list || !own) return;
-    var header = document.getElementById('hdr');
-    if (header) own.style.setProperty('--header-h', header.offsetHeight + 'px');
+    // --header-h (where it sticks) is kept up to date by site.js as the header slims or hides
     // sections after this one; on the component library each section sits in its own tile
     var pool = own.closest('[data-library-stage]')
       ? [].slice.call(document.querySelectorAll('[data-library-stage] > section[data-block]'))

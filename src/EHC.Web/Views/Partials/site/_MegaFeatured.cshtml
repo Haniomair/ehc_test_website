@@ -29,18 +29,61 @@
         break;
 
     case "megaFeaturedApp":
-        <div class="flex h-full flex-col justify-between rounded-3xl bg-linear-to-br from-brand-500 to-deep-900 p-6 text-white">
-            <div class="flex items-center gap-3"><span class="grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-500"><svg class="ico" aria-hidden="true"><use href="#i-app" /></svg></span><b class="text-lg">@title</b></div>
-            @if (!string.IsNullOrWhiteSpace(text)) { <p class="my-4 text-sm text-white/85">@text</p> }
+        @* the app: what it does (four tiles, texts in the EHC.Mega.AppFeature.* dictionary items), a decorative phone
+           (shapes only, hidden from screen readers) that fills the free height and is cut off at the bottom, and the
+           store links from Site settings. The card lies over its grid cell (absolute), so the menu's link columns set the
+           height and the card never makes the panel taller; the phone shrinks away when there is no room. *@
+        var features = new[] { ("cal", "1"), ("lab", "2"), ("drop", "3"), ("note", "4") }
+            .Select(f => (Icon: f.Item1, Label: Umbraco.GetDictionaryValue("EHC.Mega.AppFeature." + f.Item2)))
+            .Where(f => !string.IsNullOrWhiteSpace(f.Label)).ToList();
+        <div class="relative h-full min-h-[21rem]">
+        <div class="absolute inset-0 isolate flex flex-col overflow-hidden rounded-3xl bg-linear-to-br from-brand-500 to-deep-900 p-5 text-white">
+            <span class="mark-bg mark-white anim-spin-slow pointer-events-none absolute -end-12 -top-12 -z-10 h-56 w-56 opacity-15" aria-hidden="true"></span>
+            <div class="flex items-center gap-3"><span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white text-brand-500"><svg class="ico" aria-hidden="true"><use href="#i-app" /></svg></span><b class="text-lg leading-snug">@title</b></div>
+            @if (!string.IsNullOrWhiteSpace(text)) { <p class="mt-3 text-sm leading-relaxed text-white/85">@text</p> }
+            @if (features.Count > 0)
+            {
+                <ul class="mt-4 flex shrink-0 flex-wrap gap-1.5">
+                    @foreach (var f in features)
+                    {
+                        <li class="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white/10 py-1 pe-3 ps-1 text-xs font-semibold ring-1 ring-white/15">
+                            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/15" aria-hidden="true"><svg class="ico !h-3.5 !w-3.5"><use href="#i-@f.Icon" /></svg></span>
+                            @f.Label
+                        </li>
+                    }
+                </ul>
+            }
+            @* the phone shows only when there is room for it (ehc.css .app-phone-area: a height container) *@
+            <div class="app-phone-area relative mt-4 min-h-0 flex-1 overflow-hidden" aria-hidden="true">
+                <div class="app-phone anim-bob absolute start-1/2 top-3 w-44 -translate-x-1/2 rtl:translate-x-1/2 rounded-[2rem] border-[6px] border-white/25 bg-white/10 p-3 shadow-[0_24px_60px_rgba(0,0,0,.3)]">
+                    <div class="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/30"></div>
+                    <div class="rounded-xl bg-white p-3">
+                        <div class="flex items-center gap-2">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-600"><svg class="ico !h-4 !w-4"><use href="#i-cal" /></svg></span>
+                            <span class="grid flex-1 gap-1"><span class="h-1.5 w-16 rounded-full bg-deep-900/70"></span><span class="h-1.5 w-10 rounded-full bg-slate-200"></span></span>
+                        </div>
+                        <span class="mt-3 block h-6 rounded-lg bg-brand-500"></span>
+                    </div>
+                    <div class="mt-2 grid grid-cols-3 gap-1.5">
+                        <span class="grid h-11 place-items-center rounded-lg bg-white/15"><svg class="ico !h-4 !w-4 opacity-80"><use href="#i-lab" /></svg></span>
+                        <span class="grid h-11 place-items-center rounded-lg bg-white/15"><svg class="ico !h-4 !w-4 opacity-80"><use href="#i-note" /></svg></span>
+                        <span class="grid h-11 place-items-center rounded-lg bg-white/15"><svg class="ico !h-4 !w-4 opacity-80"><use href="#i-heart" /></svg></span>
+                    </div>
+                    <span class="mt-2 block h-12 rounded-xl bg-white/15"></span>
+                    <span class="mt-2 block h-12 rounded-xl bg-white/10"></span>
+                    <span class="mt-2 block h-12 rounded-xl bg-white/10"></span>
+                </div>
+            </div>
             @if (Model.Site.AppLinks.Count > 0)
             {
-                <div class="flex gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Mega.AppStores")">
+                <div class="mt-3 grid shrink-0 grid-cols-2 gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Mega.AppStores")">
                     @foreach (var store in Model.Site.AppLinks)
                     {
-                        <a href="@store.Url" target="@store.Target" class="rounded-xl bg-night-950 px-3 py-2 text-xs font-semibold">@store.Name</a>
+                        <a href="@store.Url" target="@store.Target" class="shine flex items-center justify-center gap-2 rounded-xl bg-night-950 px-3 py-2.5 text-xs font-semibold ring-1 ring-white/15 transition hover:bg-night-900"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-app" /></svg>@store.Name</a>
                     }
                 </div>
             }
+        </div>
         </div>
         break;
 

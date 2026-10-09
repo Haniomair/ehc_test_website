@@ -1,22 +1,64 @@
 @* Sticky header + desktop mega menu, driven by Settings › Navigation › megaMenu. Items with columns or a featured
-   card open a panel (keyboard: Enter/Space toggles, ArrowDown moves into the panel, Esc closes); others are plain links. *@
+   card open a panel (keyboard: Enter/Space toggles, ArrowDown moves into the panel, Esc closes); others are plain links.
+   Motion (site.js + ehc.css "menu motion"): a highlight slides between the top items, the panels share one background
+   that eases to the open panel's height, switching panels slides their content the way the pointer moved, links rise
+   in one after another on first open, and the bar slims after scrolling and hides while scrolling down. All of it is
+   off under reduced motion / "pause animations". *@
 @using EHC.Web.Site
 @using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.Blocks
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<EHC.Web.Site.SiteData>
 @{
     var items = Model.MegaMenu?.ToList() ?? [];
-    const string trigger = "mtrig group inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300";
+    const string trigger = "mtrig group relative z-[1] inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[.93rem] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-500 aria-expanded:bg-brand-50 aria-expanded:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-brand-300 dark:aria-expanded:bg-white/5 dark:aria-expanded:text-brand-300";
     const string iconButton = "hdr-ic grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-brand-500 dark:border-white/15 dark:bg-white/5 dark:text-slate-300";
+    var doctors = Model.Home?.Children()?.FirstOrDefault(x => x.ContentType.Alias == "doctorFolder");
+    const string quick = "inline-flex items-center gap-2 rounded-full px-2 py-1 text-brand-700 transition hover:text-brand-500 dark:text-brand-300 dark:hover:text-brand-200";
+}
+@{
+    @* one strip along the bottom edge of the mega menu: emergency and advice numbers (Site settings) and two quick
+       actions. It lives in the shared background, so it rides along with the bottom edge while the menu morphs between
+       panels (site.js). Nothing renders without numbers or links. *@
+    void Strip()
+    {
+        var hasNumbers = Model.Emergency is not null || Model.Advice is not null;
+        if (!hasNumbers && Model.HeaderCta is null && doctors is null) { return; }
+        <div class="mega-strip border-t border-slate-200 bg-soft dark:border-white/10 dark:bg-white/[.03]">
+            <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    @if (Model.Emergency is { } e)
+                    {
+                        <a href="tel:@e.Dial" class="inline-flex items-center gap-2 rounded-full bg-emerg-600 px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-emerg-600/90"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-er" /></svg><span>@e.Label</span><b dir="ltr">@e.Number</b></a>
+                    }
+                    @if (Model.Advice is { } a)
+                    {
+                        <a href="tel:@a.Dial" class="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-deep-900 ring-1 ring-slate-200 transition hover:ring-brand-500 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:ring-brand-400"><svg class="ico !h-4 !w-4 text-brand-500 dark:text-brand-300" aria-hidden="true"><use href="#i-phone" /></svg><span>@a.Label</span><b dir="ltr">@a.Number</b></a>
+                    }
+                </div>
+                <div class="flex flex-wrap items-center gap-x-4 text-sm font-semibold">
+                    @if (Model.HeaderCta is { } cta)
+                    {
+                        <a class="@quick" href="@cta.Url" target="@cta.Target"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-cal" /></svg>@cta.Name</a>
+                    }
+                    @if (doctors is not null)
+                    {
+                        <a class="@quick" href="@doctors.Url()"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-doc" /></svg>@doctors.Name</a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 }
 <header id="hdr" class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-night-950/85">
-    <div class="wrap flex h-[66px] items-center gap-5 lg:h-20">
+    <div class="hdr-bar wrap flex h-[66px] items-center gap-5 lg:h-20">
         <a href="@(Model.Home?.Url() ?? "/")" class="shrink-0" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.HomeLabel")">
-            @await Html.PartialAsync("site/_Logo", Model, new ViewDataDictionary(ViewData) { ["class"] = "h-9 w-auto lg:h-[52px]" })
+            @await Html.PartialAsync("site/_Logo", Model, new ViewDataDictionary(ViewData) { ["class"] = "hdr-logo h-9 w-auto lg:h-[52px]" })
         </a>
         @if (items.Count > 0)
         {
-            <nav class="hidden min-w-0 flex-1 justify-center gap-0.5 xl:flex" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.PrimaryNav")">
+            <nav class="relative hidden min-w-0 flex-1 justify-center gap-0.5 xl:flex" aria-label="@Umbraco.GetDictionaryValue("EHC.Header.PrimaryNav")" data-nav>
+                @* the highlight that slides between the items (site.js moves it; without the script the items keep their own hover colour) *@
+                <span class="nav-pill pointer-events-none absolute start-0 top-0 rounded-full bg-brand-50 opacity-0 dark:bg-white/5" aria-hidden="true" data-nav-pill></span>
                 @for (var i = 0; i < items.Count; i++)
                 {
                     var c = items[i].Content;
@@ -26,7 +68,7 @@
                     var link = c.Value<Link>("link");
                     if (hasPanel)
                     {
-                        <button type="button" class="@trigger" aria-expanded="false" aria-controls="m-@i" data-mega="m-@i"><span>@label</span><svg class="ico !h-4 !w-4 transition group-aria-expanded:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></button>
+                        <button type="button" class="@trigger" aria-expanded="false" aria-controls="m-@i" data-mega="m-@i"><span>@label</span><svg class="ico !h-4 !w-4 transition-transform duration-300 ease-out group-aria-expanded:rotate-180" aria-hidden="true"><use href="#i-chev" /></svg></button>
                     }
                     else if (link is not null)
                     {
@@ -48,7 +90,7 @@
 
     @if (items.Count > 0)
     {
-        <div id="megaWrap" class="absolute inset-x-0 top-full hidden xl:block">
+        <div id="megaWrap" class="absolute inset-x-0 top-full isolate hidden xl:block">
             @for (var i = 0; i < items.Count; i++)
             {
                 var c = items[i].Content;
@@ -62,21 +104,22 @@
                 var units = wideCols.Sum(w => w ? 2 : 1);
                 if (units > 3) { wideCols = wideCols.Select(_ => false).ToList(); units = columns.Count; }
                 var colsClass = units switch { 1 => "grid-cols-1", 2 => "grid-cols-2", _ => "grid-cols-3" };
-                <div id="m-@i" class="mega-panel absolute inset-x-0 top-0 max-h-[calc(100vh-var(--header-h,76px))] overflow-y-auto overscroll-contain border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" role="region" aria-label="@(c.Value<string>("label"))">
-                    <div class="wrap grid grid-cols-12 gap-8 py-8">
+                var step = 0;   // stagger order of the links in this panel
+                <div id="m-@i" class="mega-panel absolute inset-x-0 top-0 max-h-[calc(100vh-var(--header-h,76px))] overflow-x-hidden overflow-y-auto overscroll-contain" role="region" aria-label="@(c.Value<string>("label"))">
+                    <div class="wrap grid grid-cols-12 gap-7 py-7">
                         @if (columns.Count > 0)
                         {
-                            <div class="@(featured is null ? "col-span-12" : "col-span-8")">
-                                <div class="grid @colsClass gap-8">
+                            <div class="@(featured is null ? "col-span-12" : "col-span-9")">
+                                <div class="grid @colsClass gap-6">
                                     @for (var j = 0; j < columns.Count; j++)
                                     {
                                         var col = columns[j].Content;
                                         var links = col.Value<BlockListModel>("links")?.ToList() ?? [];
                                         var wide = wideCols[j] || (columns.Count == 1 && links.Count > 4);
-                                        <div class="@(j > 0 ? "border-s border-slate-200 ps-8 dark:border-white/10" : "") @(wideCols[j] && units > 1 ? "col-span-2" : "")">
+                                        <div class="@(j > 0 ? "border-s border-slate-200 ps-6 dark:border-white/10" : "") @(wideCols[j] && units > 1 ? "col-span-2" : "")">
                                             @if (!string.IsNullOrWhiteSpace(col.Value<string>("heading")))
                                             {
-                                                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal">@(col.Value<string>("heading"))</p>
+                                                <p class="mega-anim mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 rtl:tracking-normal" style="--i:@(step++)">@(col.Value<string>("heading"))</p>
                                             }
                                             <div class="grid gap-1 @(wide ? "grid-cols-2 gap-x-6" : "")">
                                                 @foreach (var l in links)
@@ -88,17 +131,18 @@
                                                     var desc = l.Content.Value<string>("description");
                                                     if (string.IsNullOrWhiteSpace(icon) && string.IsNullOrWhiteSpace(desc))
                                                     {
-                                                        <a href="@(target?.Url ?? "#")" class="rounded-lg px-2 py-1.5 text-[.93rem] text-slate-600 hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5">@title</a>
+                                                        <a href="@(target?.Url ?? "#")" class="mega-anim rounded-lg px-2 py-1.5 text-[.93rem] text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-500 dark:text-slate-300 dark:hover:bg-white/5" style="--i:@(step++)">@title</a>
                                                     }
                                                     else
                                                     {
                                                         var emergency = icon == "er";
-                                                        <a href="@(target?.Url ?? "#")" class="mega-link">
+                                                        <a href="@(target?.Url ?? "#")" class="mega-link mega-anim" style="--i:@(step++)">
                                                             @if (!string.IsNullOrWhiteSpace(icon))
                                                             {
-                                                                <span class="mega-ic @(emergency ? "!bg-emerg-50 !text-emerg-600 dark:!bg-emerg-500/15 dark:!text-red-300" : "")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+                                                                <span class="mega-ic @(emergency ? "is-emerg" : "")"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
                                                             }
-                                                            <span><b>@title</b>@if (!string.IsNullOrWhiteSpace(desc)) {<span class="d">@desc</span>}</span>
+                                                            <span class="min-w-0 flex-1"><b>@title</b>@if (!string.IsNullOrWhiteSpace(desc)) {<span class="d">@desc</span>}</span>
+                                                            <svg class="mega-go ico flip !h-4 !w-4 shrink-0 self-center" aria-hidden="true"><use href="#i-arrow" /></svg>
                                                         </a>
                                                     }
                                                 }
@@ -108,24 +152,29 @@
                                 </div>
                                 @if (link is not null && !string.IsNullOrWhiteSpace(link.Url) && link.Url != "#")
                                 {
-                                    <a href="@link.Url" class="link mt-4 ps-3 text-sm"><span>@(c.Value<string>("label"))</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+                                    <a href="@link.Url" class="mega-anim link mt-4 ps-3 text-sm" style="--i:@(step++)"><span>@(c.Value<string>("label"))</span><svg class="ico flip !h-4 !w-4" aria-hidden="true"><use href="#i-arrow" /></svg></a>
                                 }
                             </div>
                         }
                         @if (featured is not null)
                         {
-                            <div class="@(columns.Count == 0 ? "col-span-12" : "col-span-4")">
+                            <div class="mega-feat @(columns.Count == 0 ? "col-span-12" : "col-span-3")">
                                 @await Html.PartialAsync("site/_MegaFeatured", new MegaFeaturedModel(featured.Content, Model))
                             </div>
                         }
                     </div>
                 </div>
             }
+            @* one background for all panels, behind them: site.js morphs its height to the open panel (plus the strip),
+               in step with the content slide, so switching panels never flickers or jumps *@
+            <div class="mega-bg absolute inset-x-0 top-0 -z-10 border-b border-slate-200 bg-white shadow-[0_30px_60px_rgba(10,42,79,.12)] dark:border-white/10 dark:bg-night-900" data-mega-bg>
+                <div class="absolute inset-x-0 bottom-0" data-mega-strip>@{ Strip(); }</div>
+            </div>
         </div>
     }
 </header>
 @if (items.Count > 0)
 {
     @* outside <header>: its backdrop-filter would otherwise contain this fixed overlay *@
-    <div id="megaDim" class="pointer-events-none fixed inset-0 z-30 bg-deep-950/30 opacity-0 backdrop-blur-[2px] transition-opacity duration-200 dark:bg-black/50"></div>
+    <div id="megaDim" class="pointer-events-none fixed inset-0 z-30 bg-deep-950/30 opacity-0 backdrop-blur-[5px] transition-opacity duration-300 dark:bg-black/50"></div>
 }

@@ -57,6 +57,7 @@ public sealed class EhcComposer : IComposer
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, HeroSettingsMigration>();   // after the seeder: uses Teal / Rose
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, EServicesSeeder>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, InfoPagesSeeder>();   // after the contact page seeder (ContactSetup)
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, NavigatorSymptomsSeeder>();
         // development: uSync Settings import whenever a uSync file changes (Ehc:USync:AutoImport)
         builder.Services.AddSingleton<USyncAutoImport>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, USyncAutoImportHandler>();

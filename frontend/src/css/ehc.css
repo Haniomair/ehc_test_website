@@ -644,6 +644,14 @@ select.field { @apply pe-10; }
 .opt-row { @apply flex; }
 .opt-row > span { @apply w-full rounded-xl px-4 py-3; }
 
+/* care navigator symptom view (components/care-navigator.js): a thin scrollbar that suits the dark band, and a soft fade
+   at the top and bottom edges of the chip list so it reads as scrollable */
+.nv-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / .35) transparent; }
+.nv-scroll::-webkit-scrollbar { width: 6px; }
+.nv-scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / .3); border-radius: 999px; }
+.nv-scroll::-webkit-scrollbar-track { background: transparent; }
+.nv-fade { mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 28px), transparent 100%); }
+
 /* health tools (Views/Partials/tools, components/health-tools.js): the card is a size container so the form and the
    result sit side by side only when the card itself is wide — also inside a narrow column */
 .tool { container-type: inline-size; }

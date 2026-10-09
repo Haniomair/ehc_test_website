@@ -7,7 +7,8 @@ using Umbraco.Extensions;
 
 namespace EHC.Web.Api;
 
-public sealed record FacilityDto(Guid Id, string Name, string? City, string Type, bool HasEmergency, decimal? Lat, decimal? Lng, string Url);
+/// <summary>A facility for maps and finders. ErFeedId: the emergency department's id in /api/er-wait (live wait times), when it has one.</summary>
+public sealed record FacilityDto(Guid Id, string Name, string? City, string Type, bool HasEmergency, decimal? Lat, decimal? Lng, string Url, string? ErFeedId = null);
 
 /// <summary>GET /api/facilities?type=&amp;culture= — published facility nodes for maps and the facility finder.</summary>
 [ApiController]
@@ -37,7 +38,8 @@ public sealed class FacilitiesController(IPublishedContentQuery content) : Contr
                 f.Value<bool>("hasEmergency"),
                 f.Value<decimal?>("latitude"),
                 f.Value<decimal?>("longitude"),
-                f.Url(c, UrlMode.Relative)))
+                f.Url(c, UrlMode.Relative),
+                f.Value<bool>("hasEmergency") && f.Value<string>("erFeedId") is { Length: > 0 } feed ? feed : null))
             .OrderBy(f => f.Name)
             .ToList();
         return Ok(result);

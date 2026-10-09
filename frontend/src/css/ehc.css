@@ -437,6 +437,92 @@ html[dir="rtl"] .finder-row::after { transform: scaleX(-1); }
 }
 
 /* ---------------------------------------------------------------------
+   PAGE BAND — inner-page header without a photo (site/_PageHeader, doctor)
+   A soft gradient toned by section (data-tone, see PageMotif), a dot field
+   that fades out before the text, a glow and the brand mark behind the
+   page's icon in rings at the end side. Colours are roles only, so occasion
+   themes recolour it; the decoration is aria-hidden and below the text.
+   --------------------------------------------------------------------- */
+.page-band {
+  --tone: var(--brand-500); --end: 100%; --start: 0%;
+  position: relative; isolation: isolate; overflow: hidden;
+  background:
+    radial-gradient(560px 340px at var(--end) 0%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 70%),
+    radial-gradient(520px 260px at var(--start) 115%, color-mix(in srgb, var(--brand-400) 9%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--soft), color-mix(in srgb, var(--tone) 7%, var(--soft)));
+}
+html[dir="rtl"] .page-band { --end: 0%; --start: 100%; }
+.page-band[data-tone="support"] { --tone: var(--support-500); }
+.page-band[data-tone="accent"] { --tone: var(--accent-500); }
+.page-band[data-tone="highlight"] { --tone: var(--highlight-500); }
+.page-band::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--tone) 30%, transparent) 1.2px, transparent 1.7px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to left, #000 0%, transparent 55%);
+}
+html[dir="rtl"] .page-band::before { mask-image: linear-gradient(to right, #000 0%, transparent 55%); }
+.page-band::after {
+  content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tone) 35%, transparent) 50%, transparent);
+}
+.page-band-art { position: absolute; inset-block: 0; inset-inline-end: 0; z-index: -1; display: grid; width: 12rem; place-items: center; pointer-events: none; translate: 30% -18%; }
+html[dir="rtl"] .page-band-art { translate: -30% -18%; }
+.page-band-mark { position: absolute; width: 17rem; aspect-ratio: 1; opacity: .07; }
+.page-band-emblem { display: none; }
+@media (min-width: 1024px) {
+  .page-band-art { width: 20rem; translate: none; }
+  html[dir="rtl"] .page-band-art { translate: none; }
+  .page-band-mark { width: 27rem; }
+  .page-band-emblem {
+    position: relative; display: grid; place-items: center; width: 8.5rem; height: 8.5rem; border-radius: 9999px;
+    color: var(--tone); background: color-mix(in srgb, white 78%, transparent); backdrop-filter: blur(6px);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tone) 20%, transparent),
+      0 0 0 1.5rem color-mix(in srgb, var(--tone) 7%, transparent),
+      0 0 0 3rem color-mix(in srgb, var(--tone) 4%, transparent),
+      0 22px 44px -20px color-mix(in srgb, var(--tone) 55%, transparent);
+  }
+  .page-band-emblem .ico { width: 3.5rem; height: 3.5rem; stroke-width: 1.5; }
+}
+.dark .page-band {
+  background:
+    radial-gradient(560px 340px at var(--end) 0%, color-mix(in srgb, var(--tone) 22%, transparent), transparent 70%),
+    radial-gradient(520px 260px at var(--start) 115%, color-mix(in srgb, var(--brand-400) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--night-900), color-mix(in srgb, var(--tone) 8%, var(--night-900)));
+}
+.dark .page-band::before { background-image: radial-gradient(color-mix(in srgb, var(--tone) 40%, transparent) 1.2px, transparent 1.7px); }
+.dark .page-band-mark { filter: brightness(0) invert(1); opacity: .05; }
+.dark .page-band-emblem { color: color-mix(in srgb, var(--tone) 60%, white); background: color-mix(in srgb, white 6%, transparent); }
+
+/* preview notice (site/_PreviewNotice): a page with no content. A sketched blank page with a note badge; the badge
+   dot's pulse stops under reduced motion / a11y-still. */
+.preview-art { position: relative; width: 9.5rem; height: 7rem; }
+.preview-sheet {
+  position: absolute; inset: 0; display: grid; align-content: center; gap: .55rem; padding: 1rem 1.15rem;
+  border-radius: 1.1rem; background: #fff; rotate: -4deg;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-500) 18%, transparent), 0 18px 36px -20px color-mix(in srgb, var(--brand-500) 55%, transparent);
+}
+html[dir="rtl"] .preview-sheet { rotate: 4deg; }
+.preview-sheet i {
+  display: block; height: .55rem; border-radius: 9999px;
+  background: var(--brand-100);
+}
+.preview-sheet i:not([class]) { width: 100%; }
+.preview-badge {
+  position: absolute; inset-inline-end: -.9rem; bottom: -.9rem; display: grid; place-items: center; width: 3.25rem; height: 3.25rem;
+  border-radius: 9999px; background: var(--brand-600); color: #fff;
+  box-shadow: 0 0 0 .4rem #fff, 0 12px 24px -10px color-mix(in srgb, var(--brand-600) 70%, transparent);
+}
+.preview-badge .ico { width: 1.5rem; height: 1.5rem; }
+.preview-dot { width: .5rem; height: .5rem; border-radius: 9999px; background: var(--accent-500); animation: ehc-preview-dot 1.6s ease-in-out infinite; }
+@keyframes ehc-preview-dot { 50% { box-shadow: 0 0 0 .3rem color-mix(in srgb, var(--accent-500) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .preview-dot { animation: none; } }
+.dark .preview-sheet { background: color-mix(in srgb, white 5%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent); }
+.dark .preview-sheet i { background: color-mix(in srgb, white 10%, transparent); }
+.dark .preview-badge { box-shadow: 0 0 0 .4rem var(--night-950); }
+
+/* ---------------------------------------------------------------------
    MEDIA HEROES — image / video with a theme-aware overlay
    <section class="media-hero" data-overlay="tint|duotone|shade" data-strength="light|medium|strong"
             style="--focal: 60% 40%">
@@ -601,6 +687,12 @@ html[dir="rtl"] .compare.is-ready .compare-after { clip-path: inset(0 var(--pos)
 /* rich text on deep / brand panels */
 .rte.rte-on-dark { color: rgb(255 255 255 / .9); }
 .rte.rte-on-dark :is(h2, h3, strong, a) { color: #fff; }
+
+/* "On this page" beside a long rich text (richTextBlock + components/rte-toc.js) */
+.rte-toc { position: sticky; top: calc(var(--header-h, 76px) + 1.5rem); max-height: calc(100vh - var(--header-h, 76px) - 3rem); overflow-y: auto; }
+.rte-toc-link { @apply -ms-px block border-s-2 border-transparent py-1.5 ps-4 text-sm leading-snug text-slate-600 transition hover:border-slate-300 hover:text-deep-900 dark:text-slate-400 dark:hover:border-white/30 dark:hover:text-white; }
+.rte-toc-link[aria-current="true"] { @apply border-brand-500 font-semibold text-deep-900 dark:border-brand-300 dark:text-white; }
+.rte h2[id] { scroll-margin-top: calc(var(--header-h, 76px) + 1.5rem); }
 
 /* page contents bar (pageNavBlock + components/page-nav.js) */
 .page-nav-host { position: sticky; top: var(--header-h, 76px); z-index: 30; padding-block: 0 !important; }

@@ -135,24 +135,9 @@
                     </div>
                     <p class="sr-only" aria-live="polite" data-nav-count></p>
 
-                    <div class="nv-scroll nv-fade mt-3 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pb-6 pe-1 pt-2" data-nav-browse>
-                        @foreach (var lv in order)
-                        {
-                            var group = symptoms.Select((s, i) => (s, i)).Where(x => x.s.level == lv).ToList();
-                            if (group.Count == 0) { continue; }
-                            <div>
-                                <p class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal"><span class="h-2 w-2 rounded-full @(lv == "emergency" ? "bg-emerg-500" : "bg-white/60")" aria-hidden="true"></span>@NV("Level." + lv)</p>
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach (var x in group)
-                                    {
-                                        <button type="button" data-sym="@x.i" class="rounded-full border px-3.5 py-1.5 text-sm font-semibold transition @(lv == "emergency" ? "border-emerg-500/70 bg-emerg-600/30 hover:bg-emerg-600/50" : "border-white/25 bg-white/5 hover:bg-white/15")">@x.s.label</button>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="nv-scroll mt-3 min-h-0 flex-1 overflow-y-auto pb-1 focus:outline-none focus-visible:shadow-none" tabindex="-1" data-nav-sym-out hidden>
+                    @* a chosen symptom's answer shows above the list (natural height; it scrolls itself when the nearest list makes
+                       it taller than the view), and the list stays below it to pick another *@
+                    <div class="nv-scroll mt-3 min-h-0 shrink overflow-y-auto focus:outline-none focus-visible:shadow-none" tabindex="-1" data-nav-sym-out hidden>
                     <div class="rounded-2xl bg-white p-4 text-deep-950 dark:bg-night-900 dark:text-white">
                         <div class="mb-3 flex items-center justify-between gap-3">
                             <b class="text-sm text-slate-500 dark:text-slate-400" data-nav-sym-name></b>
@@ -166,8 +151,25 @@
                         <button type="button" class="btn btn-ghost btn-sm mt-2 w-full" data-nav-near-btn hidden><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-locate" /></svg><span>@NV("ShowNearest")</span></button>
                         <div class="mt-3 grid gap-2" aria-live="polite" data-nav-near hidden></div>
                         <p class="mt-3 flex items-start gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400"><svg class="ico mt-0.5 !h-3.5 !w-3.5 shrink-0" aria-hidden="true"><use href="#i-shield" /></svg><span>@NV("Disclaimer")</span></p>
-                        <button type="button" class="link mt-2 text-sm font-semibold" data-nav-sym-again>@NV("AnotherSymptom")</button>
                     </div>
+                    </div>
+
+                    <div class="nv-scroll nv-fade mt-3 grid min-h-24 flex-1 content-start gap-4 overflow-y-auto pb-6 pe-1 pt-2" data-nav-browse>
+                        <p class="-mb-1 text-sm font-semibold text-white/80" data-nav-browse-title hidden>@NV("AnotherSymptom")</p>
+                        @foreach (var lv in order)
+                        {
+                            var group = symptoms.Select((s, i) => (s, i)).Where(x => x.s.level == lv).ToList();
+                            if (group.Count == 0) { continue; }
+                            <div>
+                                <p class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal"><span class="h-2 w-2 rounded-full @(lv == "emergency" ? "bg-emerg-500" : "bg-white/60")" aria-hidden="true"></span>@NV("Level." + lv)</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (var x in group)
+                                    {
+                                        <button type="button" data-sym="@x.i" aria-pressed="false" class="rounded-full border px-3.5 py-1.5 text-sm font-semibold transition @(lv == "emergency" ? "border-emerg-500/70 bg-emerg-600/30 hover:bg-emerg-600/50 aria-pressed:bg-emerg-600" : "border-white/25 bg-white/5 hover:bg-white/15 aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-deep-900")">@x.s.label</button>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -218,7 +220,7 @@ else
                     {
                         <a href="tel:@emergency.Dial" class="mt-8 flex w-fit items-center gap-4 rounded-2xl bg-emerg-600 py-3 pe-6 ps-4 transition hover:bg-emerg-600/90">
                             <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/15" aria-hidden="true"><svg class="ico"><use href="#i-er" /></svg></span>
-                            <span><span class="block text-sm text-white/90">@N("Emergency")</span><b class="block text-2xl font-extrabold leading-none" dir="ltr">@emergency.Number</b></span>
+                            <span><span class="block text-sm text-white/90">@N("Emergency")</span><b class="mt-1.5 block text-2xl font-extrabold leading-none"><span dir="ltr">@emergency.Number</span></b></span>
                         </a>
                     }
                 </div>

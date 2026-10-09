@@ -1,0 +1,25 @@
+@* Shown on a page that has no content (no sections, no body): tells visitors the content is not available and that
+   this is a test website, and offers the home page. Wording is in dictionary items (EHC.Preview.*). The page view sets ViewData["emptyPage"] so master skips "Was this page helpful?". *@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    string T(string key, string fallback) => Umbraco.GetDictionaryValue("EHC.Preview." + key) is { Length: > 0 } v ? v : fallback;
+    var home = Model.Root()?.Url() ?? "/";
+}
+<section class="wrap py-12 lg:py-16" aria-labelledby="preview-title">
+    <div class="preview-note relative px-6 py-6 text-center sm:px-12">
+        <div class="relative mx-auto max-w-xl">
+            <div class="preview-art mx-auto mb-7" aria-hidden="true">
+                <div class="preview-sheet">
+                    <i class="w-2/3"></i><i></i><i class="w-5/6"></i><i class="w-1/2"></i>
+                </div>
+                <span class="preview-badge"><svg class="ico"><use href="#i-note" /></svg></span>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-accent-400/15 px-3 py-1 text-xs font-bold text-deep-900 ring-1 ring-accent-400/40 dark:text-accent-400"><span class="preview-dot"></span>@T("Badge", "Test website")</span>
+            <h2 id="preview-title" class="mt-4 text-2xl font-bold text-deep-900 sm:text-3xl dark:text-white">@T("Title", "This content isn't available")</h2>
+            <p class="mt-3 leading-relaxed text-slate-600 dark:text-slate-400">@T("Text", "This is a test website for demonstration only, and this page has no content.")</p>
+            <div class="mt-7 flex flex-wrap justify-center gap-3">
+                <a class="btn btn-primary" href="@home"><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-home" /></svg>@T("BackHome", "Back to home")</a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -9,6 +9,9 @@
     var body = Model.Value<IHtmlEncodedString>("body")?.ToHtmlString();
     var links = Model.Value<IEnumerable<Link>>("sidebarLinks")?.ToList() ?? [];
     var hasBody = !string.IsNullOrWhiteSpace(body);
+    var blocks = Model.Value<BlockListModel>("blocks");
+    var empty = !hasBody && links.Count == 0 && (blocks is null || !blocks.Any());
+    if (empty) { ViewData["emptyPage"] = true; }
 }
 @await Html.PartialAsync("site/_PageHeader", Model)
 @if (hasBody || links.Count > 0)
@@ -26,4 +29,8 @@
         }
     </div>
 }
-@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))
+@if (empty)
+{
+    @await Html.PartialAsync("site/_PreviewNotice", Model)
+}
+@await Html.GetBlockListHtmlAsync(blocks)

@@ -92,7 +92,10 @@
 
     <main id="main" tabindex="-1">
         @RenderBody()
-        @await Html.PartialAsync("site/_Feedback", Model)
+        @if (ViewData["emptyPage"] is not true)
+        {
+            @await Html.PartialAsync("site/_Feedback", Model)
+        }
     </main>
 
     @await Html.PartialAsync("site/_Footer", site)

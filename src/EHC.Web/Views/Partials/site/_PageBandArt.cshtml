@@ -1,0 +1,10 @@
+@* Decoration of the inner-page header band: the brand mark and the page's icon in rings, at the end side.
+   Purely visual (aria-hidden); the band's colour comes from data-tone on its container. See PageMotif. *@
+@model EHC.Web.Site.PageMotif
+<div class="page-band-art" aria-hidden="true">
+    <span class="page-band-mark mark-bg anim-spin-slow"></span>
+    @if (Model.Icon is { } icon)
+    {
+        <span class="page-band-emblem"><svg class="ico"><use href="#i-@icon" /></svg></span>
+    }
+</div>

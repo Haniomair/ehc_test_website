@@ -6,9 +6,15 @@
     var blocks = Model.Value<BlockListModel>("blocks");
     // a hero as the first section is the page header (and the page's h1)
     var heroFirst = blocks?.FirstOrDefault()?.Content.ContentType.Alias.StartsWith("hero") ?? false;
+    var empty = blocks is null || !blocks.Any();
+    if (empty) { ViewData["emptyPage"] = true; }
 }
 @if (!heroFirst)
 {
     @await Html.PartialAsync("site/_PageHeader", Model)
+}
+@if (empty)
+{
+    @await Html.PartialAsync("site/_PreviewNotice", Model)
 }
 @await Html.GetBlockListHtmlAsync(blocks)

@@ -94,7 +94,7 @@
     var mainView = q('[data-nav-view="main"]'), symView = q('[data-nav-view="symptom"]');
     var openBtn = q('[data-need-symptom]'), backBtn = q('[data-nav-back]'), heading = q('[data-nav-sym-heading]');
     var search = q('[data-nav-search]'), list = q('[data-nav-list]'), count = q('[data-nav-count]'), browse = q('[data-nav-browse]');
-    var out = q('[data-nav-sym-out]'), nearBtn = q('[data-nav-near-btn]'), near = q('[data-nav-near]'), again = q('[data-nav-sym-again]');
+    var browseTitle = q('[data-nav-browse-title]'), out = q('[data-nav-sym-out]'), nearBtn = q('[data-nav-near-btn]'), near = q('[data-nav-near]');
     if (!symptoms.length || !mainView || !symView || !openBtn || !search || !list || !out) return;
 
     var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -216,25 +216,23 @@
         nearBtn.hidden = !(lv.nearest && navigator.geolocation);
         nearBtn.setAttribute('data-type', lv.nearest || '');
       }
-      reveal(browse, out, true);
+      qa('[data-sym]').forEach(function (b) { b.setAttribute('aria-pressed', Number(b.getAttribute('data-sym')) === si ? 'true' : 'false'); });
+      if (browseTitle) browseTitle.hidden = false;
+      browse.scrollTop = 0;
+      showAnswer();
     }
-    function reset() {
-      search.value = '';
-      closeList();
-      reveal(out, browse, false, function () { search.focus({ preventScroll: true }); });
-    }
-    /* answer ↔ symptom chips inside the symptom view: a short fade with the same direction as the views */
-    function reveal(from, to, forward, done) {
-      if (from.hidden && !to.hidden) { if (done) done(); else if (forward) to.focus({ preventScroll: true }); return; }
-      if (reduced || !from.animate) { from.hidden = true; to.hidden = false; if (forward) to.focus({ preventScroll: true }); if (done) done(); return; }
-      var dy = forward ? 8 : -8;
-      from.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120 }).onfinish = function () {
-        from.hidden = true;
-        to.hidden = false;
-        to.animate([{ opacity: 0, transform: 'translateY(' + dy + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
-        if (forward) to.focus({ preventScroll: true });
-        if (done) done();
-      };
+    /* the answer appears above the symptom chips (which stay, to pick another): a short fade and rise the first time,
+       a quick fade when it changes */
+    function showAnswer() {
+      var first = out.hidden;
+      out.hidden = false;
+      out.scrollTop = 0;
+      if (!reduced && out.animate) {
+        out.animate(first
+          ? [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }]
+          : [{ opacity: .4 }, { opacity: 1 }], { duration: first ? 240 : 160, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }
+      out.focus({ preventScroll: true });
     }
 
     function nearest(type) {
@@ -314,7 +312,6 @@
     qa('[data-sym]').forEach(function (b) {
       b.addEventListener('click', function () { choose(Number(b.getAttribute('data-sym'))); });
     });
-    if (again) again.addEventListener('click', reset);
     search.addEventListener('input', showList);
     search.addEventListener('blur', function () { setTimeout(closeList, 120); });
     search.addEventListener('keydown', function (e) {

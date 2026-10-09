@@ -121,6 +121,25 @@
     root.addEventListener('focusin', function (e) { keyboard = !!(e.target.matches && e.target.matches(':focus-visible')); hold(); });
     root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) { keyboard = false; hold(); } });
 
+    // touch: a horizontal swipe goes to the next or previous slide in the reading direction (in Arabic the next slide
+    // comes from the left, so swiping right). Vertical swipes scroll the page as usual; swipes that start in a form
+    // field or an embedded tool (care navigator, map) are theirs.
+    var touch = null;
+    root.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      touch = e.touches.length === 1 && !(e.target.closest && e.target.closest('input, textarea, select, [data-navigator], [data-map], [data-no-swipe]'))
+        ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+    }, { passive: true });
+    root.addEventListener('touchend', function (e) {
+      if (!touch) return;
+      var t = e.changedTouches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y, quick = Date.now() - touch.at < 800;
+      touch = null;
+      if (!quick || Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      var forward = document.documentElement.dir === 'rtl' ? dx > 0 : dx < 0, n = slides.length;
+      go(forward ? (cur + 1) % n : (cur - 1 + n) % n, false, forward ? 'next' : 'prev');
+    }, { passive: true });
+    root.addEventListener('touchcancel', function () { touch = null; }, { passive: true });
+
     setPaused(paused);
   }
 

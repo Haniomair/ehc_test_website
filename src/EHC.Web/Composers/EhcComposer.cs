@@ -39,6 +39,7 @@ public sealed class EhcComposer : IComposer
 
         EHC.Web.Api.ApiSetup.Add(builder);
         EHC.Web.Feedback.FeedbackSetup.Add(builder);
+        EHC.Web.Contact.ContactSetup.Add(builder);
         EHC.Web.Vitals.VitalsSetup.Add(builder);
         EHC.Web.Stats.StatsSetup.Add(builder);
         Performance.Add(builder);
@@ -55,6 +56,7 @@ public sealed class EhcComposer : IComposer
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, GradientSeeder>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, HeroSettingsMigration>();   // after the seeder: uses Teal / Rose
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, EServicesSeeder>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, InfoPagesSeeder>();   // after the contact page seeder (ContactSetup)
         // development: uSync Settings import whenever a uSync file changes (Ehc:USync:AutoImport)
         builder.Services.AddSingleton<USyncAutoImport>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, USyncAutoImportHandler>();

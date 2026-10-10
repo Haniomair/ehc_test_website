@@ -523,6 +523,87 @@ html[dir="rtl"] .preview-sheet { rotate: 4deg; }
 .dark .preview-badge { box-shadow: 0 0 0 .4rem var(--night-950); }
 
 /* ---------------------------------------------------------------------
+   HEALTH LIBRARY (healthLibrary, healthLibrarySection, healthCondition / healthTest, Partials/library,
+   components/health-library.js). Colours are roles; the emergency tier uses the fixed emergency red.
+   --------------------------------------------------------------------- */
+.hl-h2 { @apply mb-4 text-[clamp(1.5rem,2.6vw,2rem)] font-bold leading-snug text-deep-900 dark:text-white; scroll-margin-top: calc(var(--header-h, 76px) + 1.5rem); }
+/* "When to get help": one panel, a row per tier; the tier colour is a bar at the start edge and the marker */
+.hl-help { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-night-900; }
+.hl-help-row { --tier: var(--brand-600); --tier-bg: color-mix(in srgb, var(--brand-500) 6%, transparent); @apply border-s-4 px-4 py-4 sm:px-5; border-inline-start-color: var(--tier); background: var(--tier-bg); }
+.hl-help-row + .hl-help-row { @apply border-t border-t-slate-200 dark:border-t-white/10; }
+.hl-help-row[data-tone="emerg"] { --tier: var(--color-emerg-600); --tier-bg: color-mix(in srgb, var(--color-emerg-600) 6%, transparent); }
+.hl-help-row[data-tone="urgent"] { --tier: var(--accent-500); --tier-bg: color-mix(in srgb, var(--accent-400) 9%, transparent); }
+.hl-help-ic { @apply grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white; background: var(--tier); }
+.hl-help-row[data-tone="urgent"] .hl-help-ic { @apply text-deep-900; }
+.hl-help-list { @apply mt-2.5 grid list-disc gap-x-8 gap-y-1 ps-[2.85rem] text-sm text-slate-700 sm:grid-cols-2 dark:text-slate-300; }
+.hl-help-btn { @apply inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold text-white transition hover:opacity-90; background: var(--tier); }
+.hl-help-row[data-tone="urgent"] .hl-help-btn { @apply text-deep-900; }
+.hl-letter { scroll-margin-top: calc(var(--header-h, 76px) + 5.5rem); }
+.hl-search-card { @apply rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft sm:p-8 dark:border-white/10 dark:bg-night-900; }
+.hl-entry { @apply flex h-full flex-col rounded-[22px] border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-brand-300 hover:shadow-soft dark:border-white/10 dark:bg-night-900 dark:hover:border-brand-400/60; }
+.hl-entry-ic { @apply grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300; }
+.hl-entry[data-kind="tests"] .hl-entry-ic { @apply bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300; }
+.hl-entry[data-kind="living"] .hl-entry-ic { @apply bg-accent-400/15 text-accent-500 dark:text-accent-400; }
+.hl-focus { @apply relative isolate flex h-full flex-col overflow-hidden rounded-[26px] p-7 text-white transition hover:-translate-y-1 sm:p-9; background: linear-gradient(135deg, var(--deep-900), var(--deep-800) 55%, var(--brand-700)); }
+.hl-panel { @apply flex flex-col rounded-[24px] bg-white p-6 shadow-soft ring-1 ring-slate-200 sm:p-7 dark:bg-night-950 dark:ring-white/10; }
+.hl-panel-body { @apply flex min-h-0 flex-1 flex-col; }
+/* the panel keeps one height beside the figure; a long list scrolls inside it, fading at the edges it scrolls past */
+.hl-panel { height: 30rem; }
+@media (min-width: 1024px) { .hl-panel { height: 34rem; } }
+.hl-panel-list {
+  min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding-inline-end: .35rem; padding-block: .25rem .75rem;
+  scrollbar-width: thin; scrollbar-color: var(--brand-200) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 .5rem, #000 calc(100% - 1.25rem), transparent 100%);
+}
+.hl-panel-list::-webkit-scrollbar { width: 6px; }
+.hl-panel-list::-webkit-scrollbar-thumb { background: var(--brand-200); border-radius: 9999px; }
+.hl-panel-list::-webkit-scrollbar-track { background: transparent; }
+.dark .hl-panel-list { scrollbar-color: color-mix(in srgb, white 22%, transparent) transparent; }
+.dark .hl-panel-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, white 22%, transparent); }
+.hl-system { @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-deep-900 transition hover:border-brand-500 hover:text-brand-700 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-brand-400; }
+.hl-system[aria-current="true"] { @apply border-brand-600 bg-brand-600 text-white hover:text-white dark:border-brand-500 dark:bg-brand-600; }
+/* body map: a figure (never mirrored in Arabic: it is a body, not reading order) with a point per body system */
+.hl-map { position: relative; }
+.hl-figure { display: block; width: 100%; height: auto; overflow: visible; }
+.hl-body { filter: drop-shadow(0 6px 8px color-mix(in srgb, var(--brand-500) 14%, transparent)); }
+.hl-body-a { stop-color: var(--brand-200); }
+.hl-body-b { stop-color: var(--brand-100); }
+.dark .hl-body { filter: none; }
+.dark .hl-body-a { stop-color: color-mix(in srgb, white 11%, transparent); }
+.dark .hl-body-b { stop-color: color-mix(in srgb, white 7%, transparent); }
+.hl-spot {
+  position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; z-index: 1;
+  display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: 9999px;
+  background: #fff; color: var(--brand-600);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-500) 16%, transparent), 0 8px 18px -8px color-mix(in srgb, var(--deep-900) 55%, transparent);
+  transition: background-color .2s ease, color .2s ease, scale .2s ease;
+}
+.hl-spot .ico { width: 1.15rem; height: 1.15rem; }
+a.hl-spot:hover, .hl-spot[aria-current="true"] { background: var(--brand-600); color: #fff; scale: 1.08; }
+.hl-spot[aria-current="true"]::before {
+  content: ""; position: absolute; inset: -8px; border-radius: 9999px; pointer-events: none;
+  border: 2px solid color-mix(in srgb, var(--brand-500) 50%, transparent); animation: ehc-spot-pulse 2.2s ease-out infinite;
+}
+.hl-spot::after {
+  content: attr(data-label); position: absolute; left: 50%; top: calc(100% + 8px); translate: -50% 0; z-index: 2;
+  white-space: nowrap; border-radius: 9999px; background: var(--deep-900); color: #fff; padding: .15rem .6rem;
+  font-size: .72rem; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .15s ease;
+}
+a.hl-spot:hover::after, a.hl-spot:focus-visible::after { opacity: 1; }
+/* the hovered or focused point (and its label) comes in front of its neighbours */
+a.hl-spot:hover, a.hl-spot:focus-visible { z-index: 10; }
+.hl-spot.is-empty { background: color-mix(in srgb, white 70%, transparent); color: var(--brand-300); box-shadow: none; }
+.dark .hl-spot { background: var(--night-900); color: var(--brand-300); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-400) 22%, transparent); }
+.dark a.hl-spot:hover, .dark .hl-spot[aria-current="true"] { background: var(--brand-600); color: #fff; }
+.dark .hl-spot.is-empty { background: color-mix(in srgb, white 6%, transparent); color: color-mix(in srgb, white 30%, transparent); box-shadow: none; }
+@keyframes ehc-spot-pulse { from { transform: scale(.75); opacity: 1; } to { transform: scale(1.45); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hl-spot[aria-current="true"]::before { animation: none; opacity: .6; } }
+@media print {
+  .rte-toc, [data-lib-search], .hl-toc-mobile { display: none !important; }
+  .hl-sec { break-inside: avoid-page; }
+}
+
+/* ---------------------------------------------------------------------
    MEDIA HEROES — image / video with a theme-aware overlay
    <section class="media-hero" data-overlay="tint|duotone|shade" data-strength="light|medium|strong"
             style="--focal: 60% 40%">

@@ -78,6 +78,9 @@ internal sealed record BlockField(IReadOnlyList<object> Values)
     /// <summary>A nested block list (cards, steps, items).</summary>
     public static BlockField List(string alias, BlockJson items) => Shared(alias, items.Build());
 
+    /// <summary>A rich text property value of a page (not a block): the same JSON the editor stores.</summary>
+    public static string RichValue(string html) => RichJson(html);
+
     private static string RichJson(string html) => JsonSerializer.Serialize(new
     {
         markup = html,

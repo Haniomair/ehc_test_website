@@ -1,0 +1,20 @@
+@* Health library card for a condition or a test: body-system icon, name, other names, summary (intro). *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var systems = LibraryCatalog.SystemsOf(Model);
+    var isTest = Model.ContentType.Alias == "healthTest";
+    var aka = LibraryCatalog.AlsoKnownAs(Model).Take(3).ToList();
+    var intro = Model.Value<string>("intro");
+}
+<a href="@Model.Url()" class="card group flex h-full items-start gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
+    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl @(isTest ? "bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300")" aria-hidden="true">
+        <svg class="ico !h-6 !w-6"><use href="#i-@(isTest ? "lab" : LibraryCatalog.IconFor(systems.FirstOrDefault()))" /></svg>
+    </span>
+    <span class="min-w-0 flex-1">
+        <b class="block text-base leading-snug text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@Model.Name</b>
+        @if (aka.Count > 0) { <span class="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">@string.Join("، ", aka)</span> }
+        @if (!string.IsNullOrWhiteSpace(intro)) { <span class="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">@intro</span> }
+    </span>
+</a>

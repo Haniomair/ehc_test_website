@@ -1,0 +1,55 @@
+@* "Care at EHC" on a condition or test page: the chosen specialties, the facilities that treat it (picked here plus
+   those of the specialties, up to six), and the next steps: book (header booking link), find a doctor, nearest centre.
+   Renders the next steps even without specialties or facilities: the health centre is always the first step. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@inject ISiteContext SiteContext
+@{
+    var site = SiteContext.Get(Model);
+    var specialties = Model.Value<IEnumerable<IPublishedContent>>("specialties")?.Where(s => s.IsVisible()).ToList() ?? [];
+    var facilities = (Model.Value<IEnumerable<IPublishedContent>>("careFacilities") ?? [])
+        .Concat(specialties.SelectMany(s => s.Value<IEnumerable<IPublishedContent>>("facilities") ?? []))
+        .Where(f => f.IsVisible()).DistinctBy(f => f.Key).Take(6).ToList();
+    var doctors = site.Home?.Children()?.FirstOrDefault(x => x.ContentType.Alias == "doctorFolder");
+    string L(string k) => Umbraco.GetDictionaryValue("EHC.Library." + k) ?? k;
+}
+<section aria-labelledby="h-care" class="hl-sec">
+    <h2 id="h-care" class="hl-h2">@L("Care.Title")</h2>
+    <div class="relative isolate overflow-hidden rounded-[22px] bg-deep-900 p-6 text-white sm:p-8 dark:bg-night-900 dark:ring-1 dark:ring-white/10">
+        <span class="mark-bg mark-white pointer-events-none absolute -end-16 -top-16 -z-10 h-56 w-56 opacity-[.07]" aria-hidden="true"></span>
+        <p class="max-w-2xl text-on-deep">@L("Care.Intro")</p>
+        @if (specialties.Count > 0)
+        {
+            <p class="mt-6 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal">@L("Care.Specialties")</p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+                @foreach (var s in specialties) { <li><a href="@s.Url()" class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/15"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-@(s.Value<string>("icon") is { Length: > 0 } i ? i : "heart")" /></svg>@s.Name</a></li> }
+            </ul>
+        }
+        @if (facilities.Count > 0)
+        {
+            <p class="mt-6 text-xs font-bold uppercase tracking-widest text-white/70 rtl:tracking-normal">@L("Care.Facilities")</p>
+            <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+                @foreach (var f in facilities)
+                {
+                    var primaryCare = f.Value<string>("facilityType") == "primaryCare";
+                    <li><a href="@f.Url()" class="flex items-center gap-3 rounded-2xl bg-white/5 p-3 transition hover:bg-white/10"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10" aria-hidden="true"><svg class="ico !h-5 !w-5"><use href="#i-@(primaryCare ? "clinic" : "hosp")" /></svg></span><span class="min-w-0"><b class="block truncate text-sm">@f.Name</b>@if (!string.IsNullOrWhiteSpace(f.Value<string>("city"))) {<span class="block text-xs text-white/70">@(f.Value<string>("city"))</span>}</span></a></li>
+                }
+            </ul>
+        }
+        <div class="mt-7 flex flex-wrap gap-3">
+            @if (site.HeaderCta is { } book)
+            {
+                <a href="@book.Url" target="@book.Target" rel="@(book.Target == "_blank" ? "noopener" : null)" class="btn btn-sand btn-sm"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-cal" /></svg>@book.Name</a>
+            }
+            @if (doctors is not null)
+            {
+                <a href="@doctors.Url()" class="btn btn-outline btn-sm"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-doc" /></svg>@doctors.Name</a>
+            }
+            @if (site.NearestLink is { } near)
+            {
+                <a href="@near.Url" target="@near.Target" class="btn btn-outline btn-sm"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-locate" /></svg>@near.Name</a>
+            }
+        </div>
+    </div>
+</section>

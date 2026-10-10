@@ -1,0 +1,13 @@
+﻿@* Health library test or procedure: header (body systems as eyebrow, summary), then the standard sections, care at EHC, related
+   pages and the clinical review (Partials/library/_Detail.cshtml); then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var systems = LibraryCatalog.SystemsOf(Model);
+    if (systems.Count > 0) { ViewData["eyebrow"] = string.Join(" · ", systems.Select(s => Umbraco.GetDictionaryValue("EHC.Library.System." + s))); }
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@await Html.PartialAsync("library/_Detail", Model)
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

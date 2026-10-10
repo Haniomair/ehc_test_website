@@ -1,0 +1,75 @@
+@* Condition or test page body: the fixed sections in order (empty ones left out; a condition's "When to get help"
+   comes after Symptoms), Care at EHC, related pages and tools, the clinical review. Beside it on large screens a
+   sticky "On this page" list (components/rte-toc.js) with print / copy link (components/share.js); on small screens
+   the list opens from a summary above the text. Listen reads the sections aloud. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var isTest = Model.ContentType.Alias == "healthTest";
+    string L(string k) => Umbraco.GetDictionaryValue("EHC.Library." + k) ?? k;
+    var aka = LibraryCatalog.AlsoKnownAs(Model);
+    var hasHelp = !isTest && LibraryCatalog.Lines(Model.Value<string>("emergencyWhen")).Count + LibraryCatalog.Lines(Model.Value<string>("urgentWhen")).Count + LibraryCatalog.Lines(Model.Value<string>("primaryWhen")).Count > 0;
+    var sections = (isTest ? LibraryCatalog.TestSections : LibraryCatalog.ConditionSections)
+        .Select(alias => (alias, html: alias == "help" ? null : Model.Value<IHtmlEncodedString>(alias)?.ToHtmlString()))
+        .Where(s => s.alias == "help" ? hasHelp : !string.IsNullOrWhiteSpace(s.html))
+        .ToList();
+    var hasRelated = (Model.Value<IEnumerable<IPublishedContent>>(isTest ? "relatedConditions" : "relatedTests")?.Any(p => p.IsVisible()) ?? false)
+        || (!isTest && (Model.Value<IEnumerable<IPublishedContent>>("relatedTools")?.Any(p => p.IsVisible()) ?? false));
+    var toc = sections.Select(s => (id: "h-" + s.alias, title: L("Section." + s.alias))).ToList();
+    toc.Add(("h-care", L("Care.Title")));
+    if (hasRelated) { toc.Add(("h-related", L(isTest ? "Related.Conditions" : "Related.Tests"))); }
+    toc.Add(("h-review", L("Review.Title")));
+    var share = "grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-deep-900 transition hover:border-brand-500 hover:text-brand-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:hover:border-brand-400 dark:hover:text-brand-300";
+}
+<div class="wrap grid gap-10 py-10 lg:grid-cols-[minmax(0,800px)_16rem] lg:justify-between lg:py-14">
+    <div class="min-w-0">
+        <div class="mb-8 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold @(isTest ? "bg-support-50 text-support-800 dark:bg-support-500/15 dark:text-support-300" : "bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300")"><svg class="ico !h-3.5 !w-3.5" aria-hidden="true"><use href="#i-@(isTest ? "lab" : "book")" /></svg>@L(isTest ? "Kind.Test" : "Kind.Condition")</span>
+            @if (aka.Count > 0) { <span><span class="font-semibold text-deep-900 dark:text-white">@L("AlsoKnownAs")</span> @string.Join("، ", aka)</span> }
+            @await Html.PartialAsync("site/_Listen", "#hl-body")
+        </div>
+        <details class="hl-toc-mobile mb-8 rounded-2xl border border-slate-200 lg:hidden dark:border-white/10">
+            <summary class="cursor-pointer px-4 py-3 text-sm font-bold text-deep-900 dark:text-white">@(Umbraco.GetDictionaryValue("EHC.PageNav.Title"))</summary>
+            <ol class="grid gap-1 px-4 pb-4 text-sm">@foreach (var t in toc) { <li><a href="#@t.id" class="link">@t.title</a></li> }</ol>
+        </details>
+        <div id="hl-body" class="grid gap-12">
+            @foreach (var s in sections)
+            {
+                if (s.alias == "help")
+                {
+                    @await Html.PartialAsync("library/_WhenToGetHelp", Model)
+                    continue;
+                }
+                <section aria-labelledby="h-@s.alias" class="hl-sec">
+                    <h2 id="h-@s.alias" class="hl-h2">@L("Section." + s.alias)</h2>
+                    <div class="rte">@Html.Raw(s.html)</div>
+                </section>
+            }
+        </div>
+        <div class="mt-12 grid gap-12">
+            @await Html.PartialAsync("library/_CareAtEhc", Model)
+            @await Html.PartialAsync("library/_Related", Model)
+            @await Html.PartialAsync("library/_Review", Model)
+        </div>
+    </div>
+    <aside class="hidden lg:block">
+        <div class="rte-toc">
+            <nav aria-label="@(Umbraco.GetDictionaryValue("EHC.PageNav.Title"))" data-rte-toc>
+                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500 rtl:tracking-normal dark:text-slate-400">@(Umbraco.GetDictionaryValue("EHC.PageNav.Title"))</p>
+                <ol class="grid border-s border-slate-200 dark:border-white/10">
+                    @foreach (var t in toc) { <li><a class="rte-toc-link" href="#@t.id">@t.title</a></li> }
+                </ol>
+            </nav>
+            <div class="mt-6 flex items-center gap-2 border-t border-slate-200 pt-5 dark:border-white/10" data-share>
+                <button type="button" class="@share" data-share-print aria-label="@(Umbraco.GetDictionaryValue("EHC.Share.Print"))" hidden><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-print" /></svg></button>
+                <button type="button" class="@share" data-share-copy aria-label="@(Umbraco.GetDictionaryValue("EHC.Share.Copy"))" data-done="@(Umbraco.GetDictionaryValue("EHC.Share.Copied"))" hidden><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-link" /></svg></button>
+                <button type="button" class="@share" data-share-native aria-label="@(Umbraco.GetDictionaryValue("EHC.Share.Device"))" hidden><svg class="ico !h-5 !w-5" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+                <span class="text-xs font-semibold text-brand-700 dark:text-brand-300" role="status" data-share-status></span>
+            </div>
+        </div>
+    </aside>
+</div>
+<script src="~/assets/js/components/rte-toc.js" asp-append-version="true" defer></script>
+<script src="~/assets/js/components/share.js" asp-append-version="true" defer></script>

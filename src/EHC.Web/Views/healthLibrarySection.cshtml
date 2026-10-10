@@ -1,0 +1,137 @@
+﻿@* Health library section (sectionKind): conditions or tests A–Z, with search, body-system filter and (conditions)
+   audience chips, grouped by letter with a sticky letter bar (Arabic or Latin alphabet, see Site/AzIndex.cs); or
+   healthy living articles with topic chips, search and paging. Filters are query string links: they work without JS.
+   Then the page's own sections. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var req = Context.Request;
+    var kind = Model.Value<string>("sectionKind") is { } k && LibraryCatalog.KindTypes.ContainsKey(k) ? k : "conditions";
+    var type = LibraryCatalog.KindTypes[kind];
+    var all = Model.Children().Where(c => c.ContentType.Alias == type && c.IsVisible()).ToList();
+    string L(string key) => Umbraco.GetDictionaryValue("EHC.Library." + key) ?? key;
+    var q = ((string?)req.Query["q"])?.Trim();
+    if (q?.Length > 80) { q = q[..80]; }
+    var nq = LibraryCatalog.Normalize(q);
+}
+@await Html.PartialAsync("site/_PageHeader", Model)
+@if (kind == "living")
+{
+    var ordered = all.OrderByDescending(a => a.Value<DateOnly?>("reviewedDate") ?? DateOnly.FromDateTime(a.UpdateDate)).ToList();
+    var topics = HealthArticles.Topics.Where(t => ordered.Any(a => a.Value<string>("topic") == t)).ToList();
+    string? topic = req.Query["topic"];
+    if (topic is not null && !topics.Contains(topic)) { topic = null; }
+    var list = ordered.Where(a => topic is null || a.Value<string>("topic") == topic)
+        .Where(a => nq.Length == 0 || LibraryCatalog.Score(a, nq) > 0 || LibraryCatalog.Normalize(a.Name).Contains(nq))
+        .ToList();
+    const int size = 12;
+    var pages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)size));
+    var page = Math.Min(ListingQuery.CurrentPage(req), pages);
+    <div class="wrap py-10 lg:py-14">
+        <form method="get" action="@req.Path" class="mb-6 flex max-w-xl gap-2" role="search">
+            @if (topic is not null) { <input type="hidden" name="topic" value="@topic"> }
+            <label for="lib-q" class="sr-only">@(Umbraco.GetDictionaryValue("EHC.Health.Search"))</label>
+            <input id="lib-q" name="q" type="search" value="@q" maxlength="80" class="field" placeholder="@(Umbraco.GetDictionaryValue("EHC.Health.Search"))">
+            <button type="submit" class="btn btn-primary shrink-0 !px-5"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="sr-only sm:not-sr-only">@(Umbraco.GetDictionaryValue("EHC.Health.SearchButton"))</span></button>
+        </form>
+        @if (topics.Count > 1)
+        {
+            <nav class="mb-8 flex flex-wrap gap-2" aria-label="@(Umbraco.GetDictionaryValue("EHC.Health.Topics"))">
+                <a class="chip" href="@ListingQuery.With(req, "topic", null)" aria-current="@(topic is null ? "true" : null)">@(Umbraco.GetDictionaryValue("EHC.Common.All"))</a>
+                @foreach (var t in topics) { <a class="chip" href="@ListingQuery.With(req, "topic", t)" aria-current="@(topic == t ? "true" : null)">@(Umbraco.GetDictionaryValue("EHC.Health.Topic." + t))</a> }
+            </nav>
+        }
+        <p class="mb-4 text-sm text-slate-600 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
+        @if (list.Count == 0)
+        {
+            <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@(Umbraco.GetDictionaryValue("EHC.Common.NoResults"))</p>
+        }
+        else
+        {
+            <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (var a in list.Skip((page - 1) * size).Take(size)) { <li>@await Html.PartialAsync("cards/_ArticleCard", a)</li> }
+            </ul>
+            @await Html.PartialAsync("site/_Pager", (page, pages))
+        }
+    </div>
+}
+else
+{
+    var usedSystems = LibraryCatalog.Systems.Where(s => all.Any(a => LibraryCatalog.SystemsOf(a).Contains(s.Key))).ToList();
+    string? system = req.Query["system"];
+    if (system is not null && usedSystems.All(s => s.Key != system)) { system = null; }
+    var usedAudiences = kind == "conditions" ? LibraryCatalog.Audiences.Where(a => all.Any(x => LibraryCatalog.AudiencesOf(x).Contains(a))).ToList() : [];
+    string? audience = req.Query["audience"];
+    if (audience is not null && !usedAudiences.Contains(audience)) { audience = null; }
+    var list = all.Where(a => system is null || LibraryCatalog.SystemsOf(a).Contains(system))
+        .Where(a => audience is null || LibraryCatalog.AudiencesOf(a).Contains(audience))
+        .Where(a => nq.Length == 0 || LibraryCatalog.Score(a, nq) > 0)
+        .ToList();
+    var arabic = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var byUrl = list.ToDictionary(a => a.Url(), a => a);
+    var groups = AzIndex.Build(list.Select(a => new AzIndex.Entry(a.Name ?? "", a.Url(), null)), arabic);
+    var own = AzIndex.Letters(arabic);
+    var letters = own.Concat(groups.Select(g => g.Letter).Where(l => !own.Contains(l))).ToList();
+    var present = groups.Select(g => g.Letter).ToHashSet();
+    var filtered = system is not null || audience is not null || nq.Length > 0;
+    <div class="wrap py-10 lg:py-14">
+        <form method="get" action="@req.Path" class="mb-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_auto]" role="search">
+            @if (audience is not null) { <input type="hidden" name="audience" value="@audience"> }
+            <div class="relative">
+                <label for="sec-q" class="sr-only">@L("Search." + kind)</label>
+                <svg class="ico pointer-events-none absolute inset-y-0 start-3.5 my-auto !h-5 !w-5 text-slate-400" aria-hidden="true"><use href="#i-search" /></svg>
+                <input id="sec-q" name="q" type="search" value="@q" maxlength="80" class="field !ps-11" placeholder="@L("Search." + kind)">
+            </div>
+            @if (usedSystems.Count > 1)
+            {
+                <label for="sec-system" class="sr-only">@L("BodySystem")</label>
+                <select id="sec-system" name="system" class="field">
+                    <option value="">@L("AllSystems")</option>
+                    @foreach (var s in usedSystems) { <option value="@s.Key" selected="@(s.Key == system)">@L("System." + s.Key)</option> }
+                </select>
+            }
+            <button type="submit" class="btn btn-primary !px-6">@(Umbraco.GetDictionaryValue("EHC.Health.SearchButton"))</button>
+        </form>
+        @if (usedAudiences.Count > 0)
+        {
+            <nav class="mb-6 flex flex-wrap gap-2" aria-label="@L("Audiences")">
+                <a class="chip inline-flex items-center gap-1.5 whitespace-nowrap" href="@ListingQuery.With(req, "audience", null)" aria-current="@(audience is null ? "true" : null)">@(Umbraco.GetDictionaryValue("EHC.Common.All"))</a>
+                @foreach (var a in usedAudiences) { <a class="chip inline-flex items-center gap-1.5 whitespace-nowrap" href="@ListingQuery.With(req, "audience", a)" aria-current="@(audience == a ? "true" : null)"><svg class="ico !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-@LibraryCatalog.AudienceIcons[a]" /></svg>@L("Audience." + a)</a> }
+            </nav>
+        }
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-slate-600 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
+            @if (filtered) { <a href="@req.Path" class="link text-sm font-semibold">@L("ClearFilters")</a> }
+        </div>
+        @if (groups.Count == 0)
+        {
+            <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@(Umbraco.GetDictionaryValue("EHC.Common.NoResults"))</p>
+        }
+        else
+        {
+            <nav aria-label="@(Umbraco.GetDictionaryValue("EHC.Az.Letters"))" class="sticky top-[var(--header-h,76px)] z-20 -mx-4 mb-8 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border dark:border-white/10 dark:bg-night-950/95">
+                <ul class="flex flex-wrap gap-1">
+                    @foreach (var l in letters)
+                    {
+                        <li>@if (present.Contains(l)) { <a href="#l-@letters.IndexOf(l)" class="az-letter">@l</a> } else { <span class="az-letter az-off" aria-hidden="true">@l</span> }</li>
+                    }
+                </ul>
+            </nav>
+            <div class="grid gap-10">
+                @foreach (var g in groups)
+                {
+                    <section id="l-@letters.IndexOf(g.Letter)" aria-labelledby="l-@letters.IndexOf(g.Letter)-h" class="hl-letter grid gap-4 sm:grid-cols-[4rem_minmax(0,1fr)]">
+                        <h2 id="l-@letters.IndexOf(g.Letter)-h" class="text-3xl font-extrabold text-brand-600 dark:text-brand-300">@g.Letter</h2>
+                        <ul class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach (var e in g.Entries) { <li>@await Html.PartialAsync("library/_ItemCard", byUrl[e.Url])</li> }
+                        </ul>
+                    </section>
+                }
+            </div>
+        }
+    </div>
+}
+@await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

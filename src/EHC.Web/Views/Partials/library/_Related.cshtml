@@ -1,0 +1,31 @@
+@* Related library pages (a condition's tests, a test's conditions) and health tools; nothing renders without either. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    var pages = (Model.Value<IEnumerable<IPublishedContent>>(Model.ContentType.Alias == "healthTest" ? "relatedConditions" : "relatedTests") ?? [])
+        .Where(p => p.IsVisible()).ToList();
+    var tools = Model.HasProperty("relatedTools") ? Model.Value<IEnumerable<IPublishedContent>>("relatedTools")?.Where(t => t.IsVisible()).ToList() ?? [] : [];
+    if (pages.Count == 0 && tools.Count == 0) { return; }
+    string L(string k) => Umbraco.GetDictionaryValue("EHC.Library." + k) ?? k;
+}
+<section aria-labelledby="h-related" class="hl-sec">
+    <h2 id="h-related" class="hl-h2">@L(Model.ContentType.Alias == "healthTest" ? "Related.Conditions" : "Related.Tests")</h2>
+    @if (pages.Count > 0)
+    {
+        <ul class="grid gap-4 sm:grid-cols-2">
+            @foreach (var p in pages) { <li>@await Html.PartialAsync("library/_ItemCard", p)</li> }
+        </ul>
+    }
+    @if (tools.Count > 0)
+    {
+        <p class="mb-3 mt-6 text-sm font-bold text-deep-900 dark:text-white">@(Umbraco.GetDictionaryValue("EHC.Health.RelatedTools"))</p>
+        <ul class="flex flex-wrap gap-2">
+            @foreach (var t in tools)
+            {
+                var tool = HealthTools.Find(t.Value<string>("tool"));
+                <li><a href="@t.Url()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-deep-900 transition hover:border-brand-500 hover:text-brand-700 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-brand-400"><svg class="ico !h-4 !w-4 text-brand-600 dark:text-brand-300" aria-hidden="true"><use href="#i-@(tool?.Icon ?? "target")" /></svg>@t.Name</a></li>
+            }
+        </ul>
+    }
+</section>

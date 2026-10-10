@@ -1,0 +1,43 @@
+@* "When to get help" on a condition page: one compact panel with a row per tier from the page's lists (one item per
+   line), most urgent first: a coloured marker, the tier's title with its action beside it (call the emergency number from
+   Site settings, call the advice line, book with the health centre via the header booking link) and the items in two
+   columns on wider screens. A tier without items is left out; nothing renders without any. *@
+@using EHC.Web.Site
+@using Umbraco.Cms.Core.Models.PublishedContent
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@inject ISiteContext SiteContext
+@{
+    var emergency = LibraryCatalog.Lines(Model.Value<string>("emergencyWhen"));
+    var urgent = LibraryCatalog.Lines(Model.Value<string>("urgentWhen"));
+    var primary = LibraryCatalog.Lines(Model.Value<string>("primaryWhen"));
+    if (emergency.Count + urgent.Count + primary.Count == 0) { return; }
+    var site = SiteContext.Get(Model);
+    string L(string k) => Umbraco.GetDictionaryValue("EHC.Library." + k) ?? k;
+    string Number(ContactNumber? n, string fallback) => n?.Number is { Length: > 0 } x ? x : fallback;
+    var er = Number(site.Emergency, "997");
+    var advice = Number(site.Advice, "937");
+    var book = site.HeaderCta;
+    var tiers = new List<(string tone, string icon, string title, IReadOnlyList<string> items, string? href, string? target, string? action)>();
+    if (emergency.Count > 0) { tiers.Add(("emerg", "er", string.Format(L("Help.Emergency"), er), emergency, "tel:" + (site.Emergency?.Dial ?? er), null, string.Format(L("Help.Call"), er))); }
+    if (urgent.Count > 0) { tiers.Add(("urgent", "clock", string.Format(L("Help.Urgent"), advice), urgent, "tel:" + (site.Advice?.Dial ?? advice), null, string.Format(L("Help.Call"), advice))); }
+    if (primary.Count > 0) { tiers.Add(("primary", "clinic", L("Help.Primary"), primary, book?.Url, book?.Target, book?.Name)); }
+}
+<section aria-labelledby="h-help" class="hl-sec">
+    <h2 id="h-help" class="hl-h2">@L("Section.help")</h2>
+    <div class="hl-help">
+        @foreach (var t in tiers)
+        {
+            <div class="hl-help-row" data-tone="@t.tone">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <span class="hl-help-ic" aria-hidden="true"><svg class="ico !h-4 !w-4"><use href="#i-@t.icon" /></svg></span>
+                    <h3 class="min-w-0 flex-1 text-[.95rem] font-bold leading-snug text-deep-900 dark:text-white">@t.title</h3>
+                    @if (!string.IsNullOrWhiteSpace(t.href) && !string.IsNullOrWhiteSpace(t.action))
+                    {
+                        <a href="@t.href" target="@t.target" rel="@(t.target == "_blank" ? "noopener" : null)" class="hl-help-btn"><svg class="ico !h-4 !w-4" aria-hidden="true"><use href="#i-@(t.tone == "primary" ? "cal" : "phone")" /></svg>@t.action</a>
+                    }
+                </div>
+                <ul class="hl-help-list">@foreach (var x in t.items) { <li>@x</li> }</ul>
+            </div>
+        }
+    </div>
+</section>

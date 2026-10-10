@@ -1,51 +1,283 @@
-﻿@* Health library: articles below this page, newest review first; search box and topic chips (query string, works
-   without JS), 12 per page; then the page's own sections. *@
+@* Health library home: search with suggestions (components/health-library.js; the form also works without JS and
+   lists results here), the three sections (conditions, tests and procedures, healthy living) with counts, conditions
+   A–Z, the body map (a point or chip per body system opens its conditions and tests; without JS each is a link to the
+   filtered conditions list), browse by audience, conditions in focus, the latest healthy living articles and the
+   editorial policy. Every part renders only when it has content. Then the page's own sections. *@
+@using System.Text.Json
 @using EHC.Web.Site
 @using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "master.cshtml";
     var req = Context.Request;
-    var all = Model.Children().Where(c => c.ContentType.Alias == "healthArticle")
+    string L(string key) => Umbraco.GetDictionaryValue("EHC.Library." + key) ?? key;
+    var items = LibraryCatalog.Items(Model).ToList();
+    var conditions = items.Where(i => i.ContentType.Alias == "healthCondition").ToList();
+    var tests = items.Where(i => i.ContentType.Alias == "healthTest").ToList();
+    var articles = items.Where(i => i.ContentType.Alias == "healthArticle")
         .OrderByDescending(a => a.Value<DateOnly?>("reviewedDate") ?? DateOnly.FromDateTime(a.UpdateDate)).ToList();
-    var topics = HealthArticles.Topics.Where(t => all.Any(a => a.Value<string>("topic") == t)).ToList();
-    string? topic = req.Query["topic"];
-    if (topic is not null && !topics.Contains(topic)) { topic = null; }
+    var sections = new[] { "conditions", "tests", "living" }
+        .Select(k => (kind: k, page: LibraryCatalog.Section(Model, k), count: k == "conditions" ? conditions.Count : k == "tests" ? tests.Count : articles.Count))
+        .Where(s => s.page is not null).ToList();
+    var conditionsPage = LibraryCatalog.Section(Model, "conditions");
+    var livingPage = LibraryCatalog.Section(Model, "living");
     var q = ((string?)req.Query["q"])?.Trim();
     if (q?.Length > 80) { q = q[..80]; }
-    var list = all.Where(a => topic is null || a.Value<string>("topic") == topic)
-        .Where(a => string.IsNullOrEmpty(q) || a.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase) || (a.Value<string>("intro") ?? "").Contains(q, StringComparison.CurrentCultureIgnoreCase))
-        .ToList();
-    const int size = 12;
-    var pages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)size));
-    var page = Math.Min(ListingQuery.CurrentPage(req), pages);
+    var results = string.IsNullOrEmpty(q) ? [] : LibraryCatalog.Search(Model, q);
+    string KindLabel(IPublishedContent p) => L(p.ContentType.Alias switch { "healthCondition" => "Kind.Condition", "healthTest" => "Kind.Test", _ => "Kind.Article" });
+    var index = JsonSerializer.Serialize(items.Select(i => new { n = i.Name, a = string.Join(" ", LibraryCatalog.AlsoKnownAs(i)), k = KindLabel(i), u = i.Url() }));
+    // body map: conditions and tests per body system
+    var mapped = conditions.Concat(tests).ToList();
+    var bySystem = LibraryCatalog.Systems.ToDictionary(s => s.Key, s => mapped.Where(m => LibraryCatalog.SystemsOf(m).Contains(s.Key)).OrderBy(m => m.ContentType.Alias == "healthTest").ThenBy(m => m.Name).ToList());
+    var firstSystem = LibraryCatalog.Systems.FirstOrDefault(s => s.OnMap && bySystem[s.Key].Count > 0) ?? LibraryCatalog.Systems.FirstOrDefault(s => bySystem[s.Key].Count > 0);
+    string SystemLink(string key) => conditionsPage is null ? "#" : conditionsPage.Url() + "?system=" + key;
+    var audiences = LibraryCatalog.Audiences.Select(a => (key: a, count: conditions.Count(c => LibraryCatalog.AudiencesOf(c).Contains(a)))).Where(a => a.count > 0).ToList();
+    var featured = conditions.Where(c => c.Value<bool>("featured")).Take(2).ToList();
+    var popular = (featured.Count > 0 ? featured : conditions).Concat(conditions).DistinctBy(c => c.Key).Take(6).ToList();
+    var policy = Model.Children().FirstOrDefault(c => c.ContentType.Alias == "contentPage" && c.IsVisible());
+    var arabic = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var letters = AzIndex.Letters(arabic);
+    var presentLetters = conditions.Select(c => AzIndex.LetterOf(c.Name ?? "", arabic)).ToHashSet();
 }
 @await Html.PartialAsync("site/_PageHeader", Model)
-<div class="wrap py-10 lg:py-14">
-    <form method="get" action="@req.Path" class="mb-6 flex max-w-xl gap-2" role="search">
-        @if (topic is not null) { <input type="hidden" name="topic" value="@topic"> }
-        <label for="lib-q" class="sr-only">@Umbraco.GetDictionaryValue("EHC.Health.Search")</label>
-        <input id="lib-q" name="q" type="search" value="@q" maxlength="80" class="field" placeholder="@Umbraco.GetDictionaryValue("EHC.Health.Search")">
-        <button type="submit" class="btn btn-primary shrink-0 !px-5"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="sr-only sm:not-sr-only">@Umbraco.GetDictionaryValue("EHC.Health.SearchButton")</span></button>
-    </form>
-    @if (topics.Count > 1)
-    {
-        <nav class="mb-8 flex flex-wrap gap-2" aria-label="@Umbraco.GetDictionaryValue("EHC.Health.Topics")">
-            <a class="chip" href="@ListingQuery.With(req, "topic", null)" aria-current="@(topic is null ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Common.All")</a>
-            @foreach (var t in topics) { <a class="chip" href="@ListingQuery.With(req, "topic", t)" aria-current="@(topic == t ? "true" : null)">@Umbraco.GetDictionaryValue("EHC.Health.Topic." + t)</a> }
-        </nav>
-    }
-    <p class="mb-4 text-sm text-slate-600 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", list.Count)</p>
-    @if (list.Count == 0)
-    {
-        <p class="card p-10 text-center text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Common.NoResults")</p>
-    }
-    else
-    {
-        <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (var a in list.Skip((page - 1) * size).Take(size)) { <li>@await Html.PartialAsync("cards/_ArticleCard", a)</li> }
-        </ul>
-        @await Html.PartialAsync("site/_Pager", (page, pages))
-    }
+
+<div class="wrap pt-10 lg:pt-14">
+    <div class="hl-search-card">
+        <h2 class="text-xl font-bold text-deep-900 sm:text-2xl dark:text-white">@L("Search.Title")</h2>
+        <form method="get" action="@req.Path" role="search" class="relative mt-4 flex gap-2" data-lib-search>
+            <div class="relative min-w-0 flex-1">
+                <label for="lib-q" class="sr-only">@L("Search.Label")</label>
+                <svg class="ico pointer-events-none absolute inset-y-0 start-4 my-auto !h-5 !w-5 text-slate-400" aria-hidden="true"><use href="#i-search" /></svg>
+                <input id="lib-q" name="q" type="search" value="@q" maxlength="80" autocomplete="off" class="field !h-14 !rounded-2xl !ps-12 text-base" placeholder="@L("Search.Placeholder")"
+                       role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lib-q-list" data-lib-q>
+                <ul id="lib-q-list" role="listbox" aria-label="@L("Search.Label")" class="absolute inset-x-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-2xl bg-white p-1.5 shadow-[0_16px_40px_rgba(10,42,79,.18)] ring-1 ring-slate-200 dark:bg-night-900 dark:ring-white/10" data-lib-list hidden></ul>
+            </div>
+            <button type="submit" class="btn btn-primary !h-14 shrink-0 !rounded-2xl !px-6"><span class="sr-only sm:not-sr-only">@(Umbraco.GetDictionaryValue("EHC.Health.SearchButton"))</span><svg class="ico sm:hidden" aria-hidden="true"><use href="#i-search" /></svg></button>
+            <script type="application/json" data-lib-index>@Html.Raw(index.Replace("</", "<\\/"))</script>
+        </form>
+        <p class="sr-only" aria-live="polite" data-lib-count data-format="@(Umbraco.GetDictionaryValue("EHC.Common.ResultCount"))"></p>
+        @if (popular.Count > 0)
+        {
+            <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                <span class="me-1 font-semibold text-slate-600 dark:text-slate-400">@L("Search.Popular")</span>
+                @foreach (var p in popular) { <a href="@p.Url()" class="rounded-full bg-soft px-3 py-1 font-semibold text-deep-900 transition hover:bg-brand-50 hover:text-brand-700 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">@p.Name</a> }
+            </div>
+        }
+    </div>
 </div>
+
+@if (!string.IsNullOrEmpty(q))
+{
+    <section class="wrap pt-10" aria-labelledby="lib-results">
+        <div class="mb-5 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 id="lib-results" class="text-2xl font-bold text-deep-900 dark:text-white">@string.Format(L("Search.ResultsFor"), q)</h2>
+            <a href="@req.Path" class="link text-sm font-semibold">@L("ClearFilters")</a>
+        </div>
+        <p class="mb-4 text-sm text-slate-600 dark:text-slate-400" role="status">@string.Format(Umbraco.GetDictionaryValue("EHC.Common.ResultCount") ?? "{0}", results.Count)</p>
+        @if (results.Count == 0)
+        {
+            <p class="card p-8 text-center text-slate-500 dark:text-slate-400">@L("Search.None")</p>
+        }
+        else
+        {
+            <ul class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                @foreach (var r in results)
+                {
+                    <li>@if (r.ContentType.Alias == "healthArticle") { @await Html.PartialAsync("cards/_ArticleCard", r) } else { @await Html.PartialAsync("library/_ItemCard", r) }</li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@if (sections.Count > 0)
+{
+    <section class="wrap pt-12 lg:pt-16" aria-label="@L("Sections")">
+        <ul class="grid gap-5 md:grid-cols-3">
+            @foreach (var s in sections)
+            {
+                var icon = s.kind switch { "conditions" => "book", "tests" => "lab", _ => "heart" };
+                <li>
+                    <a href="@s.page!.Url()" class="hl-entry group" data-kind="@s.kind">
+                        <span class="hl-entry-ic" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-@icon" /></svg></span>
+                        <b class="mt-5 block text-xl text-deep-900 dark:text-white">@s.page.Name</b>
+                        <span class="mt-2 block text-sm text-slate-600 dark:text-slate-400">@L("Entry." + s.kind)</span>
+                        <span class="mt-auto flex items-center justify-between pt-5 text-sm font-semibold text-brand-700 dark:text-brand-300">
+                            <span>@string.Format(L("Entry.Count"), s.count)</span>
+                            <svg class="ico flip !h-5 !w-5 transition group-hover:translate-x-1 rtl:group-hover:-translate-x-1" aria-hidden="true"><use href="#i-arrow" /></svg>
+                        </span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@if (conditionsPage is not null && conditions.Count > 0)
+{
+    <section class="wrap pt-10" aria-labelledby="lib-az">
+        <div class="flex flex-col gap-4 rounded-[22px] border border-slate-200 p-5 sm:p-6 lg:flex-row lg:items-center dark:border-white/10">
+            <h2 id="lib-az" class="shrink-0 text-lg font-bold text-deep-900 dark:text-white">@L("Az.Title")</h2>
+            <ul class="flex flex-wrap gap-1 lg:ms-auto">
+                @for (var i = 0; i < letters.Count; i++)
+                {
+                    var l = letters[i];
+                    <li>@if (presentLetters.Contains(l)) { <a href="@(conditionsPage.Url())#l-@i" class="az-letter">@l</a> } else { <span class="az-letter az-off" aria-hidden="true">@l</span> }</li>
+                }
+            </ul>
+        </div>
+    </section>
+}
+
+@if (firstSystem is not null)
+{
+    <section class="mt-14 bg-soft py-14 lg:mt-16 lg:py-20 dark:bg-night-900/60" aria-labelledby="hl-map" data-body-map>
+        <div class="wrap grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
+            <div>
+                <p class="eyebrow">@L("Map.Eyebrow")</p>
+                <h2 id="hl-map" class="h2">@L("Map.Title")</h2>
+                <p class="mt-3 max-w-lg text-slate-600 dark:text-slate-400">@L("Map.Intro")</p>
+                <div class="mt-8 grid items-start gap-8 sm:grid-cols-[16rem_minmax(0,1fr)] lg:grid-cols-1 xl:grid-cols-[16rem_minmax(0,1fr)]">
+                    <div class="hl-map mx-auto w-full max-w-[16rem]" dir="ltr">
+                        <svg class="hl-figure" viewBox="0 0 200 440" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="hl-body-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="hl-body-a" /><stop offset="1" class="hl-body-b" /></linearGradient>
+                            </defs>
+                            <path class="hl-body" fill="url(#hl-body-fill)" d="M81 34a19 25 0 1 1 38 0a19 25 0 1 1-38 0ZM100 48C104 48 108 49 108.5 52C109 62 109.5 68 110 73C116 78 130 80 141 84C152 88 157 98 157 112C158 132 160 150 161 168C162 190 165 214 166 234C167.5 246 167 258 161 261C155 263 152.5 255 152.5 244C152 226 150 206 148 188C146 170 144 150 141 132C139.5 145 137.5 156 136 166C134.5 176 133 184 134 194C136 207 141 218 141 234C141 262 137 300 133 330C131 350 133 372 129 396C127 410 127 419 131 427C133 433 124 436 114 434C110 432 110 424 111 414C112 390 110 362 110.5 336C111 300 106 262 103 241C102 237 101 235 100 235C99 235 98 237 97 241C94 262 89 300 89.5 336C90 362 88 390 89 414C90 424 90 432 86 434C76 436 67 433 69 427C73 419 73 410 71 396C67 372 69 350 67 330C63 300 59 262 59 234C59 218 64 207 66 194C67 184 65.5 176 64 166C62.5 156 60.5 145 59 132C56 150 54 170 52 188C50 206 48 226 47.5 244C47.5 255 45 263 39 261C33 258 32.5 246 34 234C35 214 38 190 39 168C40 150 42 132 43 112C43 98 48 88 59 84C70 80 84 78 90 73C90.5 68 91 62 91.5 52C92 49 96 48 100 48Z" />
+                        </svg>
+                        @foreach (var s in LibraryCatalog.Systems.Where(s => s.OnMap))
+                        {
+                            var count = bySystem[s.Key].Count;
+                            if (count == 0)
+                            {
+                                <span class="hl-spot is-empty" style="--x:@(s.X!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))%;--y:@(s.Y!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))%" aria-hidden="true"><svg class="ico"><use href="#i-@s.Icon" /></svg></span>
+                                continue;
+                            }
+                            <a href="@SystemLink(s.Key)" class="hl-spot" style="--x:@(s.X!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))%;--y:@(s.Y!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))%" data-system="@s.Key" data-label="@L("System." + s.Key)" aria-label="@L("System." + s.Key)" aria-current="@(s == firstSystem ? "true" : null)"><svg class="ico" aria-hidden="true"><use href="#i-@s.Icon" /></svg></a>
+                        }
+                    </div>
+                    <div>
+                        <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500 rtl:tracking-normal dark:text-slate-400">@L("Map.Systems")</p>
+                        <ul class="flex flex-wrap gap-2">
+                            @foreach (var s in LibraryCatalog.Systems.Where(s => bySystem[s.Key].Count > 0))
+                            {
+                                <li><a href="@SystemLink(s.Key)" class="hl-system" data-system="@s.Key" aria-current="@(s == firstSystem ? "true" : null)"><svg class="ico !h-4 !w-4 shrink-0" aria-hidden="true"><use href="#i-@s.Icon" /></svg>@L("System." + s.Key)</a></li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            @* one card that stays put; only its content changes when another body system is chosen *@
+            <div class="hl-panel" aria-live="polite">
+                @foreach (var s in LibraryCatalog.Systems.Where(s => bySystem[s.Key].Count > 0))
+                {
+                    var list = bySystem[s.Key];
+                    <div class="hl-panel-body" data-system-panel="@s.Key" hidden="@(s != firstSystem)">
+                        <div class="flex items-center gap-4">
+                            <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-@s.Icon" /></svg></span>
+                            <div>
+                                <h3 class="text-xl font-bold text-deep-900 dark:text-white">@L("System." + s.Key)</h3>
+                                <p class="text-sm text-slate-600 dark:text-slate-400">@string.Format(L("Map.Count"), list.Count)</p>
+                            </div>
+                        </div>
+                        <ul class="hl-panel-list mt-5 grid content-start gap-2">
+                            @foreach (var m in list)
+                            {
+                                var test = m.ContentType.Alias == "healthTest";
+                                <li>
+                                    <a href="@m.Url()" class="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:hover:border-brand-400">
+                                        <span class="min-w-0 flex-1"><b class="block text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@m.Name</b>@if (!string.IsNullOrWhiteSpace(m.Value<string>("intro"))) {<span class="line-clamp-1 text-sm text-slate-500 dark:text-slate-400">@(m.Value<string>("intro"))</span>}</span>
+                                        <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold @(test ? "bg-support-50 text-support-800 dark:bg-support-500/15 dark:text-support-300" : "bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300")">@L(test ? "Kind.Test" : "Kind.Condition")</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        @if (conditionsPage is not null && list.Any(m => m.ContentType.Alias == "healthCondition"))
+                        {
+                            <a href="@SystemLink(s.Key)" class="link mt-4 inline-flex shrink-0 self-start text-sm font-semibold">@string.Format(L("Map.All"), L("System." + s.Key))</a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@if (conditionsPage is not null && audiences.Count > 0)
+{
+    <section class="wrap pt-14 lg:pt-16" aria-labelledby="lib-aud">
+        <h2 id="lib-aud" class="h2 mb-6">@L("Audiences")</h2>
+        <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            @foreach (var a in audiences)
+            {
+                <li>
+                    <a href="@(conditionsPage.Url())?audience=@a.key" class="card group flex h-full flex-col items-start gap-3 p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
+                        <span class="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" aria-hidden="true"><svg class="ico"><use href="#i-@LibraryCatalog.AudienceIcons[a.key]" /></svg></span>
+                        <b class="text-deep-900 group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">@L("Audience." + a.key)</b>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">@string.Format(L("Entry.Count"), a.count)</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@if (featured.Count > 0)
+{
+    <section class="wrap pt-14 lg:pt-16" aria-labelledby="hl-focus">
+        <p class="eyebrow">@L("Focus.Eyebrow")</p>
+        <h2 id="hl-focus" class="h2 mb-6">@L("Focus.Title")</h2>
+        <ul class="grid gap-5 lg:grid-cols-2">
+            @foreach (var f in featured)
+            {
+                var sys = LibraryCatalog.SystemsOf(f).FirstOrDefault();
+                <li>
+                    <a href="@f.Url()" class="hl-focus group">
+                        <span class="mark-bg mark-white pointer-events-none absolute -bottom-16 -end-16 -z-10 h-56 w-56 opacity-10 transition duration-700 group-hover:rotate-45" aria-hidden="true"></span>
+                        <span class="grid h-14 w-14 place-items-center rounded-2xl bg-white/10" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-@LibraryCatalog.IconFor(sys)" /></svg></span>
+                        <b class="mt-6 block text-2xl">@f.Name</b>
+                        @if (!string.IsNullOrWhiteSpace(f.Value<string>("intro"))) { <span class="mt-2 block text-on-deep">@(f.Value<string>("intro"))</span> }
+                        <span class="mt-6 inline-flex items-center gap-2 font-semibold text-accent-400">@L("Focus.Read")<svg class="ico flip !h-5 !w-5 transition group-hover:translate-x-1 rtl:group-hover:-translate-x-1" aria-hidden="true"><use href="#i-arrow" /></svg></span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@if (articles.Count > 0)
+{
+    <section class="wrap pt-14 lg:pt-16" aria-labelledby="lib-living">
+        <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <p class="eyebrow">@L("Living.Eyebrow")</p>
+                <h2 id="lib-living" class="h2">@(livingPage?.Name ?? L("Living.Title"))</h2>
+            </div>
+            @if (livingPage is not null) { <a href="@livingPage.Url()" class="link font-semibold">@L("Living.All")</a> }
+        </div>
+        <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var a in articles.Take(3)) { <li>@await Html.PartialAsync("cards/_ArticleCard", a)</li> }
+        </ul>
+    </section>
+}
+
+@if (policy is not null)
+{
+    <section class="wrap py-14 lg:py-16" aria-labelledby="lib-policy">
+        <div class="flex flex-col items-start gap-5 rounded-[22px] border border-slate-200 p-6 sm:flex-row sm:items-center sm:p-8 dark:border-white/10">
+            <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-support-50 text-support-500 dark:bg-support-500/15 dark:text-support-300" aria-hidden="true"><svg class="ico !h-7 !w-7"><use href="#i-shield" /></svg></span>
+            <div class="min-w-0 flex-1">
+                <h2 id="lib-policy" class="text-lg font-bold text-deep-900 dark:text-white">@L("Policy.Title")</h2>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">@L("Policy.Text")</p>
+            </div>
+            <a href="@policy.Url()" class="btn btn-ghost btn-sm shrink-0">@policy.Name</a>
+        </div>
+    </section>
+}
+else
+{
+    <div class="pb-14 lg:pb-16"></div>
+}
+<script src="~/assets/js/components/health-library.js" asp-append-version="true" defer></script>
 @await Html.GetBlockListHtmlAsync(Model.Value<BlockListModel>("blocks"))

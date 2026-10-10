@@ -548,10 +548,11 @@ html[dir="rtl"] .preview-sheet { rotate: 4deg; }
 .hl-panel { @apply flex flex-col rounded-[24px] bg-white p-6 shadow-soft ring-1 ring-slate-200 sm:p-7 dark:bg-night-950 dark:ring-white/10; }
 .hl-panel-body { @apply flex min-h-0 flex-1 flex-col; }
 /* the panel keeps one height beside the figure; a long list scrolls inside it, fading at the edges it scrolls past */
-.hl-panel { height: 30rem; }
+.hl-panel { height: 24rem; }
+@media (min-width: 640px) { .hl-panel { height: 30rem; } }
 @media (min-width: 1024px) { .hl-panel { height: 34rem; } }
 .hl-panel-list {
-  min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding-inline-end: .35rem; padding-block: .25rem .75rem;
+  min-height: 0; flex: 1; overflow-y: auto; padding-inline-end: .35rem; padding-block: .25rem .75rem;   /* no overscroll containment: at its ends the page scrolls on */
   scrollbar-width: thin; scrollbar-color: var(--brand-200) transparent;
   mask-image: linear-gradient(to bottom, transparent 0, #000 .5rem, #000 calc(100% - 1.25rem), transparent 100%);
 }

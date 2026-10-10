@@ -1,4 +1,7 @@
-@* Facility card: type, city, emergency badge. data-* attributes let the map highlight the matching pin. *@
+@* Facility card: a thumbnail of its header photo for hospitals (health centres and the rest: the type icon), type, city,
+   emergency badge. data-* attributes let
+   the map highlight the matching pin. *@
+@using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Models.PublishedContent
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
 @{
@@ -6,9 +9,18 @@
     var type = f.Value<string>("facilityType") ?? "";
     var icon = type switch { "hospital" => "hosp", "primaryCare" => "clinic", _ => "star" };
     var er = f.Value<bool>("hasEmergency");
+    // health centres show their icon, never a photo
+    var photo = type == "primaryCare" ? null : f.Value<MediaWithCrops>("headerImage");
 }
 <a href="@f.Url()" class="card group flex items-start gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-soft" data-facility="@f.Key">
-    <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+    @if (photo is not null)
+    {
+        <img src="@photo.GetCropUrl(144, 144, furtherOptions: "format=webp&quality=78")" alt="" width="56" height="56" class="h-14 w-14 shrink-0 rounded-2xl object-cover" loading="lazy" decoding="async">
+    }
+    else
+    {
+        <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"><svg class="ico" aria-hidden="true"><use href="#i-@icon" /></svg></span>
+    }
     <span class="min-w-0 flex-1">
         <b class="block leading-snug text-deep-900 dark:text-white">@f.Name</b>
         <span class="text-sm text-slate-500 dark:text-slate-400">@Umbraco.GetDictionaryValue("EHC.Facility.Type." + (string.IsNullOrEmpty(type) ? "hospital" : type))@if (!string.IsNullOrWhiteSpace(f.Value<string>("city"))) {<text> · @(f.Value<string>("city"))</text>}</span>

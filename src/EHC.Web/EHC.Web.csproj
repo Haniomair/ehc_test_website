@@ -51,6 +51,11 @@
     <Content Update="appsettings.*.local.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- photos that seeders put into the media library (resource names: EHC.Web.SeedMedia.{file}) -->
+    <EmbeddedResource Include="Composers\SeedMedia\*.jpg" LogicalName="EHC.Web.SeedMedia.%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <!-- Front-end assets (wwwroot/assets) are built from /frontend and are not in source control.
        Run `npm run publish:umbraco` in /frontend before `dotnet publish`. -->
   <Target Name="EnsureFrontendAssets" BeforeTargets="ComputeFilesToPublish">

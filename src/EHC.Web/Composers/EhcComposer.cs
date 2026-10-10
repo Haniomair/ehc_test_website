@@ -60,6 +60,8 @@ public sealed class EhcComposer : IComposer
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, NavigatorSymptomsSeeder>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, MegaMenuSeeder>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, HealthLibrarySeeder>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, HealthArticleImagesSeeder>();   // after the library: its articles may have moved
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, FacilityPhotosSeeder>();
         // development: uSync Settings import whenever a uSync file changes (Ehc:USync:AutoImport)
         builder.Services.AddSingleton<USyncAutoImport>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, USyncAutoImportHandler>();

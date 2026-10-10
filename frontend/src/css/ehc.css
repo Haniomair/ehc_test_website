@@ -548,8 +548,6 @@ html[dir="rtl"] .preview-sheet { rotate: 4deg; }
 .hl-panel { @apply flex flex-col rounded-[24px] bg-white p-6 shadow-soft ring-1 ring-slate-200 sm:p-7 dark:bg-night-950 dark:ring-white/10; }
 .hl-panel-body { @apply flex min-h-0 flex-1 flex-col; }
 /* the panel keeps one height beside the figure; a long list scrolls inside it, fading at the edges it scrolls past */
-.hl-panel { height: 24rem; }
-@media (min-width: 640px) { .hl-panel { height: 30rem; } }
 @media (min-width: 1024px) { .hl-panel { height: 34rem; } }
 .hl-panel-list {
   min-height: 0; flex: 1; overflow-y: auto; padding-inline-end: .35rem; padding-block: .25rem .75rem;   /* no overscroll containment: at its ends the page scrolls on */
@@ -561,6 +559,12 @@ html[dir="rtl"] .preview-sheet { rotate: 4deg; }
 .hl-panel-list::-webkit-scrollbar-track { background: transparent; }
 .dark .hl-panel-list { scrollbar-color: color-mix(in srgb, white 22%, transparent) transparent; }
 .dark .hl-panel-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, white 22%, transparent); }
+/* phones and tablets: no scroll area inside the page (a touch that starts on one keeps the whole swipe, so the page seems
+   stuck); the card fits its list, up to six topics, and "All conditions" leads to the rest */
+@media (max-width: 1023.98px) {
+  .hl-panel-list { flex: none; overflow: visible; padding-inline-end: 0; mask-image: none; }
+  .hl-panel-list > li:nth-child(n + 7) { display: none; }
+}
 .hl-system { @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-deep-900 transition hover:border-brand-500 hover:text-brand-700 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-brand-400; }
 .hl-system[aria-current="true"] { @apply border-brand-600 bg-brand-600 text-white hover:text-white dark:border-brand-500 dark:bg-brand-600; }
 /* body map: a figure (never mirrored in Arabic: it is a body, not reading order) with a point per body system */
